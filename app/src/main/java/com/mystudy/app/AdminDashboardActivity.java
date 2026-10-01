@@ -238,14 +238,27 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         grid.addView(card, params);
 
-        card.setOnClickListener(v ->
-                Toast.makeText(
-                        this,
-                        description + " will be available soon.",
-                        Toast.LENGTH_SHORT
-                ).show()
-        );
+        card.setOnClickListener(v -> {
+
+    if (description.equals("Student Management")) {
+
+        Intent intent =
+                new Intent(
+                        AdminDashboardActivity.this,
+                        StudentManagementActivity.class
+                );
+
+        startActivity(intent);
+
+    } else {
+
+        Toast.makeText(
+                this,
+                description + " will be available soon.",
+                Toast.LENGTH_SHORT
+        ).show();
     }
+});
 
     private void logout() {
 

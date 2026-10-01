@@ -24,6 +24,7 @@
         <activity android:name=".RegisterActivity" android:exported="false" />
         <activity android:name=".AdminLoginActivity" android:exported="false" />
         <activity android:name=".AdminDashboardActivity" android:exported="false" />
+
         <activity android:name=".StudentManagementActivity" android:exported="false" />
         <activity android:name=".ClassManagementActivity" android:exported="false" />
         <activity android:name=".SubjectManagementActivity" android:exported="false" />
@@ -32,6 +33,7 @@
         <activity android:name=".QuestionManagementActivity" android:exported="false" />
         <activity android:name=".GamificationManagementActivity" android:exported="false" />
         <activity android:name=".AnnouncementManagementActivity" android:exported="false" />
+        <activity android:name=".AdminManagementActivity" android:exported="false" />
 
     </application>
 

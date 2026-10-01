@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,7 +18,6 @@ import com.google.firebase.auth.FirebaseAuth;
 public class AdminDashboardActivity extends AppCompatActivity {
 
     private FirebaseAuth auth;
-
     private String adminName;
     private String userRole;
 
@@ -36,7 +34,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
             adminName = "Admin";
         }
 
-        if (userRole == null) {
+        if (userRole == null || userRole.trim().isEmpty()) {
             userRole = "admin";
         }
 
@@ -45,11 +43,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
     private void createDashboard() {
 
-        ScrollView scrollView = new ScrollView(this);
-
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(30, 40, 30, 40);
+        root.setPadding(32, 40, 32, 32);
         root.setBackgroundColor(Color.rgb(248, 250, 252));
 
         TextView title = new TextView(this);
@@ -58,117 +54,103 @@ public class AdminDashboardActivity extends AppCompatActivity {
         title.setTextColor(Color.rgb(17, 24, 39));
         title.setGravity(Gravity.CENTER);
 
-        root.addView(title);
-
         TextView welcome = new TextView(this);
         welcome.setText("Welcome, " + adminName + " 👋");
         welcome.setTextSize(20);
         welcome.setTextColor(Color.rgb(79, 70, 229));
         welcome.setGravity(Gravity.CENTER);
+        welcome.setPadding(0, 12, 0, 4);
 
-        LinearLayout.LayoutParams welcomeParams =
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
+        TextView role = new TextView(this);
+        role.setText("Role: " + userRole);
+        role.setTextSize(14);
+        role.setTextColor(Color.rgb(100, 116, 139));
+        role.setGravity(Gravity.CENTER);
+        role.setPadding(0, 0, 0, 25);
 
-        welcomeParams.topMargin = 15;
-        root.addView(welcome, welcomeParams);
-
-        TextView roleText = new TextView(this);
-
-        if (userRole.equals("main_admin")) {
-            roleText.setText("MAIN ADMIN");
-        } else {
-            roleText.setText("ADMIN");
-        }
-
-        roleText.setTextSize(13);
-        roleText.setTextColor(Color.rgb(100, 116, 139));
-        roleText.setGravity(Gravity.CENTER);
-
-        root.addView(roleText);
+        root.addView(title);
+        root.addView(welcome);
+        root.addView(role);
 
         GridLayout grid = new GridLayout(this);
         grid.setColumnCount(2);
-        grid.setUseDefaultMargins(true);
-
-        LinearLayout.LayoutParams gridParams =
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
-
-        gridParams.topMargin = 35;
-
-        root.addView(grid, gridParams);
+        grid.setRowCount(5);
 
         addDashboardButton(
                 grid,
-                "👥\nStudents",
+                "👨‍🎓 Students",
                 "Student Management"
         );
 
         addDashboardButton(
                 grid,
-                "📚\nClasses",
+                "🏫 Classes",
                 "Class Management"
         );
 
         addDashboardButton(
                 grid,
-                "📖\nSubjects",
+                "📚 Subjects",
                 "Subject Management"
         );
 
         addDashboardButton(
                 grid,
-                "📑\nChapters",
+                "📖 Chapters",
                 "Chapter Management"
         );
 
         addDashboardButton(
                 grid,
-                "🎓\nLessons",
+                "📝 Lessons",
                 "Lesson Management"
         );
 
         addDashboardButton(
                 grid,
-                "❓\nQuestions",
+                "❓ Questions",
                 "Quiz Management"
         );
 
         addDashboardButton(
                 grid,
-                "🏆\nPoints & Badges",
+                "🏆 Points & Badges",
                 "Gamification"
         );
 
         addDashboardButton(
                 grid,
-                "📢\nAnnouncements",
+                "📢 Announcements",
                 "Announcements"
         );
 
-        if (userRole.equals("main_admin")) {
-
+        if ("main_admin".equals(userRole)) {
             addDashboardButton(
                     grid,
-                    "👤\nAdmin Management",
-                    "Manage Admins"
+                    "👑 Admins",
+                    "Admin Management"
             );
         }
 
         addDashboardButton(
                 grid,
-                "⚙️\nSettings",
-                "Admin Settings"
+                "⚙️ Settings",
+                "Settings"
+        );
+
+        root.addView(
+                grid,
+                new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        0,
+                        1
+                )
         );
 
         Button logoutButton = new Button(this);
         logoutButton.setText("Logout");
         logoutButton.setTextSize(16);
+        logoutButton.setOnClickListener(v -> logout());
 
         LinearLayout.LayoutParams logoutParams =
                 new LinearLayout.LayoutParams(
@@ -176,15 +158,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
                         LinearLayout.LayoutParams.WRAP_CONTENT
                 );
 
-        logoutParams.topMargin = 30;
+        logoutParams.topMargin = 20;
 
         root.addView(logoutButton, logoutParams);
 
-        logoutButton.setOnClickListener(v -> logout());
-
-        scrollView.addView(root);
-
-        setContentView(scrollView);
+        setContentView(root);
     }
 
     private void addDashboardButton(
@@ -193,82 +171,63 @@ public class AdminDashboardActivity extends AppCompatActivity {
             String description
     ) {
 
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setGravity(Gravity.CENTER);
-        card.setPadding(15, 25, 15, 25);
+        Button button = new Button(this);
 
-        card.setBackgroundColor(Color.WHITE);
-
-        TextView titleView = new TextView(this);
-        titleView.setText(title);
-        titleView.setTextSize(19);
-        titleView.setTextColor(Color.rgb(17, 24, 39));
-        titleView.setGravity(Gravity.CENTER);
-
-        TextView descriptionView = new TextView(this);
-        descriptionView.setText(description);
-        descriptionView.setTextSize(11);
-        descriptionView.setTextColor(Color.rgb(100, 116, 139));
-        descriptionView.setGravity(Gravity.CENTER);
-
-        card.addView(titleView);
-        card.addView(descriptionView);
+        button.setText(title);
+        button.setTextSize(15);
+        button.setAllCaps(false);
 
         GridLayout.LayoutParams params =
                 new GridLayout.LayoutParams();
 
         params.width = 0;
-        params.height =
-                (int) (125 * getResources().getDisplayMetrics().density);
-
+        params.height = 180;
         params.columnSpec =
-                GridLayout.spec(
-                        GridLayout.UNDEFINED,
-                        1f
-                );
+                GridLayout.spec(GridLayout.UNDEFINED, 1f);
 
-        params.rowSpec =
-                GridLayout.spec(
-                        GridLayout.UNDEFINED,
-                        1f
-                );
+        params.setMargins(10, 10, 10, 10);
 
-        params.setMargins(8, 8, 8, 8);
+        grid.addView(button, params);
 
-        grid.addView(card, params);
+        button.setOnClickListener(v -> {
 
-        card.setOnClickListener(v -> {
+            if ("Student Management".equals(description)) {
 
-    if (description.equals("Student Management")) {
-
-        Intent intent =
-                new Intent(
+                Intent intent = new Intent(
                         AdminDashboardActivity.this,
                         StudentManagementActivity.class
                 );
 
-        startActivity(intent);
+                startActivity(intent);
 
-    } else {
+            } else if ("Class Management".equals(description)) {
 
-        Toast.makeText(
-                this,
-                description + " will be available soon.",
-                Toast.LENGTH_SHORT
-        ).show();
+                Intent intent = new Intent(
+                        AdminDashboardActivity.this,
+                        ClassManagementActivity.class
+                );
+
+                startActivity(intent);
+
+            } else {
+
+                Toast.makeText(
+                        AdminDashboardActivity.this,
+                        description + " will be available soon.",
+                        Toast.LENGTH_SHORT
+                ).show();
+            }
+        });
     }
-});
 
     private void logout() {
 
         auth.signOut();
 
-        Intent intent =
-                new Intent(
-                        AdminDashboardActivity.this,
-                        IntroActivity.class
-                );
+        Intent intent = new Intent(
+                AdminDashboardActivity.this,
+                IntroActivity.class
+        );
 
         intent.addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK |
@@ -276,7 +235,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         );
 
         startActivity(intent);
-
         finish();
     }
 }

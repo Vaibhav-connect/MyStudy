@@ -9,6 +9,9 @@
         android:label="MyStudy"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyStudy">
+        <activity
+    android:name=".AdminDashboardActivity"
+    android:exported="false" />
 
         <activity
             android:name=".IntroActivity"

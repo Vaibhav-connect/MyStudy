@@ -71,11 +71,16 @@ public class AdminDashboardActivity extends AppCompatActivity {
         TextView title =
                 new TextView(this);
 
-        title.setText("MyStudy Admin");
+        title.setText(
+                "MyStudy Admin"
+        );
+
         title.setTextSize(30);
+
         title.setTextColor(
                 Color.rgb(17, 24, 39)
         );
+
         title.setGravity(
                 Gravity.CENTER
         );
@@ -90,9 +95,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
         );
 
         welcome.setTextSize(20);
+
         welcome.setTextColor(
                 Color.rgb(79, 70, 229)
         );
+
         welcome.setGravity(
                 Gravity.CENTER
         );
@@ -113,9 +120,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
         );
 
         role.setTextSize(14);
+
         role.setTextColor(
                 Color.rgb(100, 116, 139)
         );
+
         role.setGravity(
                 Gravity.CENTER
         );
@@ -213,7 +222,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 new Button(this);
 
         logoutButton.setText("Logout");
+
         logoutButton.setTextSize(16);
+
         logoutButton.setAllCaps(false);
 
         logoutButton.setOnClickListener(
@@ -246,13 +257,16 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 new Button(this);
 
         button.setText(title);
+
         button.setTextSize(15);
+
         button.setAllCaps(false);
 
         GridLayout.LayoutParams params =
                 new GridLayout.LayoutParams();
 
         params.width = 0;
+
         params.height = 180;
 
         params.columnSpec =
@@ -349,6 +363,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
                                 new Intent(
                                         this,
                                         QuestionManagementActivity.class
+                                )
+                        );
+
+                    } else if (
+                            "Gamification".equals(
+                                    description
+                            )
+                    ) {
+
+                        startActivity(
+                                new Intent(
+                                        this,
+                                        GamificationManagementActivity.class
                                 )
                         );
 

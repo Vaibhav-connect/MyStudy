@@ -234,8 +234,8 @@ public class AdminLoginActivity extends AppCompatActivity {
                         Intent intent =
                                 new Intent(
                                         AdminLoginActivity.this,
-                                        MainActivity.class
-                                );
+                                        AdminDashboardActivity.class
+                        );
 
                         intent.putExtra("userRole", role);
                         intent.putExtra("adminName", name);

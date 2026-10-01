@@ -45,25 +45,35 @@ public class AdminDashboardActivity extends AppCompatActivity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(32, 40, 32, 32);
-        root.setBackgroundColor(Color.rgb(248, 250, 252));
+        root.setBackgroundColor(
+                Color.rgb(248, 250, 252)
+        );
 
         TextView title = new TextView(this);
         title.setText("MyStudy Admin");
         title.setTextSize(30);
-        title.setTextColor(Color.rgb(17, 24, 39));
+        title.setTextColor(
+                Color.rgb(17, 24, 39)
+        );
         title.setGravity(Gravity.CENTER);
 
         TextView welcome = new TextView(this);
-        welcome.setText("Welcome, " + adminName + " 👋");
+        welcome.setText(
+                "Welcome, " + adminName + " 👋"
+        );
         welcome.setTextSize(20);
-        welcome.setTextColor(Color.rgb(79, 70, 229));
+        welcome.setTextColor(
+                Color.rgb(79, 70, 229)
+        );
         welcome.setGravity(Gravity.CENTER);
         welcome.setPadding(0, 12, 0, 4);
 
         TextView role = new TextView(this);
         role.setText("Role: " + userRole);
         role.setTextSize(14);
-        role.setTextColor(Color.rgb(100, 116, 139));
+        role.setTextColor(
+                Color.rgb(100, 116, 139)
+        );
         role.setGravity(Gravity.CENTER);
         role.setPadding(0, 0, 0, 25);
 
@@ -124,6 +134,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         );
 
         if ("main_admin".equals(userRole)) {
+
             addDashboardButton(
                     grid,
                     "👑 Admins",
@@ -144,14 +155,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
                         1
                 );
 
-        root.addView(grid, gridParams);
+        root.addView(
+                grid,
+                gridParams
+        );
 
         Button logoutButton = new Button(this);
         logoutButton.setText("Logout");
         logoutButton.setTextSize(16);
         logoutButton.setAllCaps(false);
 
-        logoutButton.setOnClickListener(v -> logout());
+        logoutButton.setOnClickListener(
+                v -> logout()
+        );
 
         LinearLayout.LayoutParams logoutParams =
                 new LinearLayout.LayoutParams(
@@ -161,7 +177,10 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         logoutParams.topMargin = 20;
 
-        root.addView(logoutButton, logoutParams);
+        root.addView(
+                logoutButton,
+                logoutParams
+        );
 
         setContentView(root);
     }
@@ -183,19 +202,30 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         params.width = 0;
         params.height = 180;
+
         params.columnSpec =
                 GridLayout.spec(
                         GridLayout.UNDEFINED,
                         1f
                 );
 
-        params.setMargins(10, 10, 10, 10);
+        params.setMargins(
+                10,
+                10,
+                10,
+                10
+        );
 
-        grid.addView(button, params);
+        grid.addView(
+                button,
+                params
+        );
 
         button.setOnClickListener(v -> {
 
-            if ("Student Management".equals(description)) {
+            if ("Student Management".equals(
+                    description
+            )) {
 
                 Intent intent = new Intent(
                         AdminDashboardActivity.this,
@@ -204,7 +234,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
                 startActivity(intent);
 
-            } else if ("Class Management".equals(description)) {
+            } else if ("Class Management".equals(
+                    description
+            )) {
 
                 Intent intent = new Intent(
                         AdminDashboardActivity.this,
@@ -213,11 +245,23 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
                 startActivity(intent);
 
+            } else if ("Subject Management".equals(
+                    description
+            )) {
+
+                Intent intent = new Intent(
+                        AdminDashboardActivity.this,
+                        SubjectManagementActivity.class
+                );
+
+                startActivity(intent);
+
             } else {
 
                 Toast.makeText(
                         AdminDashboardActivity.this,
-                        description + " will be available soon.",
+                        description +
+                                " will be available soon.",
                         Toast.LENGTH_SHORT
                 ).show();
             }
@@ -239,6 +283,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         );
 
         startActivity(intent);
+
         finish();
     }
 }

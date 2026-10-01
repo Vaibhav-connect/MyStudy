@@ -5,6 +5,8 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -34,7 +36,6 @@ public class ChapterManagementActivity extends AppCompatActivity {
 
     private final List<String> subjectIds = new ArrayList<>();
     private final List<String> subjectNames = new ArrayList<>();
-    private final List<String> subjectClassIds = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,16 +52,12 @@ public class ChapterManagementActivity extends AppCompatActivity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(24, 30, 24, 24);
-        root.setBackgroundColor(
-                Color.rgb(248, 250, 252)
-        );
+        root.setBackgroundColor(Color.rgb(248, 250, 252));
 
         TextView title = new TextView(this);
         title.setText("Chapter Management");
         title.setTextSize(28);
-        title.setTextColor(
-                Color.rgb(17, 24, 39)
-        );
+        title.setTextColor(Color.rgb(17, 24, 39));
         title.setGravity(Gravity.CENTER);
         title.setPadding(0, 0, 0, 20);
 
@@ -71,9 +68,7 @@ public class ChapterManagementActivity extends AppCompatActivity {
         addButton.setAllCaps(false);
         addButton.setTextSize(16);
 
-        addButton.setOnClickListener(
-                v -> showAddChapterDialog()
-        );
+        addButton.setOnClickListener(v -> showAddChapterDialog());
 
         root.addView(
                 addButton,
@@ -86,15 +81,8 @@ public class ChapterManagementActivity extends AppCompatActivity {
         ScrollView scrollView = new ScrollView(this);
 
         chapterContainer = new LinearLayout(this);
-        chapterContainer.setOrientation(
-                LinearLayout.VERTICAL
-        );
-        chapterContainer.setPadding(
-                0,
-                20,
-                0,
-                20
-        );
+        chapterContainer.setOrientation(LinearLayout.VERTICAL);
+        chapterContainer.setPadding(0, 20, 0, 20);
 
         scrollView.addView(chapterContainer);
 
@@ -110,10 +98,7 @@ public class ChapterManagementActivity extends AppCompatActivity {
         Button backButton = new Button(this);
         backButton.setText("Back");
         backButton.setAllCaps(false);
-
-        backButton.setOnClickListener(
-                v -> finish()
-        );
+        backButton.setOnClickListener(v -> finish());
 
         root.addView(backButton);
 
@@ -131,56 +116,37 @@ public class ChapterManagementActivity extends AppCompatActivity {
                     if (querySnapshot.isEmpty()) {
 
                         TextView empty = new TextView(this);
-                        empty.setText(
-                                "No chapters added yet."
-                        );
+                        empty.setText("No chapters added yet.");
                         empty.setTextSize(16);
                         empty.setTextColor(
                                 Color.rgb(100, 116, 139)
                         );
-                        empty.setGravity(
-                                Gravity.CENTER
-                        );
-                        empty.setPadding(
-                                0,
-                                40,
-                                0,
-                                40
-                        );
+                        empty.setGravity(Gravity.CENTER);
+                        empty.setPadding(0, 40, 0, 40);
 
                         chapterContainer.addView(empty);
-
                         return;
                     }
 
                     for (DocumentSnapshot document :
                             querySnapshot.getDocuments()) {
 
-                        String id =
-                                document.getId();
+                        String id = document.getId();
 
                         String name =
                                 document.getString("name");
 
                         String className =
-                                document.getString(
-                                        "className"
-                                );
+                                document.getString("className");
 
                         String subjectName =
-                                document.getString(
-                                        "subjectName"
-                                );
+                                document.getString("subjectName");
 
                         String classId =
-                                document.getString(
-                                        "classId"
-                                );
+                                document.getString("classId");
 
                         String subjectId =
-                                document.getString(
-                                        "subjectId"
-                                );
+                                document.getString("subjectId");
 
                         Long order =
                                 document.getLong("order");
@@ -194,14 +160,11 @@ public class ChapterManagementActivity extends AppCompatActivity {
                         }
 
                         if (subjectName == null) {
-                            subjectName =
-                                    "Unknown Subject";
+                            subjectName = "Unknown Subject";
                         }
 
                         long chapterOrder =
-                                order != null
-                                        ? order
-                                        : 0;
+                                order != null ? order : 0;
 
                         addChapterCard(
                                 id,
@@ -213,17 +176,12 @@ public class ChapterManagementActivity extends AppCompatActivity {
                                 chapterOrder
                         );
                     }
-
                 })
-                .addOnFailureListener(e -> {
-
-                    Toast.makeText(
-                            this,
-                            "Failed to load chapters: "
-                                    + e.getMessage(),
-                            Toast.LENGTH_LONG
-                    ).show();
-                });
+                .addOnFailureListener(e -> Toast.makeText(
+                        this,
+                        "Failed to load chapters: " + e.getMessage(),
+                        Toast.LENGTH_LONG
+                ).show());
     }
 
     private void addChapterCard(
@@ -236,116 +194,61 @@ public class ChapterManagementActivity extends AppCompatActivity {
             long order
     ) {
 
-        LinearLayout card =
-                new LinearLayout(this);
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(24, 20, 24, 20);
+        card.setBackgroundColor(Color.WHITE);
 
-        card.setOrientation(
-                LinearLayout.VERTICAL
-        );
-
-        card.setPadding(
-                24,
-                20,
-                24,
-                20
-        );
-
-        card.setBackgroundColor(
-                Color.WHITE
-        );
-
-        TextView nameText =
-                new TextView(this);
-
+        TextView nameText = new TextView(this);
         nameText.setText(name);
         nameText.setTextSize(20);
-        nameText.setTextColor(
-                Color.rgb(17, 24, 39)
-        );
+        nameText.setTextColor(Color.rgb(17, 24, 39));
 
-        TextView classText =
-                new TextView(this);
-
-        classText.setText(
-                "Class: " + className
-        );
-
+        TextView classText = new TextView(this);
+        classText.setText("Class: " + className);
         classText.setTextSize(14);
-        classText.setTextColor(
-                Color.rgb(79, 70, 229)
-        );
+        classText.setTextColor(Color.rgb(79, 70, 229));
 
-        TextView subjectText =
-                new TextView(this);
-
-        subjectText.setText(
-                "Subject: " + subjectName
-        );
-
+        TextView subjectText = new TextView(this);
+        subjectText.setText("Subject: " + subjectName);
         subjectText.setTextSize(15);
-        subjectText.setTextColor(
-                Color.rgb(16, 185, 129)
-        );
+        subjectText.setTextColor(Color.rgb(16, 185, 129));
 
-        TextView orderText =
-                new TextView(this);
-
-        orderText.setText(
-                "Order: " + order
-        );
-
+        TextView orderText = new TextView(this);
+        orderText.setText("Order: " + order);
         orderText.setTextSize(14);
-        orderText.setTextColor(
-                Color.rgb(100, 116, 139)
-        );
+        orderText.setTextColor(Color.rgb(100, 116, 139));
 
         card.addView(nameText);
         card.addView(classText);
         card.addView(subjectText);
         card.addView(orderText);
 
-        LinearLayout buttonRow =
-                new LinearLayout(this);
+        LinearLayout buttonRow = new LinearLayout(this);
+        buttonRow.setOrientation(LinearLayout.HORIZONTAL);
 
-        buttonRow.setOrientation(
-                LinearLayout.HORIZONTAL
-        );
-
-        Button editButton =
-                new Button(this);
-
+        Button editButton = new Button(this);
         editButton.setText("Edit");
         editButton.setAllCaps(false);
 
-        String finalName = name;
-        String finalClassId = classId;
-        String finalClassName = className;
-        String finalSubjectId = subjectId;
-        String finalSubjectName = subjectName;
-
-        editButton.setOnClickListener(
-                v -> showEditChapterDialog(
+        editButton.setOnClickListener(v ->
+                showEditChapterDialog(
                         documentId,
-                        finalName,
-                        finalClassId,
-                        finalClassName,
-                        finalSubjectId,
-                        finalSubjectName,
+                        name,
+                        classId,
+                        className,
+                        subjectId,
+                        subjectName,
                         order
                 )
         );
 
-        Button deleteButton =
-                new Button(this);
-
+        Button deleteButton = new Button(this);
         deleteButton.setText("Delete");
         deleteButton.setAllCaps(false);
 
-        deleteButton.setOnClickListener(
-                v -> confirmDelete(
-                        documentId,
-                        finalName
-                )
+        deleteButton.setOnClickListener(v ->
+                confirmDelete(documentId, name)
         );
 
         buttonRow.addView(
@@ -368,31 +271,20 @@ public class ChapterManagementActivity extends AppCompatActivity {
 
         card.addView(buttonRow);
 
-        LinearLayout.LayoutParams cardParams =
+        LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT
                 );
 
-        cardParams.setMargins(
-                0,
-                0,
-                0,
-                18
-        );
+        params.setMargins(0, 0, 0, 18);
 
-        chapterContainer.addView(
-                card,
-                cardParams
-        );
+        chapterContainer.addView(card, params);
     }
 
     private void showAddChapterDialog() {
 
-        loadClassesForDialog(
-                false,
-                null
-        );
+        loadClassesForDialog(false, null);
     }
 
     private void showEditChapterDialog(
@@ -405,21 +297,17 @@ public class ChapterManagementActivity extends AppCompatActivity {
             long oldOrder
     ) {
 
-        ChapterEditData data =
-                new ChapterEditData(
-                        documentId,
-                        oldName,
-                        oldClassId,
-                        oldClassName,
-                        oldSubjectId,
-                        oldSubjectName,
-                        oldOrder
-                );
+        ChapterEditData data = new ChapterEditData();
 
-        loadClassesForDialog(
-                true,
-                data
-        );
+        data.documentId = documentId;
+        data.name = oldName;
+        data.classId = oldClassId;
+        data.className = oldClassName;
+        data.subjectId = oldSubjectId;
+        data.subjectName = oldSubjectName;
+        data.order = oldOrder;
+
+        loadClassesForDialog(true, data);
     }
 
     private void loadClassesForDialog(
@@ -437,14 +325,10 @@ public class ChapterManagementActivity extends AppCompatActivity {
                     for (DocumentSnapshot document :
                             querySnapshot.getDocuments()) {
 
-                        classIds.add(
-                                document.getId()
-                        );
+                        classIds.add(document.getId());
 
                         String name =
-                                document.getString(
-                                        "name"
-                                );
+                                document.getString("name");
 
                         if (name == null) {
                             name = "Unnamed Class";
@@ -469,15 +353,11 @@ public class ChapterManagementActivity extends AppCompatActivity {
                             editData
                     );
                 })
-                .addOnFailureListener(e -> {
-
-                    Toast.makeText(
-                            this,
-                            "Failed to load classes: "
-                                    + e.getMessage(),
-                            Toast.LENGTH_LONG
-                    ).show();
-                });
+                .addOnFailureListener(e -> Toast.makeText(
+                        this,
+                        "Failed to load classes: " + e.getMessage(),
+                        Toast.LENGTH_LONG
+                ).show());
     }
 
     private void showChapterDialog(
@@ -485,28 +365,15 @@ public class ChapterManagementActivity extends AppCompatActivity {
             ChapterEditData editData
     ) {
 
-        LinearLayout layout =
-                new LinearLayout(this);
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 20, 50, 10);
 
-        layout.setOrientation(
-                LinearLayout.VERTICAL
-        );
-
-        layout.setPadding(
-                50,
-                20,
-                50,
-                10
-        );
-
-        EditText nameInput =
-                new EditText(this);
-
+        EditText nameInput = new EditText(this);
         nameInput.setHint("Chapter name");
         nameInput.setSingleLine(true);
 
-        Spinner classSpinner =
-                new Spinner(this);
+        Spinner classSpinner = new Spinner(this);
 
         ArrayAdapter<String> classAdapter =
                 new ArrayAdapter<>(
@@ -516,28 +383,16 @@ public class ChapterManagementActivity extends AppCompatActivity {
                 );
 
         classAdapter.setDropDownViewResource(
-                android.R.layout
-                        .simple_spinner_dropdown_item
+                android.R.layout.simple_spinner_dropdown_item
         );
 
-        classSpinner.setAdapter(
-                classAdapter
-        );
+        classSpinner.setAdapter(classAdapter);
 
-        Spinner subjectSpinner =
-                new Spinner(this);
+        Spinner subjectSpinner = new Spinner(this);
 
-        EditText orderInput =
-                new EditText(this);
-
-        orderInput.setHint(
-                "Order e.g. 1"
-        );
-
-        orderInput.setInputType(
-                InputType.TYPE_CLASS_NUMBER
-        );
-
+        EditText orderInput = new EditText(this);
+        orderInput.setHint("Order e.g. 1");
+        orderInput.setInputType(InputType.TYPE_CLASS_NUMBER);
         orderInput.setSingleLine(true);
 
         layout.addView(nameInput);
@@ -547,37 +402,26 @@ public class ChapterManagementActivity extends AppCompatActivity {
 
         if (editMode && editData != null) {
 
-            nameInput.setText(
-                    editData.name
-            );
-
+            nameInput.setText(editData.name);
             orderInput.setText(
-                    String.valueOf(
-                            editData.order
-                    )
+                    String.valueOf(editData.order)
             );
 
             int classPosition =
-                    classIds.indexOf(
-                            editData.classId
-                    );
+                    classIds.indexOf(editData.classId);
 
             if (classPosition >= 0) {
-
-                classSpinner.setSelection(
-                        classPosition
-                );
+                classSpinner.setSelection(classPosition);
             }
         }
 
         classSpinner.setOnItemSelectedListener(
-                new android.widget.AdapterView
-                        .OnItemSelectedListener() {
+                new AdapterView.OnItemSelectedListener() {
 
                     @Override
                     public void onItemSelected(
-                            android.widget.AdapterView<?> parent,
-                            android.view.View view,
+                            AdapterView<?> parent,
+                            View view,
                             int position,
                             long id
                     ) {
@@ -585,265 +429,206 @@ public class ChapterManagementActivity extends AppCompatActivity {
                         if (position >= 0 &&
                                 position < classIds.size()) {
 
+                            String selectedClassId =
+                                    classIds.get(position);
+
                             loadSubjectsForClass(
-                                    classIds.get(position),
+                                    selectedClassId,
                                     subjectSpinner,
-                                    editMode
-                                            ? editData
-                                            : null
+                                    editMode,
+                                    editData
                             );
                         }
                     }
 
                     @Override
                     public void onNothingSelected(
-                            android.widget.AdapterView<?> parent
+                            AdapterView<?> parent
                     ) {
                     }
                 }
         );
 
-        String title =
-                editMode
-                        ? "Edit Chapter"
-                        : "Add Chapter";
-
-        String positive =
-                editMode
-                        ? "Save"
-                        : "Add";
-
         AlertDialog dialog =
                 new AlertDialog.Builder(this)
-                        .setTitle(title)
+                        .setTitle(
+                                editMode
+                                        ? "Edit Chapter"
+                                        : "Add Chapter"
+                        )
                         .setView(layout)
                         .setNegativeButton(
                                 "Cancel",
                                 null
                         )
                         .setPositiveButton(
-                                positive,
+                                editMode
+                                        ? "Save"
+                                        : "Add",
                                 null
                         )
                         .create();
 
-        dialog.setOnShowListener(
-                d -> {
+        dialog.setOnShowListener(d -> {
 
-                    dialog.getButton(
-                            AlertDialog.BUTTON_POSITIVE
-                    ).setOnClickListener(
-                            v -> {
+            dialog.getButton(
+                    AlertDialog.BUTTON_POSITIVE
+            ).setOnClickListener(v -> {
 
-                                String name =
-                                        nameInput
-                                                .getText()
-                                                .toString()
-                                                .trim();
+                String name =
+                        nameInput.getText()
+                                .toString()
+                                .trim();
 
-                                String orderString =
-                                        orderInput
-                                                .getText()
-                                                .toString()
-                                                .trim();
+                String orderString =
+                        orderInput.getText()
+                                .toString()
+                                .trim();
 
-                                if (name.isEmpty()) {
+                if (name.isEmpty()) {
 
-                                    nameInput.setError(
-                                            "Enter chapter name"
-                                    );
-
-                                    return;
-                                }
-
-                                if (orderString.isEmpty()) {
-
-                                    orderInput.setError(
-                                            "Enter order"
-                                    );
-
-                                    return;
-                                }
-
-                                long order;
-
-                                try {
-
-                                    order =
-                                            Long.parseLong(
-                                                    orderString
-                                            );
-
-                                } catch (Exception e) {
-
-                                    orderInput.setError(
-                                            "Enter valid number"
-                                    );
-
-                                    return;
-                                }
-
-                                int classPosition =
-                                        classSpinner
-                                                .getSelectedItemPosition();
-
-                                int subjectPosition =
-                                        subjectSpinner
-                                                .getSelectedItemPosition();
-
-                                if (classPosition < 0 ||
-                                        classPosition >=
-                                                classIds.size()) {
-
-                                    Toast.makeText(
-                                            this,
-                                            "Select a class.",
-                                            Toast.LENGTH_SHORT
-                                    ).show();
-
-                                    return;
-                                }
-
-                                if (subjectPosition < 0 ||
-                                        subjectPosition >=
-                                                subjectIds.size()) {
-
-                                    Toast.makeText(
-                                            this,
-                                            "Select a subject.",
-                                            Toast.LENGTH_SHORT
-                                    ).show();
-
-                                    return;
-                                }
-
-                                String selectedClassId =
-                                        classIds.get(
-                                                classPosition
-                                        );
-
-                                String selectedClassName =
-                                        classNames.get(
-                                                classPosition
-                                        );
-
-                                String selectedSubjectId =
-                                        subjectIds.get(
-                                                subjectPosition
-                                        );
-
-                                String selectedSubjectName =
-                                        subjectNames.get(
-                                                subjectPosition
-                                        );
-
-                                Map<String, Object> data =
-                                        new HashMap<>();
-
-                                data.put(
-                                        "name",
-                                        name
-                                );
-
-                                data.put(
-                                        "classId",
-                                        selectedClassId
-                                );
-
-                                data.put(
-                                        "className",
-                                        selectedClassName
-                                );
-
-                                data.put(
-                                        "subjectId",
-                                        selectedSubjectId
-                                );
-
-                                data.put(
-                                        "subjectName",
-                                        selectedSubjectName
-                                );
-
-                                data.put(
-                                        "order",
-                                        order
-                                );
-
-                                if (!editMode) {
-
-                                    data.put(
-                                            "createdAt",
-                                            System.currentTimeMillis()
-                                    );
-
-                                    db.collection(
-                                            "chapters"
-                                    )
-                                            .add(data)
-                                            .addOnSuccessListener(
-                                                    unused -> {
-
-                                                        Toast.makeText(
-                                                                this,
-                                                                "Chapter added successfully",
-                                                                Toast.LENGTH_SHORT
-                                                        ).show();
-
-                                                        dialog.dismiss();
-                                                        loadChapters();
-                                                    }
-                                            )
-                                            .addOnFailureListener(
-                                                    e -> {
-
-                                                        Toast.makeText(
-                                                                this,
-                                                                "Failed: "
-                                                                        + e.getMessage(),
-                                                                Toast.LENGTH_LONG
-                                                        ).show();
-                                                    }
-                                            );
-
-                                } else {
-
-                                    db.collection(
-                                            "chapters"
-                                    )
-                                            .document(
-                                                    editData.documentId
-                                            )
-                                            .update(data)
-                                            .addOnSuccessListener(
-                                                    unused -> {
-
-                                                        Toast.makeText(
-                                                                this,
-                                                                "Chapter updated successfully",
-                                                                Toast.LENGTH_SHORT
-                                                        ).show();
-
-                                                        dialog.dismiss();
-                                                        loadChapters();
-                                                    }
-                                            )
-                                            .addOnFailureListener(
-                                                    e -> {
-
-                                                        Toast.makeText(
-                                                                this,
-                                                                "Failed: "
-                                                                        + e.getMessage(),
-                                                                Toast.LENGTH_LONG
-                                                        ).show();
-                                                    }
-                                            );
-                                }
-                            }
+                    nameInput.setError(
+                            "Enter chapter name"
                     );
+                    return;
                 }
-        );
+
+                if (orderString.isEmpty()) {
+
+                    orderInput.setError(
+                            "Enter order"
+                    );
+                    return;
+                }
+
+                long order;
+
+                try {
+                    order = Long.parseLong(orderString);
+                } catch (Exception e) {
+
+                    orderInput.setError(
+                            "Enter valid number"
+                    );
+                    return;
+                }
+
+                int classPosition =
+                        classSpinner.getSelectedItemPosition();
+
+                int subjectPosition =
+                        subjectSpinner.getSelectedItemPosition();
+
+                if (classPosition < 0 ||
+                        classPosition >= classIds.size()) {
+
+                    Toast.makeText(
+                            this,
+                            "Select a class.",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    return;
+                }
+
+                if (subjectPosition < 0 ||
+                        subjectPosition >= subjectIds.size()) {
+
+                    Toast.makeText(
+                            this,
+                            "Select a subject.",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    return;
+                }
+
+                String selectedClassId =
+                        classIds.get(classPosition);
+
+                String selectedClassName =
+                        classNames.get(classPosition);
+
+                String selectedSubjectId =
+                        subjectIds.get(subjectPosition);
+
+                String selectedSubjectName =
+                        subjectNames.get(subjectPosition);
+
+                Map<String, Object> data =
+                        new HashMap<>();
+
+                data.put("name", name);
+                data.put("classId", selectedClassId);
+                data.put("className", selectedClassName);
+                data.put("subjectId", selectedSubjectId);
+                data.put("subjectName", selectedSubjectName);
+                data.put("order", order);
+
+                if (!editMode) {
+
+                    data.put(
+                            "createdAt",
+                            System.currentTimeMillis()
+                    );
+
+                    db.collection("chapters")
+                            .add(data)
+                            .addOnSuccessListener(
+                                    unused -> {
+
+                                        Toast.makeText(
+                                                this,
+                                                "Chapter added successfully",
+                                                Toast.LENGTH_SHORT
+                                        ).show();
+
+                                        dialog.dismiss();
+                                        loadChapters();
+                                    }
+                            )
+                            .addOnFailureListener(
+                                    e -> Toast.makeText(
+                                            this,
+                                            "Failed: " +
+                                                    e.getMessage(),
+                                            Toast.LENGTH_LONG
+                                    ).show()
+                            );
+
+                } else {
+
+                    if (editData == null) {
+                        return;
+                    }
+
+                    db.collection("chapters")
+                            .document(editData.documentId)
+                            .update(data)
+                            .addOnSuccessListener(
+                                    unused -> {
+
+                                        Toast.makeText(
+                                                this,
+                                                "Chapter updated successfully",
+                                                Toast.LENGTH_SHORT
+                                        ).show();
+
+                                        dialog.dismiss();
+                                        loadChapters();
+                                    }
+                            )
+                            .addOnFailureListener(
+                                    e -> Toast.makeText(
+                                            this,
+                                            "Failed: " +
+                                                    e.getMessage(),
+                                            Toast.LENGTH_LONG
+                                    ).show()
+                            );
+                }
+            });
+        });
 
         dialog.show();
     }
@@ -856,103 +641,62 @@ public class ChapterManagementActivity extends AppCompatActivity {
     ) {
 
         db.collection("subjects")
-                .whereEqualTo(
-                        "classId",
-                        classId
-                )
+                .whereEqualTo("classId", classId)
                 .get()
-                .addOnSuccessListener(
-                        querySnapshot -> {
+                .addOnSuccessListener(querySnapshot -> {
 
-                            subjectIds.clear();
-                            subjectNames.clear();
-                            subjectClassIds.clear();
+                    subjectIds.clear();
+                    subjectNames.clear();
 
-                            for (DocumentSnapshot document :
-                                    querySnapshot
-                                            .getDocuments()) {
+                    for (DocumentSnapshot document :
+                            querySnapshot.getDocuments()) {
 
-                                subjectIds.add(
-                                        document.getId()
-                                );
+                        subjectIds.add(document.getId());
 
-                                String name =
-                                        document.getString(
-                                                "name"
-                                        );
+                        String name =
+                                document.getString("name");
 
-                                if (name == null) {
-                                    name =
-                                            "Unnamed Subject";
-                                }
-
-                                subjectNames.add(name);
-
-                                subjectClassIds.add(
-                                        classId
-                                );
-                            }
-
-                            ArrayAdapter<String> adapter =
-                                    new ArrayAdapter<>(
-                                            this,
-                                            android.R.layout
-                                                    .simple_spinner_item,
-                                            subjectNames
-                                    );
-
-                            adapter.setDropDownViewResource(
-                                    android.R.layout
-                                            .simple_spinner_dropdown_item
-                            );
-
-                            subjectSpinner.setAdapter(
-                                    adapter
-                            );
-
-                            if (editMode &&
-                                    editData != null) {
-
-                                int position =
-                                        subjectIds.indexOf(
-                                                editData.subjectId
-                                        );
-
-                                if (position >= 0) {
-
-                                    subjectSpinner
-                                            .setSelection(
-                                                    position
-                                            );
-                                }
-                            }
+                        if (name == null) {
+                            name = "Unnamed Subject";
                         }
-                )
-                .addOnFailureListener(
-                        e -> {
 
-                            Toast.makeText(
+                        subjectNames.add(name);
+                    }
+
+                    ArrayAdapter<String> adapter =
+                            new ArrayAdapter<>(
                                     this,
-                                    "Failed to load subjects: "
-                                            + e.getMessage(),
-                                    Toast.LENGTH_LONG
-                            ).show();
+                                    android.R.layout.simple_spinner_item,
+                                    subjectNames
+                            );
+
+                    adapter.setDropDownViewResource(
+                            android.R.layout.simple_spinner_dropdown_item
+                    );
+
+                    subjectSpinner.setAdapter(adapter);
+
+                    if (editMode &&
+                            editData != null) {
+
+                        int position =
+                                subjectIds.indexOf(
+                                        editData.subjectId
+                                );
+
+                        if (position >= 0) {
+                            subjectSpinner.setSelection(
+                                    position
+                            );
                         }
-                );
-    }
-
-    private void loadSubjectsForClass(
-            String classId,
-            Spinner subjectSpinner,
-            boolean editMode
-    ) {
-
-        loadSubjectsForClass(
-                classId,
-                subjectSpinner,
-                editMode,
-                null
-        );
+                    }
+                })
+                .addOnFailureListener(e -> Toast.makeText(
+                        this,
+                        "Failed to load subjects: " +
+                                e.getMessage(),
+                        Toast.LENGTH_LONG
+                ).show());
     }
 
     private void confirmDelete(
@@ -975,12 +719,8 @@ public class ChapterManagementActivity extends AppCompatActivity {
                         "Delete",
                         (dialog, which) -> {
 
-                            db.collection(
-                                    "chapters"
-                            )
-                                    .document(
-                                            documentId
-                                    )
+                            db.collection("chapters")
+                                    .document(documentId)
                                     .delete()
                                     .addOnSuccessListener(
                                             unused -> {
@@ -995,18 +735,14 @@ public class ChapterManagementActivity extends AppCompatActivity {
                                             }
                                     )
                                     .addOnFailureListener(
-                                            e -> {
-
-                                                Toast.makeText(
-                                                        this,
-                                                        "Delete failed: "
-                                                                + e.getMessage(),
-                                                        Toast.LENGTH_LONG
-                                                ).show();
-                                            }
+                                            e -> Toast.makeText(
+                                                    this,
+                                                    "Delete failed: " +
+                                                            e.getMessage(),
+                                                    Toast.LENGTH_LONG
+                                            ).show()
                                     );
-                        }
-                )
+                        })
                 .show();
     }
 
@@ -1019,24 +755,5 @@ public class ChapterManagementActivity extends AppCompatActivity {
         String subjectId;
         String subjectName;
         long order;
-
-        ChapterEditData(
-                String documentId,
-                String name,
-                String classId,
-                String className,
-                String subjectId,
-                String subjectName,
-                long order
-        ) {
-
-            this.documentId = documentId;
-            this.name = name;
-            this.classId = classId;
-            this.className = className;
-            this.subjectId = subjectId;
-            this.subjectName = subjectName;
-            this.order = order;
-        }
     }
 }

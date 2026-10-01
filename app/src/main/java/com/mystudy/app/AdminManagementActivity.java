@@ -14,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.Arrays;
+
 public class AdminManagementActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
@@ -51,7 +53,7 @@ public class AdminManagementActivity extends AppCompatActivity {
         TextView info = new TextView(this);
         info.setText(
                 "Only Main Admin can manage administrators.\n" +
-                "The user must already have a MyStudy account."
+                        "The user must already have a MyStudy account."
         );
         info.setTextSize(14);
         info.setTextColor(0xFF64748B);
@@ -62,6 +64,7 @@ public class AdminManagementActivity extends AppCompatActivity {
         Button addAdminButton = new Button(this);
         addAdminButton.setText("+ Add Admin");
         addAdminButton.setAllCaps(false);
+
         addAdminButton.setOnClickListener(v ->
                 showAddAdminDialog()
         );
@@ -86,11 +89,13 @@ public class AdminManagementActivity extends AppCompatActivity {
     private void loadAdmins() {
 
         db.collection("users")
-                .whereIn("role",
-                        java.util.Arrays.asList(
+                .whereIn(
+                        "role",
+                        Arrays.asList(
                                 "main_admin",
                                 "admin"
-                        ))
+                        )
+                )
                 .get()
                 .addOnSuccessListener(snapshot -> {
 
@@ -143,6 +148,11 @@ public class AdminManagementActivity extends AppCompatActivity {
             role = "admin";
         }
 
+        final String displayName = name;
+        final String displayEmail = email;
+        final String displayRole = role;
+        final String adminId = doc.getId();
+
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(20, 20, 20, 20);
@@ -159,7 +169,7 @@ public class AdminManagementActivity extends AppCompatActivity {
         card.setLayoutParams(cardParams);
 
         TextView nameView = new TextView(this);
-        nameView.setText("👤 " + name);
+        nameView.setText("👤 " + displayName);
         nameView.setTextSize(19);
         nameView.setTextColor(0xFF111827);
         nameView.setTypeface(null, 1);
@@ -167,7 +177,7 @@ public class AdminManagementActivity extends AppCompatActivity {
         card.addView(nameView);
 
         TextView emailView = new TextView(this);
-        emailView.setText("📧 " + email);
+        emailView.setText("📧 " + displayEmail);
         emailView.setTextSize(14);
         emailView.setTextColor(0xFF475569);
         emailView.setPadding(0, 8, 0, 4);
@@ -177,7 +187,7 @@ public class AdminManagementActivity extends AppCompatActivity {
         TextView roleView = new TextView(this);
         roleView.setText(
                 "Role: " +
-                        ("main_admin".equals(role)
+                        ("main_admin".equals(displayRole)
                                 ? "Main Admin"
                                 : "Admin")
         );
@@ -187,7 +197,7 @@ public class AdminManagementActivity extends AppCompatActivity {
 
         card.addView(roleView);
 
-        if ("main_admin".equals(role)) {
+        if ("main_admin".equals(displayRole)) {
 
             TextView protectedText = new TextView(this);
             protectedText.setText(
@@ -204,10 +214,11 @@ public class AdminManagementActivity extends AppCompatActivity {
             removeButton.setText("Remove Admin");
             removeButton.setAllCaps(false);
 
-            final String adminId = doc.getId();
-
             removeButton.setOnClickListener(v ->
-                    confirmRemoveAdmin(adminId, name)
+                    confirmRemoveAdmin(
+                            adminId,
+                            displayName
+                    )
             );
 
             card.addView(removeButton);
@@ -231,7 +242,7 @@ public class AdminManagementActivity extends AppCompatActivity {
         TextView help = new TextView(this);
         help.setText(
                 "Example: user@gmail.com\n\n" +
-                "The account must already exist in MyStudy."
+                        "The account must already exist in MyStudy."
         );
         help.setTextSize(13);
         help.setTextColor(0xFF64748B);

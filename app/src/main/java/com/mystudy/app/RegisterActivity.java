@@ -11,8 +11,16 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -20,12 +28,19 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText emailInput;
     private EditText passwordInput;
     private EditText confirmPasswordInput;
+
     private Spinner classSpinner;
     private Spinner languageSpinner;
+
+    private FirebaseAuth auth;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        auth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         createRegisterScreen();
     }
@@ -231,84 +246,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         loginText.setOnClickListener(v -> finish());
 
-        registerButton.setOnClickListener(v -> {
-
-            String name = nameInput.getText().toString().trim();
-            String email = emailInput.getText().toString().trim();
-            String password = passwordInput.getText().toString();
-            String confirmPassword =
-                    confirmPasswordInput.getText().toString();
-
-            if (name.isEmpty()) {
-                nameInput.setError("Enter student name");
-                nameInput.requestFocus();
-                return;
-            }
-
-            if (email.isEmpty()) {
-                emailInput.setError("Enter email");
-                emailInput.requestFocus();
-                return;
-            }
-
-            if (password.isEmpty()) {
-                passwordInput.setError("Enter password");
-                passwordInput.requestFocus();
-                return;
-            }
-
-            if (password.length() < 6) {
-                passwordInput.setError(
-                        "Password must be at least 6 characters"
-                );
-                passwordInput.requestFocus();
-                return;
-            }
-
-            if (confirmPassword.isEmpty()) {
-                confirmPasswordInput.setError(
-                        "Confirm your password"
-                );
-                confirmPasswordInput.requestFocus();
-                return;
-            }
-
-            if (!password.equals(confirmPassword)) {
-                confirmPasswordInput.setError(
-                        "Passwords do not match"
-                );
-                confirmPasswordInput.requestFocus();
-                return;
-            }
-
-            if (classSpinner.getSelectedItemPosition() == 0) {
-                TextView error =
-                        (TextView) classSpinner.getSelectedView();
-
-                if (error != null) {
-                    error.setError("Select class");
-                }
-
-                return;
-            }
-
-            if (languageSpinner.getSelectedItemPosition() == 0) {
-                TextView error =
-                        (TextView) languageSpinner.getSelectedView();
-
-                if (error != null) {
-                    error.setError("Select language");
-                }
-
-                return;
-            }
-
-            android.widget.Toast.makeText(
-                    this,
-                    "Registration details are valid!",
-                    android.widget.Toast.LENGTH_SHORT
-            ).show();
-        });
+        registerButton.setOnClickListener(v -> registerUser());
 
         setContentView(root);
     }
@@ -352,5 +290,181 @@ public class RegisterActivity extends AppCompatActivity {
         params.topMargin = topMargin;
 
         root.addView(input, params);
+    }
+
+    private void registerUser() {
+
+        String name =
+                nameInput.getText().toString().trim();
+
+        String email =
+                emailInput.getText().toString().trim();
+
+        String password =
+                passwordInput.getText().toString();
+
+        String confirmPassword =
+                confirmPasswordInput.getText().toString();
+
+        if (name.isEmpty()) {
+            nameInput.setError("Enter student name");
+            nameInput.requestFocus();
+            return;
+        }
+
+        if (email.isEmpty()) {
+            emailInput.setError("Enter email");
+            emailInput.requestFocus();
+            return;
+        }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS
+                .matcher(email)
+                .matches()) {
+
+            emailInput.setError("Enter a valid email");
+            emailInput.requestFocus();
+            return;
+        }
+
+        if (password.isEmpty()) {
+            passwordInput.setError("Enter password");
+            passwordInput.requestFocus();
+            return;
+        }
+
+        if (password.length() < 6) {
+            passwordInput.setError(
+                    "Password must be at least 6 characters"
+            );
+            passwordInput.requestFocus();
+            return;
+        }
+
+        if (confirmPassword.isEmpty()) {
+            confirmPasswordInput.setError(
+                    "Confirm your password"
+            );
+            confirmPasswordInput.requestFocus();
+            return;
+        }
+
+        if (!password.equals(confirmPassword)) {
+            confirmPasswordInput.setError(
+                    "Passwords do not match"
+            );
+            confirmPasswordInput.requestFocus();
+            return;
+        }
+
+        if (classSpinner.getSelectedItemPosition() == 0) {
+
+            Toast.makeText(
+                    this,
+                    "Please select your class",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
+        if (languageSpinner.getSelectedItemPosition() == 0) {
+
+            Toast.makeText(
+                    this,
+                    "Please select your language",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
+        String selectedClass =
+                classSpinner.getSelectedItem().toString();
+
+        String selectedLanguage =
+                languageSpinner.getSelectedItem().toString();
+
+        Toast.makeText(
+                this,
+                "Creating your account...",
+                Toast.LENGTH_SHORT
+        ).show();
+
+        auth.createUserWithEmailAndPassword(
+                email,
+                password
+        ).addOnCompleteListener(this, task -> {
+
+            if (!task.isSuccessful()) {
+
+                String message =
+                        task.getException() != null
+                                ? task.getException().getMessage()
+                                : "Registration failed";
+
+                Toast.makeText(
+                        this,
+                        message,
+                        Toast.LENGTH_LONG
+                ).show();
+
+                return;
+            }
+
+            FirebaseUser user =
+                    auth.getCurrentUser();
+
+            if (user == null) {
+
+                Toast.makeText(
+                        this,
+                        "Account created, but user data could not be loaded.",
+                        Toast.LENGTH_LONG
+                ).show();
+
+                return;
+            }
+
+            String uid = user.getUid();
+
+            Map<String, Object> userData =
+                    new HashMap<>();
+
+            userData.put("name", name);
+            userData.put("email", email);
+            userData.put("class", selectedClass);
+            userData.put("language", selectedLanguage);
+            userData.put("role", "student");
+            userData.put(
+                    "createdAt",
+                    com.google.firebase.firestore.FieldValue.serverTimestamp()
+            );
+
+            db.collection("users")
+                    .document(uid)
+                    .set(userData)
+                    .addOnSuccessListener(unused -> {
+
+                        Toast.makeText(
+                                this,
+                                "Account created successfully! 🎉",
+                                Toast.LENGTH_LONG
+                        ).show();
+
+                        auth.signOut();
+
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+
+                        Toast.makeText(
+                                this,
+                                "Account created, but profile saving failed: "
+                                        + e.getMessage(),
+                                Toast.LENGTH_LONG
+                        ).show();
+                    });
+        });
     }
 }

@@ -14,14 +14,24 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 public class LoginActivity extends AppCompatActivity {
 
     private EditText email;
     private EditText password;
 
+    private FirebaseAuth auth;
+    private FirebaseFirestore db;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        auth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         createLoginScreen();
     }
@@ -170,7 +180,7 @@ public class LoginActivity extends AppCompatActivity {
         adminParams.topMargin = 25;
         root.addView(adminLogin, adminParams);
 
-        loginButton.setOnClickListener(v -> validateLogin());
+        loginButton.setOnClickListener(v -> loginUser());
 
         registerText.setOnClickListener(v -> {
 
@@ -188,14 +198,7 @@ public class LoginActivity extends AppCompatActivity {
             );
         });
 
-        forgotPassword.setOnClickListener(v -> {
-
-            Toast.makeText(
-                    this,
-                    "Password recovery will use email verification.",
-                    Toast.LENGTH_SHORT
-            ).show();
-        });
+        forgotPassword.setOnClickListener(v -> sendPasswordReset());
 
         adminLogin.setOnClickListener(v -> {
 
@@ -257,7 +260,7 @@ public class LoginActivity extends AppCompatActivity {
         root.addView(input, params);
     }
 
-    private void validateLogin() {
+    private void loginUser() {
 
         String emailText =
                 email.getText().toString().trim();
@@ -271,6 +274,15 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        if (!android.util.Patterns.EMAIL_ADDRESS
+                .matcher(emailText)
+                .matches()) {
+
+            email.setError("Enter a valid email");
+            email.requestFocus();
+            return;
+        }
+
         if (passwordText.isEmpty()) {
             password.setError("Enter your password");
             password.requestFocus();
@@ -279,8 +291,160 @@ public class LoginActivity extends AppCompatActivity {
 
         Toast.makeText(
                 this,
-                "Login system will be connected with Firebase.",
+                "Signing in...",
                 Toast.LENGTH_SHORT
         ).show();
+
+        auth.signInWithEmailAndPassword(
+                emailText,
+                passwordText
+        ).addOnCompleteListener(this, task -> {
+
+            if (!task.isSuccessful()) {
+
+                String message =
+                        task.getException() != null
+                                ? task.getException().getMessage()
+                                : "Login failed";
+
+                Toast.makeText(
+                        this,
+                        message,
+                        Toast.LENGTH_LONG
+                ).show();
+
+                return;
+            }
+
+            FirebaseUser user =
+                    auth.getCurrentUser();
+
+            if (user == null) {
+
+                Toast.makeText(
+                        this,
+                        "Login successful, but user data could not be loaded.",
+                        Toast.LENGTH_LONG
+                ).show();
+
+                return;
+            }
+
+            loadUserProfile(user.getUid());
+        });
+    }
+
+    private void loadUserProfile(String uid) {
+
+        db.collection("users")
+                .document(uid)
+                .get()
+                .addOnSuccessListener(document -> {
+
+                    if (!document.exists()) {
+
+                        Toast.makeText(
+                                this,
+                                "Profile not found.",
+                                Toast.LENGTH_LONG
+                        ).show();
+
+                        auth.signOut();
+                        return;
+                    }
+
+                    String name =
+                            document.getString("name");
+
+                    if (name == null || name.isEmpty()) {
+                        name = "Student";
+                    }
+
+                    Toast.makeText(
+                            this,
+                            "Welcome, " + name + "! 👋",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    Intent intent =
+                            new Intent(
+                                    LoginActivity.this,
+                                    MainActivity.class
+                            );
+
+                    intent.putExtra("studentName", name);
+
+                    startActivity(intent);
+
+                    overridePendingTransition(
+                            android.R.anim.fade_in,
+                            android.R.anim.fade_out
+                    );
+
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+
+                    Toast.makeText(
+                            this,
+                            "Could not load profile: "
+                                    + e.getMessage(),
+                            Toast.LENGTH_LONG
+                    ).show();
+                });
+    }
+
+    private void sendPasswordReset() {
+
+        String emailText =
+                email.getText().toString().trim();
+
+        if (emailText.isEmpty()) {
+
+            email.setError(
+                    "Enter your email first"
+            );
+
+            email.requestFocus();
+            return;
+        }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS
+                .matcher(emailText)
+                .matches()) {
+
+            email.setError(
+                    "Enter a valid email"
+            );
+
+            email.requestFocus();
+            return;
+        }
+
+        auth.sendPasswordResetEmail(emailText)
+                .addOnCompleteListener(task -> {
+
+                    if (task.isSuccessful()) {
+
+                        Toast.makeText(
+                                this,
+                                "Password reset email sent. Check your inbox.",
+                                Toast.LENGTH_LONG
+                        ).show();
+
+                    } else {
+
+                        String message =
+                                task.getException() != null
+                                        ? task.getException().getMessage()
+                                        : "Could not send reset email";
+
+                        Toast.makeText(
+                                this,
+                                message,
+                                Toast.LENGTH_LONG
+                        ).show();
+                    }
+                });
     }
 }

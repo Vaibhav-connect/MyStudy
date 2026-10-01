@@ -39,6 +39,9 @@
         <activity
             android:name=".AdminLoginActivity"
             android:exported="false" />
+        <activity
+    android:name=".StudentManagementActivity"
+    android:exported="false" />
 
     </application>
 

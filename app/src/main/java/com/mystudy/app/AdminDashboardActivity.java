@@ -17,6 +17,7 @@ import com.google.firebase.auth.FirebaseAuth;
 public class AdminDashboardActivity extends AppCompatActivity {
 
     private FirebaseAuth auth;
+
     private String adminName;
     private String userRole;
 
@@ -27,10 +28,14 @@ public class AdminDashboardActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
 
         adminName =
-                getIntent().getStringExtra("adminName");
+                getIntent().getStringExtra(
+                        "adminName"
+                );
 
         userRole =
-                getIntent().getStringExtra("userRole");
+                getIntent().getStringExtra(
+                        "userRole"
+                );
 
         if (adminName == null ||
                 adminName.trim().isEmpty()) {
@@ -114,7 +119,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 new TextView(this);
 
         role.setText(
-                "Role: " + userRole
+                "Role: " +
+                        userRole
         );
 
         role.setTextSize(14);
@@ -219,8 +225,12 @@ public class AdminDashboardActivity extends AppCompatActivity {
         Button logoutButton =
                 new Button(this);
 
-        logoutButton.setText("Logout");
+        logoutButton.setText(
+                "Logout"
+        );
+
         logoutButton.setTextSize(16);
+
         logoutButton.setAllCaps(false);
 
         logoutButton.setOnClickListener(
@@ -253,13 +263,16 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 new Button(this);
 
         button.setText(title);
+
         button.setTextSize(15);
+
         button.setAllCaps(false);
 
         GridLayout.LayoutParams params =
                 new GridLayout.LayoutParams();
 
         params.width = 0;
+
         params.height = 180;
 
         params.columnSpec =
@@ -330,6 +343,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
                                 new Intent(
                                         AdminDashboardActivity.this,
                                         ChapterManagementActivity.class
+                                )
+                        );
+
+                    } else if (
+                            "Lesson Management".equals(
+                                    description
+                            )
+                    ) {
+
+                        startActivity(
+                                new Intent(
+                                        AdminDashboardActivity.this,
+                                        LessonManagementActivity.class
                                 )
                         );
 

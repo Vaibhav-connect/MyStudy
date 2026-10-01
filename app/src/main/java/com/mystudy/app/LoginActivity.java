@@ -1,17 +1,23 @@
 package com.mystudy.app;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class LoginActivity extends AppCompatActivity {
+
+    private EditText email;
+    private EditText password;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +46,6 @@ public class LoginActivity extends AppCompatActivity {
         root.setBackground(background);
 
         TextView logo = new TextView(this);
-
         logo.setText("📖");
         logo.setTextSize(55);
         logo.setGravity(Gravity.CENTER);
@@ -48,7 +53,6 @@ public class LoginActivity extends AppCompatActivity {
         root.addView(logo);
 
         TextView title = new TextView(this);
-
         title.setText("Welcome Back! 👋");
         title.setTextSize(30);
         title.setTextColor(Color.WHITE);
@@ -61,11 +65,9 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         titleParams.topMargin = 15;
-
         root.addView(title, titleParams);
 
         TextView subtitle = new TextView(this);
-
         subtitle.setText("Continue your learning journey");
         subtitle.setTextSize(16);
         subtitle.setTextColor(Color.WHITE);
@@ -78,66 +80,30 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         subtitleParams.topMargin = 8;
-
         root.addView(subtitle, subtitleParams);
 
-        EditText email = new EditText(this);
-
-        email.setHint("Email");
-        email.setTextSize(16);
-        email.setSingleLine(true);
-        email.setInputType(
-                android.text.InputType.TYPE_CLASS_TEXT |
-                android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+        email = createInput(
+                "Email",
+                InputType.TYPE_CLASS_TEXT |
+                        InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
         );
 
-        email.setPadding(30, 10, 30, 10);
+        addInput(root, email, 45);
 
-        GradientDrawable inputBackground = new GradientDrawable();
-
-        inputBackground.setColor(Color.WHITE);
-        inputBackground.setCornerRadius(35);
-
-        email.setBackground(inputBackground);
-
-        LinearLayout.LayoutParams emailParams =
-                new LinearLayout.LayoutParams(
-                        650,
-                        65
-                );
-
-        emailParams.topMargin = 45;
-
-        root.addView(email, emailParams);
-
-        EditText password = new EditText(this);
-
-        password.setHint("Password");
-        password.setTextSize(16);
-        password.setSingleLine(true);
-        password.setInputType(
-                android.text.InputType.TYPE_CLASS_TEXT |
-                android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        password = createInput(
+                "Password",
+                InputType.TYPE_CLASS_TEXT |
+                        InputType.TYPE_TEXT_VARIATION_PASSWORD
         );
 
-        password.setPadding(30, 10, 30, 10);
-        password.setBackground(inputBackground);
-
-        LinearLayout.LayoutParams passwordParams =
-                new LinearLayout.LayoutParams(
-                        650,
-                        65
-                );
-
-        passwordParams.topMargin = 15;
-
-        root.addView(password, passwordParams);
+        addInput(root, password, 15);
 
         Button loginButton = new Button(this);
 
         loginButton.setText("Login");
         loginButton.setTextSize(18);
         loginButton.setAllCaps(false);
+        loginButton.setTextColor(Color.rgb(79, 70, 229));
 
         GradientDrawable loginBackground =
                 new GradientDrawable();
@@ -146,7 +112,6 @@ public class LoginActivity extends AppCompatActivity {
         loginBackground.setCornerRadius(40);
 
         loginButton.setBackground(loginBackground);
-        loginButton.setTextColor(Color.rgb(79, 70, 229));
 
         LinearLayout.LayoutParams loginParams =
                 new LinearLayout.LayoutParams(
@@ -155,7 +120,6 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         loginParams.topMargin = 25;
-
         root.addView(loginButton, loginParams);
 
         TextView forgotPassword = new TextView(this);
@@ -172,7 +136,6 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         forgotParams.topMargin = 18;
-
         root.addView(forgotPassword, forgotParams);
 
         TextView registerText = new TextView(this);
@@ -189,7 +152,6 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         registerParams.topMargin = 20;
-
         root.addView(registerText, registerParams);
 
         TextView adminLogin = new TextView(this);
@@ -206,9 +168,112 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         adminParams.topMargin = 25;
-
         root.addView(adminLogin, adminParams);
 
+        loginButton.setOnClickListener(v -> validateLogin());
+
+        registerText.setOnClickListener(v -> {
+
+            Intent intent =
+                    new Intent(
+                            LoginActivity.this,
+                            RegisterActivity.class
+                    );
+
+            startActivity(intent);
+
+            overridePendingTransition(
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out
+            );
+        });
+
+        forgotPassword.setOnClickListener(v -> {
+
+            Toast.makeText(
+                    this,
+                    "Password recovery will be connected with email verification.",
+                    Toast.LENGTH_SHORT
+            ).show();
+        });
+
+        adminLogin.setOnClickListener(v -> {
+
+            Toast.makeText(
+                    this,
+                    "Admin Login screen is coming next.",
+                    Toast.LENGTH_SHORT
+            ).show();
+        });
+
         setContentView(root);
+    }
+
+    private EditText createInput(
+            String hint,
+            int inputType
+    ) {
+
+        EditText input = new EditText(this);
+
+        input.setHint(hint);
+        input.setTextSize(16);
+        input.setSingleLine(true);
+        input.setInputType(inputType);
+        input.setPadding(30, 10, 30, 10);
+
+        GradientDrawable background =
+                new GradientDrawable();
+
+        background.setColor(Color.WHITE);
+        background.setCornerRadius(35);
+
+        input.setBackground(background);
+
+        return input;
+    }
+
+    private void addInput(
+            LinearLayout root,
+            EditText input,
+            int topMargin
+    ) {
+
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(
+                        650,
+                        65
+                );
+
+        params.topMargin = topMargin;
+
+        root.addView(input, params);
+    }
+
+    private void validateLogin() {
+
+        String emailText =
+                email.getText().toString().trim();
+
+        String passwordText =
+                password.getText().toString();
+
+        if (emailText.isEmpty()) {
+            email.setError("Enter your email");
+            email.requestFocus();
+            return;
+        }
+
+        if (passwordText.isEmpty()) {
+            password.setError("Enter your password");
+            password.requestFocus();
+            return;
+        }
+
+        Toast.makeText(
+                this,
+                "Login system will be connected with Firebase.",
+                Toast.LENGTH_SHORT
+        ).show();
     }
 }

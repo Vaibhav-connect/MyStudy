@@ -266,7 +266,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 new GridLayout.LayoutParams();
 
         params.width = 0;
-
         params.height = 180;
 
         params.columnSpec =
@@ -290,9 +289,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         button.setOnClickListener(
                 v -> {
 
-                    if ("Student Management".equals(
-                            description
-                    )) {
+                    if ("Student Management".equals(description)) {
 
                         startActivity(
                                 new Intent(
@@ -301,11 +298,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                                 )
                         );
 
-                    } else if (
-                            "Class Management".equals(
-                                    description
-                            )
-                    ) {
+                    } else if ("Class Management".equals(description)) {
 
                         startActivity(
                                 new Intent(
@@ -314,11 +307,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                                 )
                         );
 
-                    } else if (
-                            "Subject Management".equals(
-                                    description
-                            )
-                    ) {
+                    } else if ("Subject Management".equals(description)) {
 
                         startActivity(
                                 new Intent(
@@ -327,11 +316,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                                 )
                         );
 
-                    } else if (
-                            "Chapter Management".equals(
-                                    description
-                            )
-                    ) {
+                    } else if ("Chapter Management".equals(description)) {
 
                         startActivity(
                                 new Intent(
@@ -340,11 +325,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                                 )
                         );
 
-                    } else if (
-                            "Lesson Management".equals(
-                                    description
-                            )
-                    ) {
+                    } else if ("Lesson Management".equals(description)) {
 
                         startActivity(
                                 new Intent(
@@ -353,11 +334,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                                 )
                         );
 
-                    } else if (
-                            "Quiz Management".equals(
-                                    description
-                            )
-                    ) {
+                    } else if ("Quiz Management".equals(description)) {
 
                         startActivity(
                                 new Intent(
@@ -366,11 +343,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                                 )
                         );
 
-                    } else if (
-                            "Gamification".equals(
-                                    description
-                            )
-                    ) {
+                    } else if ("Gamification".equals(description)) {
 
                         startActivity(
                                 new Intent(
@@ -379,11 +352,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                                 )
                         );
 
-                    } else if (
-                            "Announcements".equals(
-                                    description
-                            )
-                    ) {
+                    } else if ("Announcements".equals(description)) {
 
                         startActivity(
                                 new Intent(
@@ -391,6 +360,26 @@ public class AdminDashboardActivity extends AppCompatActivity {
                                         AnnouncementManagementActivity.class
                                 )
                         );
+
+                    } else if ("Admin Management".equals(description)) {
+
+                        if ("main_admin".equals(userRole)) {
+
+                            startActivity(
+                                    new Intent(
+                                            this,
+                                            AdminManagementActivity.class
+                                    )
+                            );
+
+                        } else {
+
+                            Toast.makeText(
+                                    this,
+                                    "Main Admin access required.",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+                        }
 
                     } else {
 
@@ -416,8 +405,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 );
 
         intent.addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK
-                        |
+                Intent.FLAG_ACTIVITY_NEW_TASK |
                         Intent.FLAG_ACTIVITY_CLEAR_TASK
         );
 

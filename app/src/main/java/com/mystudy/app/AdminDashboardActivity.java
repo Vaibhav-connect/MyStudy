@@ -379,6 +379,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
                                 )
                         );
 
+                    } else if (
+                            "Announcements".equals(
+                                    description
+                            )
+                    ) {
+
+                        startActivity(
+                                new Intent(
+                                        this,
+                                        AnnouncementManagementActivity.class
+                                )
+                        );
+
                     } else {
 
                         Toast.makeText(

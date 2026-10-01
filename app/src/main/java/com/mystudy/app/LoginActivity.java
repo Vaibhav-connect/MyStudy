@@ -192,18 +192,25 @@ public class LoginActivity extends AppCompatActivity {
 
             Toast.makeText(
                     this,
-                    "Password recovery will be connected with email verification.",
+                    "Password recovery will use email verification.",
                     Toast.LENGTH_SHORT
             ).show();
         });
 
         adminLogin.setOnClickListener(v -> {
 
-            Toast.makeText(
-                    this,
-                    "Admin Login screen is coming next.",
-                    Toast.LENGTH_SHORT
-            ).show();
+            Intent intent =
+                    new Intent(
+                            LoginActivity.this,
+                            AdminLoginActivity.class
+                    );
+
+            startActivity(intent);
+
+            overridePendingTransition(
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out
+            );
         });
 
         setContentView(root);

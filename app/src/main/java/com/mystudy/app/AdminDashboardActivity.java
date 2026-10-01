@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.View;
 import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.LinearLayout;
@@ -138,18 +137,20 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 "Settings"
         );
 
-        root.addView(
-                grid,
+        LinearLayout.LayoutParams gridParams =
                 new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         0,
                         1
-                )
-        );
+                );
+
+        root.addView(grid, gridParams);
 
         Button logoutButton = new Button(this);
         logoutButton.setText("Logout");
         logoutButton.setTextSize(16);
+        logoutButton.setAllCaps(false);
+
         logoutButton.setOnClickListener(v -> logout());
 
         LinearLayout.LayoutParams logoutParams =
@@ -183,7 +184,10 @@ public class AdminDashboardActivity extends AppCompatActivity {
         params.width = 0;
         params.height = 180;
         params.columnSpec =
-                GridLayout.spec(GridLayout.UNDEFINED, 1f);
+                GridLayout.spec(
+                        GridLayout.UNDEFINED,
+                        1f
+                );
 
         params.setMargins(10, 10, 10, 10);
 
@@ -230,8 +234,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
         );
 
         intent.addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK |
-                Intent.FLAG_ACTIVITY_CLEAR_TASK
+                Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TASK
         );
 
         startActivity(intent);

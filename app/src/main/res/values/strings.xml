@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">MyStudy</string>
+
+    <string name="welcome">Welcome</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="logout">Logout</string>
+
+    <string name="student_name">Student Name</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="class_name">Class</string>
+    <string name="parent_pin">Parent PIN</string>
+
+    <string name="english">English</string>
+    <string name="marathi">Marathi</string>
+    <string name="hindi">Hindi</string>
+
+    <string name="subjects">Subjects</string>
+    <string name="lessons">Lessons</string>
+    <string name="practice">Practice</string>
+    <string name="progress">Progress</string>
+    <string name="profile">Profile</string>
+
+    <string name="mathematics">Mathematics</string>
+    <string name="evs">EVS</string>
+
+    <string name="points">Points</string>
+    <string name="streak">Streak</string>
+    <string name="accuracy">Accuracy</string>
+
+    <string name="about_mystudy">About MyStudy</string>
+    <string name="developed_by">Developed by Vaibhav Bhosale</string>
+    <string name="developer_email">vb1961869@gmail.com</string>
+
+</resources>

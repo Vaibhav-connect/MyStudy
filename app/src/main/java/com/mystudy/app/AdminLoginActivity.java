@@ -1,11 +1,10 @@
 package com.mystudy.app;
 
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -14,218 +13,118 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 public class AdminLoginActivity extends AppCompatActivity {
+
+    private FirebaseAuth auth;
+    private FirebaseFirestore db;
 
     private EditText emailInput;
     private EditText passwordInput;
+    private Button loginButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        createAdminLoginScreen();
+        auth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+
+        createUi();
     }
 
-    private void createAdminLoginScreen() {
+    private void createUi() {
 
         LinearLayout root = new LinearLayout(this);
-
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER);
-        root.setPadding(45, 45, 45, 45);
-
-        GradientDrawable background = new GradientDrawable(
-                GradientDrawable.Orientation.TL_BR,
-                new int[]{
-                        Color.rgb(30, 27, 75),
-                        Color.rgb(79, 70, 229),
-                        Color.rgb(124, 58, 237)
-                }
-        );
-
-        root.setBackground(background);
-
-        TextView icon = new TextView(this);
-
-        icon.setText("👑");
-        icon.setTextSize(58);
-        icon.setGravity(Gravity.CENTER);
-
-        root.addView(icon);
+        root.setPadding(40, 40, 40, 40);
 
         TextView title = new TextView(this);
-
-        title.setText("Admin Login");
+        title.setText("MyStudy Admin");
         title.setTextSize(30);
-        title.setTextColor(Color.WHITE);
         title.setGravity(Gravity.CENTER);
 
-        LinearLayout.LayoutParams titleParams =
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
-
-        titleParams.topMargin = 12;
-
-        root.addView(title, titleParams);
-
         TextView subtitle = new TextView(this);
-
-        subtitle.setText("Manage MyStudy securely");
+        subtitle.setText("Secure Administrator Login");
         subtitle.setTextSize(16);
-        subtitle.setTextColor(Color.WHITE);
         subtitle.setGravity(Gravity.CENTER);
+
+        emailInput = new EditText(this);
+        emailInput.setHint("Admin Email");
+        emailInput.setInputType(
+                InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+        );
+
+        passwordInput = new EditText(this);
+        passwordInput.setHint("Password");
+        passwordInput.setInputType(
+                InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_VARIATION_PASSWORD
+        );
+
+        loginButton = new Button(this);
+        loginButton.setText("Login as Admin");
+
+        TextView forgotPassword = new TextView(this);
+        forgotPassword.setText("Forgot Password?");
+        forgotPassword.setTextSize(15);
+        forgotPassword.setGravity(Gravity.CENTER);
+        forgotPassword.setPadding(0, 25, 0, 25);
+
+        root.addView(title);
 
         LinearLayout.LayoutParams subtitleParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT
                 );
 
-        subtitleParams.topMargin = 6;
-
+        subtitleParams.topMargin = 10;
         root.addView(subtitle, subtitleParams);
 
-        emailInput = createInput(
-                "Admin Email",
-                InputType.TYPE_CLASS_TEXT |
-                        InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-        );
-
-        addInput(root, emailInput, 45);
-
-        passwordInput = createInput(
-                "Admin Password",
-                InputType.TYPE_CLASS_TEXT |
-                        InputType.TYPE_TEXT_VARIATION_PASSWORD
-        );
-
-        addInput(root, passwordInput, 15);
-
-        Button loginButton = new Button(this);
-
-        loginButton.setText("Admin Login");
-        loginButton.setTextSize(18);
-        loginButton.setAllCaps(false);
-        loginButton.setTextColor(Color.rgb(79, 70, 229));
-
-        GradientDrawable loginBackground =
-                new GradientDrawable();
-
-        loginBackground.setColor(Color.WHITE);
-        loginBackground.setCornerRadius(40);
-
-        loginButton.setBackground(loginBackground);
-
-        LinearLayout.LayoutParams loginParams =
+        LinearLayout.LayoutParams inputParams =
                 new LinearLayout.LayoutParams(
-                        650,
-                        70
-                );
-
-        loginParams.topMargin = 25;
-
-        root.addView(loginButton, loginParams);
-
-        TextView forgotPassword = new TextView(this);
-
-        forgotPassword.setText("Forgot Admin Password?");
-        forgotPassword.setTextSize(15);
-        forgotPassword.setTextColor(Color.WHITE);
-        forgotPassword.setGravity(Gravity.CENTER);
-
-        LinearLayout.LayoutParams forgotParams =
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT
                 );
 
-        forgotParams.topMargin = 18;
+        inputParams.topMargin = 25;
+        root.addView(emailInput, inputParams);
 
-        root.addView(forgotPassword, forgotParams);
+        inputParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
 
-        TextView backText = new TextView(this);
+        inputParams.topMargin = 15;
+        root.addView(passwordInput, inputParams);
 
-        backText.setText("← Back to Student Login");
-        backText.setTextSize(16);
-        backText.setTextColor(Color.WHITE);
-        backText.setGravity(Gravity.CENTER);
-
-        LinearLayout.LayoutParams backParams =
+        LinearLayout.LayoutParams buttonParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT
                 );
 
-        backParams.topMargin = 25;
+        buttonParams.topMargin = 25;
+        root.addView(loginButton, buttonParams);
 
-        root.addView(backText, backParams);
-
-        loginButton.setOnClickListener(v -> validateAdminLogin());
-
-        forgotPassword.setOnClickListener(v -> {
-
-            Toast.makeText(
-                    this,
-                    "Admin password recovery will use email verification.",
-                    Toast.LENGTH_SHORT
-            ).show();
-        });
-
-        backText.setOnClickListener(v -> finish());
+        root.addView(forgotPassword);
 
         setContentView(root);
+
+        loginButton.setOnClickListener(v -> loginAdmin());
+
+        forgotPassword.setOnClickListener(v -> resetPassword());
     }
 
-    private EditText createInput(
-            String hint,
-            int inputType
-    ) {
+    private void loginAdmin() {
 
-        EditText input = new EditText(this);
-
-        input.setHint(hint);
-        input.setTextSize(16);
-        input.setSingleLine(true);
-        input.setInputType(inputType);
-        input.setPadding(30, 10, 30, 10);
-
-        GradientDrawable background =
-                new GradientDrawable();
-
-        background.setColor(Color.WHITE);
-        background.setCornerRadius(35);
-
-        input.setBackground(background);
-
-        return input;
-    }
-
-    private void addInput(
-            LinearLayout root,
-            EditText input,
-            int topMargin
-    ) {
-
-        LinearLayout.LayoutParams params =
-                new LinearLayout.LayoutParams(
-                        650,
-                        65
-                );
-
-        params.topMargin = topMargin;
-
-        root.addView(input, params);
-    }
-
-    private void validateAdminLogin() {
-
-        String email =
-                emailInput.getText().toString().trim();
-
-        String password =
-                passwordInput.getText().toString();
+        String email = emailInput.getText().toString().trim();
+        String password = passwordInput.getText().toString().trim();
 
         if (email.isEmpty()) {
             emailInput.setError("Enter admin email");
@@ -234,15 +133,203 @@ public class AdminLoginActivity extends AppCompatActivity {
         }
 
         if (password.isEmpty()) {
-            passwordInput.setError("Enter admin password");
+            passwordInput.setError("Enter password");
             passwordInput.requestFocus();
             return;
         }
 
-        Toast.makeText(
-                this,
-                "Admin authentication will be connected with Firebase.",
-                Toast.LENGTH_SHORT
-        ).show();
+        loginButton.setEnabled(false);
+        loginButton.setText("Checking...");
+
+        auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+
+                    if (!task.isSuccessful()) {
+                        loginButton.setEnabled(true);
+                        loginButton.setText("Login as Admin");
+
+                        Toast.makeText(
+                                this,
+                                getLoginError(task.getException()),
+                                Toast.LENGTH_LONG
+                        ).show();
+
+                        return;
+                    }
+
+                    if (auth.getCurrentUser() == null) {
+                        loginButton.setEnabled(true);
+                        loginButton.setText("Login as Admin");
+
+                        Toast.makeText(
+                                this,
+                                "Authentication failed.",
+                                Toast.LENGTH_LONG
+                        ).show();
+
+                        return;
+                    }
+
+                    String uid = auth.getCurrentUser().getUid();
+
+                    checkAdminRole(uid);
+                });
+    }
+
+    private void checkAdminRole(String uid) {
+
+        db.collection("users")
+                .document(uid)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+
+                    if (!documentSnapshot.exists()) {
+
+                        auth.signOut();
+
+                        loginButton.setEnabled(true);
+                        loginButton.setText("Login as Admin");
+
+                        Toast.makeText(
+                                this,
+                                "Admin profile not found.",
+                                Toast.LENGTH_LONG
+                        ).show();
+
+                        return;
+                    }
+
+                    String role = documentSnapshot.getString("role");
+
+                    if (role == null) {
+                        auth.signOut();
+
+                        loginButton.setEnabled(true);
+                        loginButton.setText("Login as Admin");
+
+                        Toast.makeText(
+                                this,
+                                "No admin role assigned.",
+                                Toast.LENGTH_LONG
+                        ).show();
+
+                        return;
+                    }
+
+                    if (role.equals("main_admin") || role.equals("admin")) {
+
+                        String name =
+                                documentSnapshot.getString("name");
+
+                        if (name == null || name.trim().isEmpty()) {
+                            name = "Admin";
+                        }
+
+                        Toast.makeText(
+                                this,
+                                "Welcome, " + name + "!",
+                                Toast.LENGTH_SHORT
+                        ).show();
+
+                        Intent intent =
+                                new Intent(
+                                        AdminLoginActivity.this,
+                                        MainActivity.class
+                                );
+
+                        intent.putExtra("userRole", role);
+                        intent.putExtra("adminName", name);
+
+                        startActivity(intent);
+
+                        finish();
+
+                    } else {
+
+                        auth.signOut();
+
+                        loginButton.setEnabled(true);
+                        loginButton.setText("Login as Admin");
+
+                        Toast.makeText(
+                                this,
+                                "Access denied. Admin account required.",
+                                Toast.LENGTH_LONG
+                        ).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+
+                    auth.signOut();
+
+                    loginButton.setEnabled(true);
+                    loginButton.setText("Login as Admin");
+
+                    Toast.makeText(
+                            this,
+                            "Unable to verify admin profile.",
+                            Toast.LENGTH_LONG
+                    ).show();
+                });
+    }
+
+    private void resetPassword() {
+
+        String email = emailInput.getText().toString().trim();
+
+        if (email.isEmpty()) {
+            emailInput.setError("Enter your admin email first");
+            emailInput.requestFocus();
+            return;
+        }
+
+        auth.sendPasswordResetEmail(email)
+                .addOnSuccessListener(unused -> {
+
+                    Toast.makeText(
+                            this,
+                            "Password reset email sent.",
+                            Toast.LENGTH_LONG
+                    ).show();
+                })
+                .addOnFailureListener(e -> {
+
+                    Toast.makeText(
+                            this,
+                            "Unable to send reset email.",
+                            Toast.LENGTH_LONG
+                    ).show();
+                });
+    }
+
+    private String getLoginError(Exception exception) {
+
+        if (exception == null) {
+            return "Login failed.";
+        }
+
+        String message = exception.getMessage();
+
+        if (message == null) {
+            return "Invalid email or password.";
+        }
+
+        if (message.contains("INVALID_LOGIN_CREDENTIALS")) {
+            return "Invalid email or password.";
+        }
+
+        if (message.contains("INVALID_EMAIL")) {
+            return "Invalid email address.";
+        }
+
+        if (message.contains("TOO_MANY_ATTEMPTS")) {
+            return "Too many attempts. Try again later.";
+        }
+
+        if (message.contains("NETWORK_REQUEST_FAILED")) {
+            return "Network error. Check your internet connection.";
+        }
+
+        return "Login failed. Please check your details.";
     }
 }

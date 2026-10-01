@@ -9,9 +9,6 @@
         android:label="MyStudy"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyStudy">
-        <activity
-    android:name=".AdminDashboardActivity"
-    android:exported="false" />
 
         <activity
             android:name=".IntroActivity"
@@ -39,12 +36,22 @@
         <activity
             android:name=".AdminLoginActivity"
             android:exported="false" />
+
         <activity
-    android:name=".StudentManagementActivity"
-    android:exported="false" />
+            android:name=".AdminDashboardActivity"
+            android:exported="false" />
+
         <activity
-    android:name=".ClassManagementActivity"
-    android:exported="false" />
+            android:name=".StudentManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ClassManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".SubjectManagementActivity"
+            android:exported="false" />
 
     </application>
 

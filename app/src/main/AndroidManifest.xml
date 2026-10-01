@@ -53,6 +53,10 @@
             android:name=".SubjectManagementActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ChapterManagementActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

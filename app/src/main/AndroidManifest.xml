@@ -42,6 +42,9 @@
         <activity
     android:name=".StudentManagementActivity"
     android:exported="false" />
+        <activity
+    android:name=".ClassManagementActivity"
+    android:exported="false" />
 
     </application>
 

@@ -26,14 +26,21 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         auth = FirebaseAuth.getInstance();
 
-        adminName = getIntent().getStringExtra("adminName");
-        userRole = getIntent().getStringExtra("userRole");
+        adminName =
+                getIntent().getStringExtra("adminName");
 
-        if (adminName == null || adminName.trim().isEmpty()) {
+        userRole =
+                getIntent().getStringExtra("userRole");
+
+        if (adminName == null ||
+                adminName.trim().isEmpty()) {
+
             adminName = "Admin";
         }
 
-        if (userRole == null || userRole.trim().isEmpty()) {
+        if (userRole == null ||
+                userRole.trim().isEmpty()) {
+
             userRole = "admin";
         }
 
@@ -42,46 +49,98 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
     private void createDashboard() {
 
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(32, 40, 32, 32);
+        LinearLayout root =
+                new LinearLayout(this);
+
+        root.setOrientation(
+                LinearLayout.VERTICAL
+        );
+
+        root.setPadding(
+                32,
+                40,
+                32,
+                32
+        );
+
         root.setBackgroundColor(
                 Color.rgb(248, 250, 252)
         );
 
-        TextView title = new TextView(this);
-        title.setText("MyStudy Admin");
+        TextView title =
+                new TextView(this);
+
+        title.setText(
+                "MyStudy Admin"
+        );
+
         title.setTextSize(30);
+
         title.setTextColor(
                 Color.rgb(17, 24, 39)
         );
-        title.setGravity(Gravity.CENTER);
 
-        TextView welcome = new TextView(this);
-        welcome.setText(
-                "Welcome, " + adminName + " 👋"
+        title.setGravity(
+                Gravity.CENTER
         );
+
+        TextView welcome =
+                new TextView(this);
+
+        welcome.setText(
+                "Welcome, " +
+                        adminName +
+                        " 👋"
+        );
+
         welcome.setTextSize(20);
+
         welcome.setTextColor(
                 Color.rgb(79, 70, 229)
         );
-        welcome.setGravity(Gravity.CENTER);
-        welcome.setPadding(0, 12, 0, 4);
 
-        TextView role = new TextView(this);
-        role.setText("Role: " + userRole);
+        welcome.setGravity(
+                Gravity.CENTER
+        );
+
+        welcome.setPadding(
+                0,
+                12,
+                0,
+                4
+        );
+
+        TextView role =
+                new TextView(this);
+
+        role.setText(
+                "Role: " + userRole
+        );
+
         role.setTextSize(14);
+
         role.setTextColor(
                 Color.rgb(100, 116, 139)
         );
-        role.setGravity(Gravity.CENTER);
-        role.setPadding(0, 0, 0, 25);
+
+        role.setGravity(
+                Gravity.CENTER
+        );
+
+        role.setPadding(
+                0,
+                0,
+                0,
+                25
+        );
 
         root.addView(title);
         root.addView(welcome);
         root.addView(role);
 
-        GridLayout grid = new GridLayout(this);
+        GridLayout grid =
+                new GridLayout(this);
+
         grid.setColumnCount(2);
         grid.setRowCount(5);
 
@@ -148,19 +207,18 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 "Settings"
         );
 
-        LinearLayout.LayoutParams gridParams =
+        root.addView(
+                grid,
                 new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         0,
                         1
-                );
-
-        root.addView(
-                grid,
-                gridParams
+                )
         );
 
-        Button logoutButton = new Button(this);
+        Button logoutButton =
+                new Button(this);
+
         logoutButton.setText("Logout");
         logoutButton.setTextSize(16);
         logoutButton.setAllCaps(false);
@@ -191,7 +249,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
             String description
     ) {
 
-        Button button = new Button(this);
+        Button button =
+                new Button(this);
 
         button.setText(title);
         button.setTextSize(15);
@@ -221,65 +280,86 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 params
         );
 
-        button.setOnClickListener(v -> {
+        button.setOnClickListener(
+                v -> {
 
-            if ("Student Management".equals(
-                    description
-            )) {
+                    if ("Student Management".equals(
+                            description
+                    )) {
 
-                Intent intent = new Intent(
-                        AdminDashboardActivity.this,
-                        StudentManagementActivity.class
-                );
+                        startActivity(
+                                new Intent(
+                                        AdminDashboardActivity.this,
+                                        StudentManagementActivity.class
+                                )
+                        );
 
-                startActivity(intent);
+                    } else if (
+                            "Class Management".equals(
+                                    description
+                            )
+                    ) {
 
-            } else if ("Class Management".equals(
-                    description
-            )) {
+                        startActivity(
+                                new Intent(
+                                        AdminDashboardActivity.this,
+                                        ClassManagementActivity.class
+                                )
+                        );
 
-                Intent intent = new Intent(
-                        AdminDashboardActivity.this,
-                        ClassManagementActivity.class
-                );
+                    } else if (
+                            "Subject Management".equals(
+                                    description
+                            )
+                    ) {
 
-                startActivity(intent);
+                        startActivity(
+                                new Intent(
+                                        AdminDashboardActivity.this,
+                                        SubjectManagementActivity.class
+                                )
+                        );
 
-            } else if ("Subject Management".equals(
-                    description
-            )) {
+                    } else if (
+                            "Chapter Management".equals(
+                                    description
+                            )
+                    ) {
 
-                Intent intent = new Intent(
-                        AdminDashboardActivity.this,
-                        SubjectManagementActivity.class
-                );
+                        startActivity(
+                                new Intent(
+                                        AdminDashboardActivity.this,
+                                        ChapterManagementActivity.class
+                                )
+                        );
 
-                startActivity(intent);
+                    } else {
 
-            } else {
-
-                Toast.makeText(
-                        AdminDashboardActivity.this,
-                        description +
-                                " will be available soon.",
-                        Toast.LENGTH_SHORT
-                ).show();
-            }
-        });
+                        Toast.makeText(
+                                AdminDashboardActivity.this,
+                                description +
+                                        " will be available soon.",
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                }
+        );
     }
 
     private void logout() {
 
         auth.signOut();
 
-        Intent intent = new Intent(
-                AdminDashboardActivity.this,
-                IntroActivity.class
-        );
+        Intent intent =
+                new Intent(
+                        AdminDashboardActivity.this,
+                        IntroActivity.class
+                );
 
         intent.addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK
-                        | Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        |
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK
         );
 
         startActivity(intent);

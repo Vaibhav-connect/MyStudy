@@ -13,27 +13,85 @@
         <activity
             android:name=".IntroActivity"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
 
-        <activity android:name=".MainActivity" android:exported="false" />
-        <activity android:name=".LoginActivity" android:exported="false" />
-        <activity android:name=".RegisterActivity" android:exported="false" />
-        <activity android:name=".AdminLoginActivity" android:exported="false" />
-        <activity android:name=".AdminDashboardActivity" android:exported="false" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
 
-        <activity android:name=".StudentManagementActivity" android:exported="false" />
-        <activity android:name=".ClassManagementActivity" android:exported="false" />
-        <activity android:name=".SubjectManagementActivity" android:exported="false" />
-        <activity android:name=".ChapterManagementActivity" android:exported="false" />
-        <activity android:name=".LessonManagementActivity" android:exported="false" />
-        <activity android:name=".QuestionManagementActivity" android:exported="false" />
-        <activity android:name=".GamificationManagementActivity" android:exported="false" />
-        <activity android:name=".AnnouncementManagementActivity" android:exported="false" />
-        <activity android:name=".AdminManagementActivity" android:exported="false" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".RegisterActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".AdminLoginActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".AdminDashboardActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".StudentManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ClassManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".SubjectManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ChapterManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".LessonManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".QuestionManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".GamificationManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".AnnouncementManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".AdminManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".StudentClassActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".StudentSubjectActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".StudentChapterActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".StudentLessonActivity"
+            android:exported="false" />
 
     </application>
 

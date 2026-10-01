@@ -1,7 +1,10 @@
 package com.mystudy.app;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -47,7 +50,6 @@ public class IntroActivity extends AppCompatActivity {
         root.setBackground(background);
 
         title = new TextView(this);
-
         title.setText("MyStudy");
         title.setTextSize(40);
         title.setTextColor(Color.WHITE);
@@ -56,7 +58,6 @@ public class IntroActivity extends AppCompatActivity {
         root.addView(title);
 
         TextView tagline = new TextView(this);
-
         tagline.setText("Learn • Practice • Grow");
         tagline.setTextSize(18);
         tagline.setTextColor(Color.WHITE);
@@ -69,11 +70,9 @@ public class IntroActivity extends AppCompatActivity {
                 );
 
         taglineParams.topMargin = 8;
-
         root.addView(tagline, taglineParams);
 
         LinearLayout scene = new LinearLayout(this);
-
         scene.setGravity(Gravity.CENTER_VERTICAL);
         scene.setOrientation(LinearLayout.HORIZONTAL);
 
@@ -84,11 +83,9 @@ public class IntroActivity extends AppCompatActivity {
                 );
 
         sceneParams.topMargin = 60;
-
         root.addView(scene, sceneParams);
 
         boy = new TextView(this);
-
         boy.setText("👦");
         boy.setTextSize(72);
         boy.setGravity(Gravity.CENTER);
@@ -99,7 +96,6 @@ public class IntroActivity extends AppCompatActivity {
         );
 
         book = new TextView(this);
-
         book.setText("📕");
         book.setTextSize(80);
         book.setGravity(Gravity.CENTER);
@@ -112,7 +108,6 @@ public class IntroActivity extends AppCompatActivity {
         scene.addView(book, bookParams);
 
         TextView welcome = new TextView(this);
-
         welcome.setText("Welcome to MyStudy! ✨");
         welcome.setTextSize(20);
         welcome.setTextColor(Color.WHITE);
@@ -125,7 +120,6 @@ public class IntroActivity extends AppCompatActivity {
                 );
 
         welcomeParams.topMargin = 35;
-
         root.addView(welcome, welcomeParams);
 
         setContentView(root);
@@ -183,9 +177,6 @@ public class IntroActivity extends AppCompatActivity {
                             1f
                     );
 
-            bookScaleX.setDuration(900);
-            bookScaleY.setDuration(900);
-
             ObjectAnimator bookRotation =
                     ObjectAnimator.ofFloat(
                             book,
@@ -195,15 +186,15 @@ public class IntroActivity extends AppCompatActivity {
                             0f
                     );
 
+            bookScaleX.setDuration(900);
+            bookScaleY.setDuration(900);
             bookRotation.setDuration(900);
 
             walk.addListener(
-                    new android.animation.AnimatorListenerAdapter() {
+                    new AnimatorListenerAdapter() {
 
                         @Override
-                        public void onAnimationEnd(
-                                android.animation.Animator animation
-                        ) {
+                        public void onAnimationEnd(Animator animation) {
 
                             book.setText("📖");
 
@@ -214,6 +205,19 @@ public class IntroActivity extends AppCompatActivity {
                                     bookScaleX,
                                     bookScaleY,
                                     bookRotation
+                            );
+
+                            bookAnimation.addListener(
+                                    new AnimatorListenerAdapter() {
+
+                                        @Override
+                                        public void onAnimationEnd(
+                                                Animator animation
+                                        ) {
+
+                                            openLoginScreen();
+                                        }
+                                    }
                             );
 
                             bookAnimation.start();
@@ -231,5 +235,23 @@ public class IntroActivity extends AppCompatActivity {
 
             walkingAnimation.start();
         });
+    }
+
+    private void openLoginScreen() {
+
+        Intent intent =
+                new Intent(
+                        IntroActivity.this,
+                        LoginActivity.class
+                );
+
+        startActivity(intent);
+
+        overridePendingTransition(
+                android.R.anim.fade_in,
+                android.R.anim.fade_out
+        );
+
+        finish();
     }
 }

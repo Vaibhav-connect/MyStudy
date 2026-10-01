@@ -57,6 +57,10 @@
             android:name=".ChapterManagementActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".LessonManagementActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

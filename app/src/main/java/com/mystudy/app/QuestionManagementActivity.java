@@ -34,10 +34,26 @@ public class QuestionManagementActivity extends AppCompatActivity {
     private final List<String> classIds = new ArrayList<>();
     private final List<String> classNames = new ArrayList<>();
 
+    private final List<String> subjectIds = new ArrayList<>();
+    private final List<String> subjectNames = new ArrayList<>();
+
     private final List<String> chapterIds = new ArrayList<>();
     private final List<String> chapterNames = new ArrayList<>();
 
     private final List<String> questionTypes = new ArrayList<>();
+
+    private final String[] mediums = {
+            "English",
+            "Semi-English",
+            "Marathi",
+            "Hindi"
+    };
+
+    private final String[] difficulties = {
+            "easy",
+            "medium",
+            "hard"
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -153,17 +169,37 @@ public class QuestionManagementActivity extends AppCompatActivity {
                         String className =
                                 document.getString("className");
 
+                        String medium =
+                                document.getString("medium");
+
+                        String subjectName =
+                                document.getString("subjectName");
+
                         String chapterName =
                                 document.getString("chapterName");
+
+                        String topic =
+                                document.getString("topic");
+
+                        String difficulty =
+                                document.getString("difficulty");
+
+                        String explanation =
+                                document.getString("explanation");
+
+                        String imageUrl =
+                                document.getString("imageUrl");
 
                         Long marksValue =
                                 document.getLong("marks");
 
-                        if (question == null) {
+                        if (question == null ||
+                                question.trim().isEmpty()) {
                             question = "Unnamed Question";
                         }
 
-                        if (type == null) {
+                        if (type == null ||
+                                type.trim().isEmpty()) {
                             type = "MCQ";
                         }
 
@@ -171,12 +207,42 @@ public class QuestionManagementActivity extends AppCompatActivity {
                             answer = "";
                         }
 
-                        if (className == null) {
+                        if (className == null ||
+                                className.trim().isEmpty()) {
                             className = "Unknown Class";
                         }
 
-                        if (chapterName == null) {
+                        if (medium == null ||
+                                medium.trim().isEmpty()) {
+                            medium = "English";
+                        }
+
+                        if (subjectName == null ||
+                                subjectName.trim().isEmpty()) {
+                            subjectName = "Unknown Subject";
+                        }
+
+                        if (chapterName == null ||
+                                chapterName.trim().isEmpty()) {
                             chapterName = "Unknown Chapter";
+                        }
+
+                        if (topic == null ||
+                                topic.trim().isEmpty()) {
+                            topic = "General";
+                        }
+
+                        if (difficulty == null ||
+                                difficulty.trim().isEmpty()) {
+                            difficulty = "easy";
+                        }
+
+                        if (explanation == null) {
+                            explanation = "";
+                        }
+
+                        if (imageUrl == null) {
+                            imageUrl = "";
                         }
 
                         long marks =
@@ -184,32 +250,20 @@ public class QuestionManagementActivity extends AppCompatActivity {
                                         ? marksValue
                                         : 1;
 
-                        final String finalQuestion =
-                                question;
-
-                        final String finalType =
-                                type;
-
-                        final String finalAnswer =
-                                answer;
-
-                        final String finalClassName =
-                                className;
-
-                        final String finalChapterName =
-                                chapterName;
-
-                        final long finalMarks =
-                                marks;
-
                         addQuestionCard(
                                 id,
-                                finalQuestion,
-                                finalType,
-                                finalAnswer,
-                                finalClassName,
-                                finalChapterName,
-                                finalMarks
+                                question,
+                                type,
+                                answer,
+                                className,
+                                medium,
+                                subjectName,
+                                chapterName,
+                                topic,
+                                difficulty,
+                                explanation,
+                                imageUrl,
+                                marks
                         );
                     }
                 })
@@ -229,7 +283,13 @@ public class QuestionManagementActivity extends AppCompatActivity {
             String type,
             String answer,
             String className,
+            String medium,
+            String subjectName,
             String chapterName,
+            String topic,
+            String difficulty,
+            String explanation,
+            String imageUrl,
             long marks
     ) {
 
@@ -249,14 +309,40 @@ public class QuestionManagementActivity extends AppCompatActivity {
         typeText.setTextColor(Color.rgb(79, 70, 229));
 
         TextView classText = new TextView(this);
-        classText.setText("Class: " + className);
+        classText.setText(
+                "Class: " + className +
+                        " • Medium: " + medium
+        );
         classText.setTextSize(14);
         classText.setTextColor(Color.rgb(16, 185, 129));
 
+        TextView subjectText = new TextView(this);
+        subjectText.setText(
+                "Subject: " + subjectName
+        );
+        subjectText.setTextSize(14);
+        subjectText.setTextColor(Color.rgb(14, 116, 144));
+
         TextView chapterText = new TextView(this);
-        chapterText.setText("Chapter: " + chapterName);
+        chapterText.setText(
+                "Chapter: " + chapterName
+        );
         chapterText.setTextSize(14);
         chapterText.setTextColor(Color.rgb(14, 116, 144));
+
+        TextView topicText = new TextView(this);
+        topicText.setText(
+                "Topic: " + topic
+        );
+        topicText.setTextSize(14);
+        topicText.setTextColor(Color.rgb(124, 58, 237));
+
+        TextView difficultyText = new TextView(this);
+        difficultyText.setText(
+                "Difficulty: " + difficulty
+        );
+        difficultyText.setTextSize(14);
+        difficultyText.setTextColor(Color.rgb(234, 88, 12));
 
         TextView marksText = new TextView(this);
         marksText.setText("Marks: " + marks);
@@ -266,8 +352,28 @@ public class QuestionManagementActivity extends AppCompatActivity {
         card.addView(questionText);
         card.addView(typeText);
         card.addView(classText);
+        card.addView(subjectText);
         card.addView(chapterText);
+        card.addView(topicText);
+        card.addView(difficultyText);
         card.addView(marksText);
+
+        if (imageUrl != null &&
+                !imageUrl.trim().isEmpty()) {
+
+            TextView imageText = new TextView(this);
+
+            imageText.setText(
+                    "🖼 Image attached"
+            );
+
+            imageText.setTextSize(13);
+            imageText.setTextColor(
+                    Color.rgb(79, 70, 229)
+            );
+
+            card.addView(imageText);
+        }
 
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -283,7 +389,13 @@ public class QuestionManagementActivity extends AppCompatActivity {
                         type,
                         answer,
                         className,
+                        medium,
+                        subjectName,
                         chapterName,
+                        topic,
+                        difficulty,
+                        explanation,
+                        imageUrl,
                         marks
                 )
         );
@@ -344,7 +456,13 @@ public class QuestionManagementActivity extends AppCompatActivity {
             String oldType,
             String oldAnswer,
             String oldClassName,
+            String oldMedium,
+            String oldSubjectName,
             String oldChapterName,
+            String oldTopic,
+            String oldDifficulty,
+            String oldExplanation,
+            String oldImageUrl,
             long oldMarks
     ) {
 
@@ -356,7 +474,13 @@ public class QuestionManagementActivity extends AppCompatActivity {
         data.type = oldType;
         data.answer = oldAnswer;
         data.className = oldClassName;
+        data.medium = oldMedium;
+        data.subjectName = oldSubjectName;
         data.chapterName = oldChapterName;
+        data.topic = oldTopic;
+        data.difficulty = oldDifficulty;
+        data.explanation = oldExplanation;
+        data.imageUrl = oldImageUrl;
         data.marks = oldMarks;
 
         loadClasses(true, data);
@@ -436,6 +560,16 @@ public class QuestionManagementActivity extends AppCompatActivity {
                 10
         );
 
+        ScrollView dialogScroll =
+                new ScrollView(this);
+
+        LinearLayout form =
+                new LinearLayout(this);
+
+        form.setOrientation(
+                LinearLayout.VERTICAL
+        );
+
         EditText questionInput =
                 new EditText(this);
 
@@ -455,6 +589,11 @@ public class QuestionManagementActivity extends AppCompatActivity {
         questionTypes.add("FILL_BLANK");
         questionTypes.add("NUMERICAL");
         questionTypes.add("SHORT_ANSWER");
+        questionTypes.add("MATCH");
+        questionTypes.add("SPELLING");
+        questionTypes.add("REARRANGE");
+        questionTypes.add("WORD_PROBLEM");
+        questionTypes.add("PICTURE_BASED");
 
         ArrayAdapter<String> typeAdapter =
                 new ArrayAdapter<>(
@@ -469,40 +608,22 @@ public class QuestionManagementActivity extends AppCompatActivity {
 
         typeSpinner.setAdapter(typeAdapter);
 
-        EditText optionAInput =
-                new EditText(this);
+        Spinner mediumSpinner =
+                new Spinner(this);
 
-        optionAInput.setHint("Option A");
+        ArrayAdapter<String> mediumAdapter =
+                new ArrayAdapter<>(
+                        this,
+                        android.R.layout.simple_spinner_item,
+                        mediums
+                );
 
-        EditText optionBInput =
-                new EditText(this);
-
-        optionBInput.setHint("Option B");
-
-        EditText optionCInput =
-                new EditText(this);
-
-        optionCInput.setHint("Option C");
-
-        EditText optionDInput =
-                new EditText(this);
-
-        optionDInput.setHint("Option D");
-
-        EditText answerInput =
-                new EditText(this);
-
-        answerInput.setHint(
-                "Correct Answer"
+        mediumAdapter.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item
         );
 
-        EditText marksInput =
-                new EditText(this);
-
-        marksInput.setHint("Marks e.g. 1");
-
-        marksInput.setInputType(
-                InputType.TYPE_CLASS_NUMBER
+        mediumSpinner.setAdapter(
+                mediumAdapter
         );
 
         Spinner classSpinner =
@@ -523,19 +644,207 @@ public class QuestionManagementActivity extends AppCompatActivity {
                 classAdapter
         );
 
+        Spinner subjectSpinner =
+                new Spinner(this);
+
         Spinner chapterSpinner =
                 new Spinner(this);
 
-        layout.addView(questionInput);
-        layout.addView(typeSpinner);
-        layout.addView(optionAInput);
-        layout.addView(optionBInput);
-        layout.addView(optionCInput);
-        layout.addView(optionDInput);
-        layout.addView(answerInput);
-        layout.addView(marksInput);
-        layout.addView(classSpinner);
-        layout.addView(chapterSpinner);
+        EditText topicInput =
+                new EditText(this);
+
+        topicInput.setHint(
+                "Topic"
+        );
+
+        EditText optionAInput =
+                new EditText(this);
+
+        optionAInput.setHint(
+                "Option A"
+        );
+
+        EditText optionBInput =
+                new EditText(this);
+
+        optionBInput.setHint(
+                "Option B"
+        );
+
+        EditText optionCInput =
+                new EditText(this);
+
+        optionCInput.setHint(
+                "Option C"
+        );
+
+        EditText optionDInput =
+                new EditText(this);
+
+        optionDInput.setHint(
+                "Option D"
+        );
+
+        EditText answerInput =
+                new EditText(this);
+
+        answerInput.setHint(
+                "Correct Answer"
+        );
+
+        EditText explanationInput =
+                new EditText(this);
+
+        explanationInput.setHint(
+                "Explanation"
+        );
+
+        explanationInput.setSingleLine(false);
+
+        EditText marksInput =
+                new EditText(this);
+
+        marksInput.setHint(
+                "Marks e.g. 1"
+        );
+
+        marksInput.setInputType(
+                InputType.TYPE_CLASS_NUMBER
+        );
+
+        Spinner difficultySpinner =
+                new Spinner(this);
+
+        ArrayAdapter<String> difficultyAdapter =
+                new ArrayAdapter<>(
+                        this,
+                        android.R.layout.simple_spinner_item,
+                        difficulties
+                );
+
+        difficultyAdapter.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item
+        );
+
+        difficultySpinner.setAdapter(
+                difficultyAdapter
+        );
+
+        EditText imageUrlInput =
+                new EditText(this);
+
+        imageUrlInput.setHint(
+                "Image URL (optional)"
+        );
+
+        imageUrlInput.setInputType(
+                InputType.TYPE_CLASS_TEXT |
+                        InputType.TYPE_TEXT_VARIATION_URI
+        );
+
+        addLabel(
+                form,
+                "Question"
+        );
+
+        form.addView(questionInput);
+
+        addLabel(
+                form,
+                "Question Type"
+        );
+
+        form.addView(typeSpinner);
+
+        addLabel(
+                form,
+                "Class"
+        );
+
+        form.addView(classSpinner);
+
+        addLabel(
+                form,
+                "Medium"
+        );
+
+        form.addView(mediumSpinner);
+
+        addLabel(
+                form,
+                "Subject"
+        );
+
+        form.addView(subjectSpinner);
+
+        addLabel(
+                form,
+                "Chapter"
+        );
+
+        form.addView(chapterSpinner);
+
+        addLabel(
+                form,
+                "Topic"
+        );
+
+        form.addView(topicInput);
+
+        addLabel(
+                form,
+                "Options"
+        );
+
+        form.addView(optionAInput);
+        form.addView(optionBInput);
+        form.addView(optionCInput);
+        form.addView(optionDInput);
+
+        addLabel(
+                form,
+                "Correct Answer"
+        );
+
+        form.addView(answerInput);
+
+        addLabel(
+                form,
+                "Explanation"
+        );
+
+        form.addView(explanationInput);
+
+        addLabel(
+                form,
+                "Marks"
+        );
+
+        form.addView(marksInput);
+
+        addLabel(
+                form,
+                "Difficulty"
+        );
+
+        form.addView(difficultySpinner);
+
+        addLabel(
+                form,
+                "Picture / Image URL"
+        );
+
+        form.addView(imageUrlInput);
+
+        dialogScroll.addView(form);
+
+        layout.addView(
+                dialogScroll,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        700
+                )
+        );
 
         if (editMode &&
                 editData != null) {
@@ -544,8 +853,20 @@ public class QuestionManagementActivity extends AppCompatActivity {
                     editData.question
             );
 
+            topicInput.setText(
+                    editData.topic
+            );
+
             answerInput.setText(
                     editData.answer
+            );
+
+            explanationInput.setText(
+                    editData.explanation
+            );
+
+            imageUrlInput.setText(
+                    editData.imageUrl
             );
 
             marksInput.setText(
@@ -565,6 +886,32 @@ public class QuestionManagementActivity extends AppCompatActivity {
                         typePosition
                 );
             }
+
+            int mediumPosition =
+                    findPosition(
+                            mediums,
+                            editData.medium
+                    );
+
+            if (mediumPosition >= 0) {
+
+                mediumSpinner.setSelection(
+                        mediumPosition
+                );
+            }
+
+            int difficultyPosition =
+                    findPosition(
+                            difficulties,
+                            editData.difficulty
+                    );
+
+            if (difficultyPosition >= 0) {
+
+                difficultySpinner.setSelection(
+                        difficultyPosition
+                );
+            }
         }
 
         classSpinner.setOnItemSelectedListener(
@@ -581,8 +928,81 @@ public class QuestionManagementActivity extends AppCompatActivity {
                         if (position >= 0 &&
                                 position < classIds.size()) {
 
-                            loadChapters(
+                            loadSubjects(
                                     classIds.get(position),
+                                    mediumSpinner,
+                                    subjectSpinner,
+                                    chapterSpinner,
+                                    editMode,
+                                    editData
+                            );
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(
+                            AdapterView<?> parent
+                    ) {
+                    }
+                }
+        );
+
+        mediumSpinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+
+                    @Override
+                    public void onItemSelected(
+                            AdapterView<?> parent,
+                            View view,
+                            int position,
+                            long id
+                    ) {
+
+                        int classPosition =
+                                classSpinner
+                                        .getSelectedItemPosition();
+
+                        if (classPosition >= 0 &&
+                                classPosition <
+                                        classIds.size()) {
+
+                            loadSubjects(
+                                    classIds.get(classPosition),
+                                    mediumSpinner,
+                                    subjectSpinner,
+                                    chapterSpinner,
+                                    editMode,
+                                    editData
+                            );
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(
+                            AdapterView<?> parent
+                    ) {
+                    }
+                }
+        );
+
+        subjectSpinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+
+                    @Override
+                    public void onItemSelected(
+                            AdapterView<?> parent,
+                            View view,
+                            int position,
+                            long id
+                    ) {
+
+                        if (position >= 0 &&
+                                position <
+                                        subjectIds.size()) {
+
+                            loadChapters(
+                                    subjectIds.get(position),
+                                    mediumSpinner,
                                     chapterSpinner,
                                     editMode,
                                     editData
@@ -636,6 +1056,17 @@ public class QuestionManagementActivity extends AppCompatActivity {
                                         .getSelectedItem()
                                         .toString();
 
+                        String medium =
+                                mediumSpinner
+                                        .getSelectedItem()
+                                        .toString();
+
+                        String topic =
+                                topicInput
+                                        .getText()
+                                        .toString()
+                                        .trim();
+
                         String optionA =
                                 optionAInput
                                         .getText()
@@ -666,8 +1097,25 @@ public class QuestionManagementActivity extends AppCompatActivity {
                                         .toString()
                                         .trim();
 
+                        String explanation =
+                                explanationInput
+                                        .getText()
+                                        .toString()
+                                        .trim();
+
                         String marksString =
                                 marksInput
+                                        .getText()
+                                        .toString()
+                                        .trim();
+
+                        String difficulty =
+                                difficultySpinner
+                                        .getSelectedItem()
+                                        .toString();
+
+                        String imageUrl =
+                                imageUrlInput
                                         .getText()
                                         .toString()
                                         .trim();
@@ -721,6 +1169,10 @@ public class QuestionManagementActivity extends AppCompatActivity {
                                 classSpinner
                                         .getSelectedItemPosition();
 
+                        int subjectPosition =
+                                subjectSpinner
+                                        .getSelectedItemPosition();
+
                         int chapterPosition =
                                 chapterSpinner
                                         .getSelectedItemPosition();
@@ -732,6 +1184,19 @@ public class QuestionManagementActivity extends AppCompatActivity {
                             Toast.makeText(
                                     this,
                                     "Select a class.",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+
+                            return;
+                        }
+
+                        if (subjectPosition < 0 ||
+                                subjectPosition >=
+                                        subjectIds.size()) {
+
+                            Toast.makeText(
+                                    this,
+                                    "Select a subject.",
                                     Toast.LENGTH_SHORT
                             ).show();
 
@@ -759,6 +1224,16 @@ public class QuestionManagementActivity extends AppCompatActivity {
                         String selectedClassName =
                                 classNames.get(
                                         classPosition
+                                );
+
+                        String selectedSubjectId =
+                                subjectIds.get(
+                                        subjectPosition
+                                );
+
+                        String selectedSubjectName =
+                                subjectNames.get(
+                                        subjectPosition
                                 );
 
                         String selectedChapterId =
@@ -810,6 +1285,11 @@ public class QuestionManagementActivity extends AppCompatActivity {
                         );
 
                         data.put(
+                                "explanation",
+                                explanation
+                        );
+
+                        data.put(
                                 "marks",
                                 marks
                         );
@@ -825,6 +1305,21 @@ public class QuestionManagementActivity extends AppCompatActivity {
                         );
 
                         data.put(
+                                "medium",
+                                medium
+                        );
+
+                        data.put(
+                                "subjectId",
+                                selectedSubjectId
+                        );
+
+                        data.put(
+                                "subjectName",
+                                selectedSubjectName
+                        );
+
+                        data.put(
                                 "chapterId",
                                 selectedChapterId
                         );
@@ -835,8 +1330,18 @@ public class QuestionManagementActivity extends AppCompatActivity {
                         );
 
                         data.put(
+                                "topic",
+                                topic
+                        );
+
+                        data.put(
                                 "difficulty",
-                                "easy"
+                                difficulty
+                        );
+
+                        data.put(
+                                "imageUrl",
+                                imageUrl
                         );
 
                         if (!editMode) {
@@ -914,17 +1419,157 @@ public class QuestionManagementActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void loadChapters(
+    private void loadSubjects(
             String classId,
+            Spinner mediumSpinner,
+            Spinner subjectSpinner,
             Spinner chapterSpinner,
             boolean editMode,
             QuestionEditData editData
     ) {
 
-        db.collection("chapters")
+        int mediumPosition =
+                mediumSpinner.getSelectedItemPosition();
+
+        if (mediumPosition < 0 ||
+                mediumPosition >= mediums.length) {
+            return;
+        }
+
+        String selectedMedium =
+                mediums[mediumPosition];
+
+        db.collection("subjects")
                 .whereEqualTo(
                         "classId",
                         classId
+                )
+                .whereEqualTo(
+                        "medium",
+                        selectedMedium
+                )
+                .get()
+                .addOnSuccessListener(
+                        snapshot -> {
+
+                            subjectIds.clear();
+                            subjectNames.clear();
+
+                            for (DocumentSnapshot document :
+                                    snapshot.getDocuments()) {
+
+                                subjectIds.add(
+                                        document.getId()
+                                );
+
+                                String name =
+                                        document.getString(
+                                                "name"
+                                        );
+
+                                if (name == null) {
+                                    name = "Unnamed Subject";
+                                }
+
+                                subjectNames.add(name);
+                            }
+
+                            ArrayAdapter<String> adapter =
+                                    new ArrayAdapter<>(
+                                            this,
+                                            android.R.layout.simple_spinner_item,
+                                            subjectNames
+                                    );
+
+                            adapter.setDropDownViewResource(
+                                    android.R.layout.simple_spinner_dropdown_item
+                            );
+
+                            subjectSpinner.setAdapter(
+                                    adapter
+                            );
+
+                            if (editMode &&
+                                    editData != null) {
+
+                                int position =
+                                        subjectNames.indexOf(
+                                                editData.subjectName
+                                        );
+
+                                if (position >= 0) {
+
+                                    subjectSpinner.setSelection(
+                                            position
+                                    );
+                                }
+                            }
+
+                            if (subjectNames.isEmpty()) {
+
+                                chapterIds.clear();
+                                chapterNames.clear();
+
+                                ArrayAdapter<String>
+                                        emptyAdapter =
+                                        new ArrayAdapter<>(
+                                                this,
+                                                android.R.layout.simple_spinner_item,
+                                                chapterNames
+                                        );
+
+                                chapterSpinner.setAdapter(
+                                        emptyAdapter
+                                );
+
+                                Toast.makeText(
+                                        this,
+                                        "No subjects found for " +
+                                                selectedMedium +
+                                                " medium.",
+                                        Toast.LENGTH_SHORT
+                                ).show();
+                            }
+                        }
+                )
+                .addOnFailureListener(
+                        e ->
+                                Toast.makeText(
+                                        this,
+                                        "Failed to load subjects: "
+                                                + e.getMessage(),
+                                        Toast.LENGTH_LONG
+                                ).show()
+                );
+    }
+
+    private void loadChapters(
+            String subjectId,
+            Spinner mediumSpinner,
+            Spinner chapterSpinner,
+            boolean editMode,
+            QuestionEditData editData
+    ) {
+
+        int mediumPosition =
+                mediumSpinner.getSelectedItemPosition();
+
+        if (mediumPosition < 0 ||
+                mediumPosition >= mediums.length) {
+            return;
+        }
+
+        String selectedMedium =
+                mediums[mediumPosition];
+
+        db.collection("chapters")
+                .whereEqualTo(
+                        "subjectId",
+                        subjectId
+                )
+                .whereEqualTo(
+                        "medium",
+                        selectedMedium
                 )
                 .get()
                 .addOnSuccessListener(
@@ -977,10 +1622,9 @@ public class QuestionManagementActivity extends AppCompatActivity {
 
                                 if (position >= 0) {
 
-                                    chapterSpinner
-                                            .setSelection(
-                                                    position
-                                            );
+                                    chapterSpinner.setSelection(
+                                            position
+                                    );
                                 }
                             }
                         }
@@ -994,6 +1638,54 @@ public class QuestionManagementActivity extends AppCompatActivity {
                                         Toast.LENGTH_LONG
                                 ).show()
                 );
+    }
+
+    private void addLabel(
+            LinearLayout parent,
+            String text
+    ) {
+
+        TextView label =
+                new TextView(this);
+
+        label.setText(text);
+        label.setTextSize(13);
+        label.setTextColor(
+                Color.rgb(71, 85, 105)
+        );
+
+        label.setPadding(
+                0,
+                12,
+                0,
+                4
+        );
+
+        parent.addView(label);
+    }
+
+    private int findPosition(
+            String[] values,
+            String target
+    ) {
+
+        if (target == null) {
+            return -1;
+        }
+
+        for (int i = 0;
+             i < values.length;
+             i++) {
+
+            if (values[i].equalsIgnoreCase(
+                    target
+            )) {
+
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private void confirmDelete(
@@ -1054,7 +1746,13 @@ public class QuestionManagementActivity extends AppCompatActivity {
         String type;
         String answer;
         String className;
+        String medium;
+        String subjectName;
         String chapterName;
+        String topic;
+        String difficulty;
+        String explanation;
+        String imageUrl;
         long marks;
     }
 }

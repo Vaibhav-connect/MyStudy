@@ -24,6 +24,8 @@ public class StudentChapterActivity extends AppCompatActivity {
 
     private String classId;
     private String className;
+    private String studentMedium;
+    private String studentName;
     private String subjectId;
     private String subjectName;
 
@@ -38,6 +40,8 @@ public class StudentChapterActivity extends AppCompatActivity {
 
         classId = getIntent().getStringExtra("classId");
         className = getIntent().getStringExtra("className");
+        studentMedium = getIntent().getStringExtra("studentMedium");
+        studentName = getIntent().getStringExtra("studentName");
         subjectId = getIntent().getStringExtra("subjectId");
         subjectName = getIntent().getStringExtra("subjectName");
 
@@ -89,20 +93,27 @@ public class StudentChapterActivity extends AppCompatActivity {
 
         TextView subtitle = new TextView(this);
 
+        String subtitleText = "";
+
         if (subjectName != null &&
                 !subjectName.trim().isEmpty()) {
 
-            subtitle.setText(
-                    subjectName + " • Choose a chapter"
-            );
+            subtitleText = subjectName;
 
         } else {
 
-            subtitle.setText(
-                    "Choose a chapter"
-            );
+            subtitleText = "Choose a chapter";
         }
 
+        if (studentMedium != null &&
+                !studentMedium.trim().isEmpty()) {
+
+            subtitleText += " • " + studentMedium;
+        }
+
+        subtitleText += " • Choose a chapter";
+
+        subtitle.setText(subtitleText);
         subtitle.setTextSize(16);
         subtitle.setTextColor(textSecondary);
         subtitle.setPadding(0, 8, 0, 24);
@@ -131,8 +142,7 @@ public class StudentChapterActivity extends AppCompatActivity {
                 )
         );
 
-        chapterContainer =
-                new LinearLayout(this);
+        chapterContainer = new LinearLayout(this);
 
         chapterContainer.setOrientation(
                 LinearLayout.VERTICAL
@@ -155,6 +165,13 @@ public class StudentChapterActivity extends AppCompatActivity {
 
         chapterContainer.removeAllViews();
 
+        if (studentMedium == null ||
+                studentMedium.trim().isEmpty()) {
+
+            showMessage("Medium information missing.");
+            return;
+        }
+
         db.collection("chapters")
                 .whereEqualTo(
                         "classId",
@@ -164,6 +181,10 @@ public class StudentChapterActivity extends AppCompatActivity {
                         "subjectId",
                         subjectId
                 )
+                .whereEqualTo(
+                        "medium",
+                        studentMedium
+                )
                 .get()
                 .addOnSuccessListener(
                         querySnapshot -> {
@@ -171,7 +192,7 @@ public class StudentChapterActivity extends AppCompatActivity {
                             if (querySnapshot.isEmpty()) {
 
                                 showMessage(
-                                        "No chapters available yet."
+                                        "No chapters available for this class and medium yet."
                                 );
 
                                 return;
@@ -428,6 +449,16 @@ public class StudentChapterActivity extends AppCompatActivity {
                     intent.putExtra(
                             "className",
                             className
+                    );
+
+                    intent.putExtra(
+                            "studentMedium",
+                            studentMedium
+                    );
+
+                    intent.putExtra(
+                            "studentName",
+                            studentName
                     );
 
                     intent.putExtra(

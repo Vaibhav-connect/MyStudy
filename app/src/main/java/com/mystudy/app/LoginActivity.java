@@ -6,6 +6,10 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.content.Context;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -22,9 +26,13 @@ public class LoginActivity extends AppCompatActivity {
 
     private EditText email;
     private EditText password;
+    private Button loginButton;
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
+
+    private boolean loginInProgress = false;
+    private boolean screenOpening = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,13 +44,24 @@ public class LoginActivity extends AppCompatActivity {
         createLoginScreen();
     }
 
+    private int dp(float value) {
+        return (int) (
+                value * getResources().getDisplayMetrics().density + 0.5f
+        );
+    }
+
     private void createLoginScreen() {
 
         LinearLayout root = new LinearLayout(this);
 
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER);
-        root.setPadding(45, 45, 45, 45);
+        root.setPadding(
+                dp(24),
+                dp(24),
+                dp(24),
+                dp(24)
+        );
 
         GradientDrawable background = new GradientDrawable(
                 GradientDrawable.Orientation.TL_BR,
@@ -60,7 +79,13 @@ public class LoginActivity extends AppCompatActivity {
         logo.setTextSize(55);
         logo.setGravity(Gravity.CENTER);
 
-        root.addView(logo);
+        root.addView(
+                logo,
+                new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+        );
 
         TextView title = new TextView(this);
         title.setText("Welcome Back! 👋");
@@ -70,11 +95,12 @@ public class LoginActivity extends AppCompatActivity {
 
         LinearLayout.LayoutParams titleParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
                 );
 
-        titleParams.topMargin = 15;
+        titleParams.topMargin = dp(15);
+
         root.addView(title, titleParams);
 
         TextView subtitle = new TextView(this);
@@ -85,11 +111,12 @@ public class LoginActivity extends AppCompatActivity {
 
         LinearLayout.LayoutParams subtitleParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
                 );
 
-        subtitleParams.topMargin = 8;
+        subtitleParams.topMargin = dp(8);
+
         root.addView(subtitle, subtitleParams);
 
         email = createInput(
@@ -98,7 +125,7 @@ public class LoginActivity extends AppCompatActivity {
                         InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
         );
 
-        addInput(root, email, 45);
+        addInput(root, email, 35);
 
         password = createInput(
                 "Password",
@@ -108,28 +135,29 @@ public class LoginActivity extends AppCompatActivity {
 
         addInput(root, password, 15);
 
-        Button loginButton = new Button(this);
+        loginButton = new Button(this);
 
         loginButton.setText("Login");
         loginButton.setTextSize(18);
         loginButton.setAllCaps(false);
         loginButton.setTextColor(Color.rgb(79, 70, 229));
+        loginButton.setGravity(Gravity.CENTER);
 
         GradientDrawable loginBackground =
                 new GradientDrawable();
 
         loginBackground.setColor(Color.WHITE);
-        loginBackground.setCornerRadius(40);
+        loginBackground.setCornerRadius(dp(40));
 
         loginButton.setBackground(loginBackground);
 
         LinearLayout.LayoutParams loginParams =
                 new LinearLayout.LayoutParams(
-                        650,
-                        70
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        dp(58)
                 );
 
-        loginParams.topMargin = 25;
+        loginParams.topMargin = dp(25);
 
         root.addView(loginButton, loginParams);
 
@@ -139,14 +167,20 @@ public class LoginActivity extends AppCompatActivity {
         forgotPassword.setTextSize(15);
         forgotPassword.setTextColor(Color.WHITE);
         forgotPassword.setGravity(Gravity.CENTER);
+        forgotPassword.setPadding(
+                dp(12),
+                dp(10),
+                dp(12),
+                dp(10)
+        );
 
         LinearLayout.LayoutParams forgotParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
                 );
 
-        forgotParams.topMargin = 18;
+        forgotParams.topMargin = dp(10);
 
         root.addView(forgotPassword, forgotParams);
 
@@ -156,14 +190,20 @@ public class LoginActivity extends AppCompatActivity {
         registerText.setTextSize(16);
         registerText.setTextColor(Color.WHITE);
         registerText.setGravity(Gravity.CENTER);
+        registerText.setPadding(
+                dp(12),
+                dp(8),
+                dp(12),
+                dp(8)
+        );
 
         LinearLayout.LayoutParams registerParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
                 );
 
-        registerParams.topMargin = 20;
+        registerParams.topMargin = dp(8);
 
         root.addView(registerText, registerParams);
 
@@ -173,20 +213,32 @@ public class LoginActivity extends AppCompatActivity {
         adminLogin.setTextSize(16);
         adminLogin.setTextColor(Color.WHITE);
         adminLogin.setGravity(Gravity.CENTER);
+        adminLogin.setPadding(
+                dp(12),
+                dp(8),
+                dp(12),
+                dp(8)
+        );
 
         LinearLayout.LayoutParams adminParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
                 );
 
-        adminParams.topMargin = 25;
+        adminParams.topMargin = dp(10);
 
         root.addView(adminLogin, adminParams);
 
         loginButton.setOnClickListener(v -> loginUser());
 
         registerText.setOnClickListener(v -> {
+
+            if (screenOpening || isFinishing()) {
+                return;
+            }
+
+            screenOpening = true;
 
             Intent intent =
                     new Intent(
@@ -200,11 +252,21 @@ public class LoginActivity extends AppCompatActivity {
                     android.R.anim.fade_in,
                     android.R.anim.fade_out
             );
+
+            screenOpening = false;
         });
 
-        forgotPassword.setOnClickListener(v -> sendPasswordReset());
+        forgotPassword.setOnClickListener(
+                v -> sendPasswordReset()
+        );
 
         adminLogin.setOnClickListener(v -> {
+
+            if (screenOpening || isFinishing()) {
+                return;
+            }
+
+            screenOpening = true;
 
             Intent intent =
                     new Intent(
@@ -218,6 +280,8 @@ public class LoginActivity extends AppCompatActivity {
                     android.R.anim.fade_in,
                     android.R.anim.fade_out
             );
+
+            screenOpening = false;
         });
 
         setContentView(root);
@@ -234,13 +298,21 @@ public class LoginActivity extends AppCompatActivity {
         input.setTextSize(16);
         input.setSingleLine(true);
         input.setInputType(inputType);
-        input.setPadding(30, 10, 30, 10);
+        input.setPadding(
+                dp(20),
+                dp(8),
+                dp(20),
+                dp(8)
+        );
+
+        input.setTextColor(Color.DKGRAY);
+        input.setHintTextColor(Color.GRAY);
 
         GradientDrawable background =
                 new GradientDrawable();
 
         background.setColor(Color.WHITE);
-        background.setCornerRadius(35);
+        background.setCornerRadius(dp(35));
 
         input.setBackground(background);
 
@@ -255,22 +327,29 @@ public class LoginActivity extends AppCompatActivity {
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(
-                        650,
-                        65
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        dp(58)
                 );
 
-        params.topMargin = topMargin;
+        params.topMargin = dp(topMargin);
 
         root.addView(input, params);
     }
 
     private void loginUser() {
 
+        if (loginInProgress) {
+            return;
+        }
+
         String emailText =
                 email.getText().toString().trim();
 
         String passwordText =
                 password.getText().toString();
+
+        email.setError(null);
+        password.setError(null);
 
         if (emailText.isEmpty()) {
 
@@ -298,6 +377,16 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        hideKeyboard();
+
+        loginInProgress = true;
+
+        if (loginButton != null) {
+            loginButton.setEnabled(false);
+            loginButton.setText("Signing in...");
+            loginButton.setAlpha(0.7f);
+        }
+
         Toast.makeText(
                 this,
                 "Signing in...",
@@ -309,12 +398,18 @@ public class LoginActivity extends AppCompatActivity {
                 passwordText
         ).addOnCompleteListener(this, task -> {
 
+            if (isFinishing() || isDestroyed()) {
+                return;
+            }
+
             if (!task.isSuccessful()) {
 
                 String message =
                         task.getException() != null
                                 ? task.getException().getMessage()
                                 : "Login failed";
+
+                resetLoginButton();
 
                 Toast.makeText(
                         this,
@@ -329,6 +424,8 @@ public class LoginActivity extends AppCompatActivity {
                     auth.getCurrentUser();
 
             if (user == null) {
+
+                resetLoginButton();
 
                 Toast.makeText(
                         this,
@@ -345,20 +442,39 @@ public class LoginActivity extends AppCompatActivity {
 
     private void loadUserProfile(String uid) {
 
+        if (uid == null || uid.trim().isEmpty()) {
+
+            auth.signOut();
+            resetLoginButton();
+
+            Toast.makeText(
+                    this,
+                    "Invalid user account.",
+                    Toast.LENGTH_LONG
+            ).show();
+
+            return;
+        }
+
         db.collection("users")
                 .document(uid)
                 .get()
                 .addOnSuccessListener(document -> {
 
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+
                     if (!document.exists()) {
+
+                        auth.signOut();
+                        resetLoginButton();
 
                         Toast.makeText(
                                 this,
                                 "Profile not found.",
                                 Toast.LENGTH_LONG
                         ).show();
-
-                        auth.signOut();
 
                         return;
                     }
@@ -390,15 +506,11 @@ public class LoginActivity extends AppCompatActivity {
                         name = "Student";
                     }
 
-                    if (selectedClass == null ||
-                            selectedClass.trim().isEmpty()) {
-
+                    if (selectedClass == null) {
                         selectedClass = "";
                     }
 
-                    if (selectedMedium == null ||
-                            selectedMedium.trim().isEmpty()) {
-
+                    if (selectedMedium == null) {
                         selectedMedium = "";
                     }
 
@@ -408,16 +520,11 @@ public class LoginActivity extends AppCompatActivity {
                         selectedLanguage = "English";
                     }
 
-                    /*
-                     * Normal Login is only for students.
-                     *
-                     * Admin accounts must use the dedicated
-                     * Admin Login screen.
-                     */
                     if (role.equals("main_admin") ||
                             role.equals("admin")) {
 
                         auth.signOut();
+                        resetLoginButton();
 
                         Toast.makeText(
                                 this,
@@ -433,6 +540,8 @@ public class LoginActivity extends AppCompatActivity {
                             "Welcome, " + name + "! 👋",
                             Toast.LENGTH_SHORT
                     ).show();
+
+                    screenOpening = true;
 
                     Intent intent =
                             new Intent(
@@ -471,10 +580,21 @@ public class LoginActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
 
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+
+                    auth.signOut();
+                    resetLoginButton();
+
+                    String error =
+                            e.getMessage() != null
+                                    ? e.getMessage()
+                                    : "Could not load profile.";
+
                     Toast.makeText(
                             this,
-                            "Could not load profile: "
-                                    + e.getMessage(),
+                            "Could not load profile: " + error,
                             Toast.LENGTH_LONG
                     ).show();
                 });
@@ -482,8 +602,14 @@ public class LoginActivity extends AppCompatActivity {
 
     private void sendPasswordReset() {
 
+        if (loginInProgress) {
+            return;
+        }
+
         String emailText =
                 email.getText().toString().trim();
+
+        email.setError(null);
 
         if (emailText.isEmpty()) {
 
@@ -509,8 +635,20 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        hideKeyboard();
+
+        Toast.makeText(
+                this,
+                "Sending reset email...",
+                Toast.LENGTH_SHORT
+        ).show();
+
         auth.sendPasswordResetEmail(emailText)
-                .addOnCompleteListener(task -> {
+                .addOnCompleteListener(this, task -> {
+
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
 
                     if (task.isSuccessful()) {
 
@@ -534,5 +672,51 @@ public class LoginActivity extends AppCompatActivity {
                         ).show();
                     }
                 });
+    }
+
+    private void resetLoginButton() {
+
+        loginInProgress = false;
+
+        if (loginButton != null &&
+                !isFinishing() &&
+                !isDestroyed()) {
+
+            loginButton.setEnabled(true);
+            loginButton.setText("Login");
+            loginButton.setAlpha(1f);
+        }
+    }
+
+    private void hideKeyboard() {
+
+        View currentFocus = getCurrentFocus();
+
+        if (currentFocus == null) {
+            return;
+        }
+
+        InputMethodManager manager =
+                (InputMethodManager)
+                        getSystemService(
+                                Context.INPUT_METHOD_SERVICE
+                        );
+
+        if (manager != null) {
+
+            manager.hideSoftInputFromWindow(
+                    currentFocus.getWindowToken(),
+                    0
+            );
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        loginInProgress = false;
+        screenOpening = false;
+
+        super.onDestroy();
     }
 }

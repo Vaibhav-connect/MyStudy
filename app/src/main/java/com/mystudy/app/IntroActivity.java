@@ -1,4 +1,3 @@
-```java
 package com.mystudy.app;
 
 import android.animation.Animator;
@@ -325,4 +324,3 @@ public class IntroActivity extends AppCompatActivity {
         super.onDestroy();
     }
 }
-```

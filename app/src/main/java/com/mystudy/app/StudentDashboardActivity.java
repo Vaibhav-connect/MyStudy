@@ -10,16 +10,39 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import java.util.Locale;
 
 public class StudentDashboardActivity extends AppCompatActivity {
 
     private String studentName;
 
+    private FirebaseFirestore db;
+    private FirebaseAuth auth;
+
+    private TextView pointsValue;
+    private TextView streakValue;
+    private TextView accuracyValue;
+    private TextView lessonProgressValue;
+
+    private int totalQuizScore = 0;
+    private int totalQuizQuestions = 0;
+    private int completedLessons = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        db = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
 
         studentName = getIntent().getStringExtra("studentName");
 
@@ -28,6 +51,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
         }
 
         createDashboard();
+        loadDashboardStats();
     }
 
     private void createDashboard() {
@@ -61,18 +85,37 @@ public class StudentDashboardActivity extends AppCompatActivity {
         LinearLayout stats = new LinearLayout(this);
         stats.setOrientation(LinearLayout.HORIZONTAL);
 
+        pointsValue = new TextView(this);
+        streakValue = new TextView(this);
+        accuracyValue = new TextView(this);
+
         stats.addView(
-                createStatCard("⭐", "0", "Points"),
+                createStatCard(
+                        "⭐",
+                        "0",
+                        "Points",
+                        pointsValue
+                ),
                 new LinearLayout.LayoutParams(0, 120, 1)
         );
 
         stats.addView(
-                createStatCard("🔥", "0", "Day Streak"),
+                createStatCard(
+                        "🔥",
+                        "0",
+                        "Day Streak",
+                        streakValue
+                ),
                 new LinearLayout.LayoutParams(0, 120, 1)
         );
 
         stats.addView(
-                createStatCard("🎯", "0%", "Accuracy"),
+                createStatCard(
+                        "🎯",
+                        "0%",
+                        "Accuracy",
+                        accuracyValue
+                ),
                 new LinearLayout.LayoutParams(0, 120, 1)
         );
 
@@ -146,7 +189,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
         TextView about = new TextView(this);
         about.setText(
                 "MyStudy\n\nDeveloped by Vaibhav Bhosale\n" +
-                "vb1961869@gmail.com"
+                        "vb1961869@gmail.com"
         );
 
         about.setTextSize(13);
@@ -164,7 +207,8 @@ public class StudentDashboardActivity extends AppCompatActivity {
     private LinearLayout createStatCard(
             String icon,
             String value,
-            String label
+            String label,
+            TextView valueReference
     ) {
 
         LinearLayout card = new LinearLayout(this);
@@ -187,14 +231,13 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         card.addView(iconView);
 
-        TextView valueView = new TextView(this);
-        valueView.setText(value);
-        valueView.setTextSize(19);
-        valueView.setTextColor(Color.rgb(79, 70, 229));
-        valueView.setTypeface(null, Typeface.BOLD);
-        valueView.setGravity(Gravity.CENTER);
+        valueReference.setText(value);
+        valueReference.setTextSize(19);
+        valueReference.setTextColor(Color.rgb(79, 70, 229));
+        valueReference.setTypeface(null, Typeface.BOLD);
+        valueReference.setGravity(Gravity.CENTER);
 
-        card.addView(valueView);
+        card.addView(valueReference);
 
         TextView labelView = new TextView(this);
         labelView.setText(label);
@@ -274,6 +317,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
         titleView.setTextColor(
                 Color.rgb(17, 24, 39)
         );
+
         titleView.setTypeface(
                 null,
                 Typeface.BOLD
@@ -289,6 +333,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
         descriptionView.setTextColor(
                 Color.rgb(100, 116, 139)
         );
+
         descriptionView.setPadding(
                 0,
                 5,
@@ -315,6 +360,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
         arrow.setTextColor(
                 Color.rgb(79, 70, 229)
         );
+
         arrow.setGravity(Gravity.CENTER);
 
         card.addView(
@@ -374,6 +420,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
         title.setTextColor(
                 Color.rgb(17, 24, 39)
         );
+
         title.setTypeface(
                 null,
                 Typeface.BOLD
@@ -381,31 +428,35 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         card.addView(title);
 
-        TextView progress = new TextView(this);
-        progress.setText(
+        lessonProgressValue = new TextView(this);
+        lessonProgressValue.setText(
                 "0 lessons completed"
         );
-        progress.setTextSize(14);
-        progress.setTextColor(
+
+        lessonProgressValue.setTextSize(14);
+        lessonProgressValue.setTextColor(
                 Color.rgb(100, 116, 139)
         );
-        progress.setPadding(
+
+        lessonProgressValue.setPadding(
                 0,
                 8,
                 0,
                 0
         );
 
-        card.addView(progress);
+        card.addView(lessonProgressValue);
 
         TextView badge = new TextView(this);
         badge.setText(
                 "🏅 Keep learning to earn badges!"
         );
+
         badge.setTextSize(14);
         badge.setTextColor(
                 Color.rgb(79, 70, 229)
         );
+
         badge.setPadding(
                 0,
                 14,
@@ -416,5 +467,128 @@ public class StudentDashboardActivity extends AppCompatActivity {
         card.addView(badge);
 
         return card;
+    }
+
+    private void loadDashboardStats() {
+
+        FirebaseUser user = auth.getCurrentUser();
+
+        if (user == null) {
+            return;
+        }
+
+        String userId = user.getUid();
+
+        db.collection("users")
+                .document(userId)
+                .get()
+                .addOnSuccessListener(document -> {
+
+                    if (!document.exists()) {
+                        return;
+                    }
+
+                    Long points = document.getLong("points");
+                    Long streak = document.getLong("streak");
+
+                    if (points != null) {
+                        pointsValue.setText(
+                                String.valueOf(points)
+                        );
+                    }
+
+                    if (streak != null) {
+                        streakValue.setText(
+                                String.valueOf(streak)
+                        );
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(
+                                StudentDashboardActivity.this,
+                                "Unable to load profile stats",
+                                Toast.LENGTH_SHORT
+                        ).show()
+                );
+
+        loadQuizAccuracy(userId);
+        loadCompletedLessons(userId);
+    }
+
+    private void loadQuizAccuracy(String userId) {
+
+        totalQuizScore = 0;
+        totalQuizQuestions = 0;
+
+        db.collection("quizProgress")
+                .whereEqualTo("userId", userId)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+
+                    for (QueryDocumentSnapshot document :
+                            querySnapshot) {
+
+                        Long score =
+                                document.getLong("score");
+
+                        Long total =
+                                document.getLong("totalQuestions");
+
+                        if (score != null) {
+                            totalQuizScore +=
+                                    score.intValue();
+                        }
+
+                        if (total != null) {
+                            totalQuizQuestions +=
+                                    total.intValue();
+                        }
+                    }
+
+                    if (totalQuizQuestions > 0) {
+
+                        double accuracy =
+                                (totalQuizScore * 100.0)
+                                        / totalQuizQuestions;
+
+                        accuracyValue.setText(
+                                String.format(
+                                        Locale.US,
+                                        "%.0f%%",
+                                        accuracy
+                                )
+                        );
+
+                    } else {
+
+                        accuracyValue.setText("0%");
+                    }
+                })
+                .addOnFailureListener(e ->
+                        accuracyValue.setText("0%")
+                );
+    }
+
+    private void loadCompletedLessons(String userId) {
+
+        db.collection("lessonProgress")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("completed", true)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+
+                    completedLessons =
+                            querySnapshot.size();
+
+                    lessonProgressValue.setText(
+                            completedLessons +
+                                    " lessons completed"
+                    );
+                })
+                .addOnFailureListener(e ->
+                        lessonProgressValue.setText(
+                                "0 lessons completed"
+                        )
+                );
     }
 }

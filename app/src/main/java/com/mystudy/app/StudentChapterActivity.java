@@ -7,6 +7,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -20,30 +21,53 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 public class StudentChapterActivity extends AppCompatActivity {
 
     private LinearLayout chapterContainer;
+    private TextView statusView;
+
     private FirebaseFirestore db;
 
-    private String classId;
-    private String className;
-    private String studentMedium;
-    private String studentName;
-    private String subjectId;
-    private String subjectName;
+    private String classId = "";
+    private String className = "";
+    private String studentMedium = "";
+    private String studentName = "";
+    private String subjectId = "";
+    private String subjectName = "";
 
-    private final int backgroundColor = Color.rgb(248, 250, 252);
-    private final int textPrimary = Color.rgb(17, 24, 39);
-    private final int textSecondary = Color.rgb(100, 116, 139);
-    private final int primaryColor = Color.rgb(79, 70, 229);
+    private final int backgroundColor =
+            Color.rgb(248, 250, 252);
+
+    private final int textPrimary =
+            Color.rgb(17, 24, 39);
+
+    private final int textSecondary =
+            Color.rgb(100, 116, 139);
+
+    private final int primaryColor =
+            Color.rgb(79, 70, 229);
+
+    private final int errorColor =
+            Color.rgb(220, 38, 38);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        classId = getIntent().getStringExtra("classId");
-        className = getIntent().getStringExtra("className");
-        studentMedium = getIntent().getStringExtra("studentMedium");
-        studentName = getIntent().getStringExtra("studentName");
-        subjectId = getIntent().getStringExtra("subjectId");
-        subjectName = getIntent().getStringExtra("subjectName");
+        classId =
+                getIntent().getStringExtra("classId");
+
+        className =
+                getIntent().getStringExtra("className");
+
+        studentMedium =
+                getIntent().getStringExtra("studentMedium");
+
+        studentName =
+                getIntent().getStringExtra("studentName");
+
+        subjectId =
+                getIntent().getStringExtra("subjectId");
+
+        subjectName =
+                getIntent().getStringExtra("subjectName");
 
         if (classId == null ||
                 classId.trim().isEmpty() ||
@@ -60,28 +84,69 @@ public class StudentChapterActivity extends AppCompatActivity {
             return;
         }
 
-        db = FirebaseFirestore.getInstance();
+        if (className == null) {
+            className = "";
+        }
+
+        if (studentMedium == null) {
+            studentMedium = "";
+        }
+
+        if (studentName == null) {
+            studentName = "";
+        }
+
+        if (subjectName == null) {
+            subjectName = "";
+        }
+
+        db =
+                FirebaseFirestore.getInstance();
 
         createUI();
+        showLoading();
         loadChapters();
     }
 
     private void createUI() {
 
-        ScrollView scrollView = new ScrollView(this);
+        ScrollView scrollView =
+                new ScrollView(this);
+
         scrollView.setFillViewport(true);
 
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(20, 24, 20, 30);
-        root.setBackgroundColor(backgroundColor);
+        LinearLayout root =
+                new LinearLayout(this);
 
-        TextView title = new TextView(this);
+        root.setOrientation(
+                LinearLayout.VERTICAL
+        );
 
-        title.setText("📚 Chapters");
+        root.setPadding(
+                20,
+                24,
+                20,
+                30
+        );
+
+        root.setBackgroundColor(
+                backgroundColor
+        );
+
+        TextView title =
+                new TextView(this);
+
+        title.setText(
+                "📚 Chapters"
+        );
+
         title.setTextSize(28);
         title.setTextColor(textPrimary);
-        title.setTypeface(null, Typeface.BOLD);
+
+        title.setTypeface(
+                null,
+                Typeface.BOLD
+        );
 
         root.addView(
                 title,
@@ -91,32 +156,46 @@ public class StudentChapterActivity extends AppCompatActivity {
                 )
         );
 
-        TextView subtitle = new TextView(this);
+        TextView subtitle =
+                new TextView(this);
 
-        String subtitleText = "";
+        String subtitleText;
 
-        if (subjectName != null &&
-                !subjectName.trim().isEmpty()) {
+        if (!subjectName.trim().isEmpty()) {
 
-            subtitleText = subjectName;
+            subtitleText =
+                    subjectName;
 
         } else {
 
-            subtitleText = "Choose a chapter";
+            subtitleText =
+                    "Choose a chapter";
         }
 
-        if (studentMedium != null &&
-                !studentMedium.trim().isEmpty()) {
+        if (!studentMedium.trim().isEmpty()) {
 
-            subtitleText += " • " + studentMedium;
+            subtitleText +=
+                    " • " + studentMedium;
         }
 
-        subtitleText += " • Choose a chapter";
+        subtitleText +=
+                " • Choose a chapter";
 
-        subtitle.setText(subtitleText);
+        subtitle.setText(
+                subtitleText
+        );
+
         subtitle.setTextSize(16);
-        subtitle.setTextColor(textSecondary);
-        subtitle.setPadding(0, 8, 0, 24);
+        subtitle.setTextColor(
+                textSecondary
+        );
+
+        subtitle.setPadding(
+                0,
+                8,
+                0,
+                12
+        );
 
         root.addView(
                 subtitle,
@@ -126,13 +205,53 @@ public class StudentChapterActivity extends AppCompatActivity {
                 )
         );
 
-        TextView sectionTitle = new TextView(this);
+        statusView =
+                new TextView(this);
 
-        sectionTitle.setText("Your Chapters");
+        statusView.setTextSize(14);
+
+        statusView.setGravity(
+                Gravity.CENTER
+        );
+
+        statusView.setPadding(
+                0,
+                8,
+                0,
+                16
+        );
+
+        root.addView(
+                statusView,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
+
+        TextView sectionTitle =
+                new TextView(this);
+
+        sectionTitle.setText(
+                "Your Chapters"
+        );
+
         sectionTitle.setTextSize(18);
-        sectionTitle.setTextColor(textPrimary);
-        sectionTitle.setTypeface(null, Typeface.BOLD);
-        sectionTitle.setPadding(0, 0, 0, 14);
+        sectionTitle.setTextColor(
+                textPrimary
+        );
+
+        sectionTitle.setTypeface(
+                null,
+                Typeface.BOLD
+        );
+
+        sectionTitle.setPadding(
+                0,
+                0,
+                0,
+                14
+        );
 
         root.addView(
                 sectionTitle,
@@ -142,7 +261,8 @@ public class StudentChapterActivity extends AppCompatActivity {
                 )
         );
 
-        chapterContainer = new LinearLayout(this);
+        chapterContainer =
+                new LinearLayout(this);
 
         chapterContainer.setOrientation(
                 LinearLayout.VERTICAL
@@ -163,14 +283,16 @@ public class StudentChapterActivity extends AppCompatActivity {
 
     private void loadChapters() {
 
-        chapterContainer.removeAllViews();
+        if (studentMedium.trim().isEmpty()) {
 
-        if (studentMedium == null ||
-                studentMedium.trim().isEmpty()) {
+            showEmpty(
+                    "Medium information is missing. Please login again."
+            );
 
-            showMessage("Medium information missing.");
             return;
         }
+
+        showLoading();
 
         db.collection("chapters")
                 .whereEqualTo(
@@ -189,14 +311,36 @@ public class StudentChapterActivity extends AppCompatActivity {
                 .addOnSuccessListener(
                         querySnapshot -> {
 
+                            chapterContainer
+                                    .removeAllViews();
+
                             if (querySnapshot.isEmpty()) {
 
-                                showMessage(
-                                        "No chapters available for this class and medium yet."
+                                showEmpty(
+                                        "No chapters available for this subject yet."
                                 );
 
                                 return;
                             }
+
+                            int chapterCount =
+                                    querySnapshot.size();
+
+                            statusView.setText(
+                                    "✅ " +
+                                            chapterCount +
+                                            " chapter" +
+                                            (
+                                                    chapterCount == 1
+                                                            ? ""
+                                                            : "s"
+                                            ) +
+                                            " available"
+                            );
+
+                            statusView.setTextColor(
+                                    primaryColor
+                            );
 
                             for (
                                     QueryDocumentSnapshot document :
@@ -207,14 +351,28 @@ public class StudentChapterActivity extends AppCompatActivity {
                                         document.getId();
 
                                 String chapterName =
-                                        document.getString("name");
+                                        document.getString(
+                                                "name"
+                                        );
 
                                 if (
                                         chapterName == null ||
                                         chapterName.trim().isEmpty()
                                 ) {
 
-                                    chapterName = "Chapter";
+                                    chapterName =
+                                            document.getString(
+                                                    "chapterName"
+                                            );
+                                }
+
+                                if (
+                                        chapterName == null ||
+                                        chapterName.trim().isEmpty()
+                                ) {
+
+                                    chapterName =
+                                            "Chapter";
                                 }
 
                                 addChapterCard(
@@ -227,7 +385,7 @@ public class StudentChapterActivity extends AppCompatActivity {
                 .addOnFailureListener(
                         error -> {
 
-                            showMessage(
+                            showError(
                                     "Unable to load chapters."
                             );
 
@@ -272,10 +430,18 @@ public class StudentChapterActivity extends AppCompatActivity {
         GradientDrawable background =
                 new GradientDrawable();
 
-        background.setColor(Color.WHITE);
-        background.setCornerRadius(30);
+        background.setColor(
+                Color.WHITE
+        );
 
-        card.setBackground(background);
+        background.setCornerRadius(
+                30
+        );
+
+        card.setBackground(
+                background
+        );
+
         card.setElevation(6);
 
         TextView icon =
@@ -283,18 +449,29 @@ public class StudentChapterActivity extends AppCompatActivity {
 
         icon.setText("📘");
         icon.setTextSize(30);
-        icon.setGravity(Gravity.CENTER);
+
+        icon.setGravity(
+                Gravity.CENTER
+        );
 
         GradientDrawable iconBackground =
                 new GradientDrawable();
 
         iconBackground.setColor(
-                Color.rgb(219, 234, 254)
+                Color.rgb(
+                        219,
+                        234,
+                        254
+                )
         );
 
-        iconBackground.setCornerRadius(22);
+        iconBackground.setCornerRadius(
+                22
+        );
 
-        icon.setBackground(iconBackground);
+        icon.setBackground(
+                iconBackground
+        );
 
         card.addView(
                 icon,
@@ -326,7 +503,10 @@ public class StudentChapterActivity extends AppCompatActivity {
         );
 
         name.setTextSize(19);
-        name.setTextColor(textPrimary);
+        name.setTextColor(
+                textPrimary
+        );
+
         name.setTypeface(
                 null,
                 Typeface.BOLD
@@ -340,7 +520,10 @@ public class StudentChapterActivity extends AppCompatActivity {
         );
 
         description.setTextSize(14);
-        description.setTextColor(textSecondary);
+        description.setTextColor(
+                textSecondary
+        );
+
         description.setPadding(
                 0,
                 5,
@@ -365,8 +548,14 @@ public class StudentChapterActivity extends AppCompatActivity {
 
         arrow.setText("›");
         arrow.setTextSize(34);
-        arrow.setTextColor(primaryColor);
-        arrow.setGravity(Gravity.CENTER);
+        arrow.setTextColor(
+                primaryColor
+        );
+
+        arrow.setGravity(
+                Gravity.CENTER
+        );
+
         arrow.setTypeface(
                 null,
                 Typeface.BOLD
@@ -434,12 +623,10 @@ public class StudentChapterActivity extends AppCompatActivity {
                 view -> {
 
                     Intent intent =
-                            new Intent();
-
-                    intent.setClassName(
-                            StudentChapterActivity.this,
-                            "com.mystudy.app.StudentLessonActivity"
-                    );
+                            new Intent(
+                                    StudentChapterActivity.this,
+                                    StudentLessonActivity.class
+                            );
 
                     intent.putExtra(
                             "classId",
@@ -482,19 +669,71 @@ public class StudentChapterActivity extends AppCompatActivity {
                     );
 
                     startActivity(intent);
+
+                    overridePendingTransition(
+                            android.R.anim.fade_in,
+                            android.R.anim.fade_out
+                    );
                 }
         );
     }
 
-    private void showMessage(String message) {
+    private void showLoading() {
+
+        if (statusView != null) {
+
+            statusView.setText(
+                    "⏳ Loading chapters..."
+            );
+
+            statusView.setTextColor(
+                    primaryColor
+            );
+        }
+
+        if (chapterContainer != null) {
+
+            chapterContainer.removeAllViews();
+        }
+    }
+
+    private void showEmpty(
+            String message
+    ) {
+
+        if (chapterContainer == null) {
+            return;
+        }
+
+        chapterContainer.removeAllViews();
+
+        if (statusView != null) {
+
+            statusView.setText(
+                    "📚 No chapters available"
+            );
+
+            statusView.setTextColor(
+                    textSecondary
+            );
+        }
 
         TextView messageView =
                 new TextView(this);
 
-        messageView.setText(message);
+        messageView.setText(
+                message
+        );
+
         messageView.setTextSize(16);
-        messageView.setTextColor(textSecondary);
-        messageView.setGravity(Gravity.CENTER);
+
+        messageView.setTextColor(
+                textSecondary
+        );
+
+        messageView.setGravity(
+                Gravity.CENTER
+        );
 
         messageView.setPadding(
                 20,
@@ -510,5 +749,58 @@ public class StudentChapterActivity extends AppCompatActivity {
                         -2
                 )
         );
+    }
+
+    private void showError(
+            String message
+    ) {
+
+        if (chapterContainer != null) {
+
+            chapterContainer.removeAllViews();
+
+            TextView errorView =
+                    new TextView(this);
+
+            errorView.setText(
+                    "⚠️ " + message
+            );
+
+            errorView.setTextSize(16);
+
+            errorView.setTextColor(
+                    errorColor
+            );
+
+            errorView.setGravity(
+                    Gravity.CENTER
+            );
+
+            errorView.setPadding(
+                    20,
+                    50,
+                    20,
+                    50
+            );
+
+            chapterContainer.addView(
+                    errorView,
+                    new LinearLayout.LayoutParams(
+                            -1,
+                            -2
+                    )
+            );
+        }
+
+        if (statusView != null) {
+
+            statusView.setText(
+                    "Something went wrong"
+            );
+
+            statusView.setTextColor(
+                    errorColor
+            );
+        }
     }
 }

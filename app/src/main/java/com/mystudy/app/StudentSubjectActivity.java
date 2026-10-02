@@ -20,17 +20,29 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 public class StudentSubjectActivity extends AppCompatActivity {
 
     private LinearLayout subjectContainer;
+    private TextView statusView;
+
     private FirebaseFirestore db;
 
-    private String classId;
-    private String className;
-    private String studentMedium;
-    private String studentName;
+    private String classId = "";
+    private String className = "";
+    private String studentMedium = "";
+    private String studentName = "";
 
-    private final int backgroundColor = Color.rgb(248, 250, 252);
-    private final int textPrimary = Color.rgb(17, 24, 39);
-    private final int textSecondary = Color.rgb(100, 116, 139);
-    private final int primaryColor = Color.rgb(79, 70, 229);
+    private final int backgroundColor =
+            Color.rgb(248, 250, 252);
+
+    private final int textPrimary =
+            Color.rgb(17, 24, 39);
+
+    private final int textSecondary =
+            Color.rgb(100, 116, 139);
+
+    private final int primaryColor =
+            Color.rgb(79, 70, 229);
+
+    private final int errorColor =
+            Color.rgb(220, 38, 38);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,9 +85,11 @@ public class StudentSubjectActivity extends AppCompatActivity {
             studentName = "";
         }
 
-        db = FirebaseFirestore.getInstance();
+        db =
+                FirebaseFirestore.getInstance();
 
         createUI();
+        showLoading();
         loadSubjects();
     }
 
@@ -107,9 +121,13 @@ public class StudentSubjectActivity extends AppCompatActivity {
         TextView title =
                 new TextView(this);
 
-        title.setText("📚 Subjects");
+        title.setText(
+                "📚 Subjects"
+        );
+
         title.setTextSize(28);
         title.setTextColor(textPrimary);
+
         title.setTypeface(
                 null,
                 Typeface.BOLD
@@ -128,9 +146,7 @@ public class StudentSubjectActivity extends AppCompatActivity {
 
         String subtitleText;
 
-        if (className != null &&
-                !className.trim().isEmpty() &&
-                studentMedium != null &&
+        if (!className.trim().isEmpty() &&
                 !studentMedium.trim().isEmpty()) {
 
             subtitleText =
@@ -140,8 +156,7 @@ public class StudentSubjectActivity extends AppCompatActivity {
                             " • Choose a subject";
 
         } else if (
-                className != null &&
-                        !className.trim().isEmpty()
+                !className.trim().isEmpty()
         ) {
 
             subtitleText =
@@ -154,18 +169,46 @@ public class StudentSubjectActivity extends AppCompatActivity {
                     "Choose a subject";
         }
 
-        subtitle.setText(subtitleText);
+        subtitle.setText(
+                subtitleText
+        );
+
         subtitle.setTextSize(16);
         subtitle.setTextColor(textSecondary);
+
         subtitle.setPadding(
                 0,
                 8,
                 0,
-                24
+                12
         );
 
         root.addView(
                 subtitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
+
+        statusView =
+                new TextView(this);
+
+        statusView.setTextSize(14);
+
+        statusView.setGravity(
+                Gravity.CENTER
+        );
+
+        statusView.setPadding(
+                0,
+                8,
+                0,
+                16
+        );
+
+        root.addView(
+                statusView,
                 new LinearLayout.LayoutParams(
                         -1,
                         -2
@@ -181,6 +224,7 @@ public class StudentSubjectActivity extends AppCompatActivity {
 
         sectionTitle.setTextSize(18);
         sectionTitle.setTextColor(textPrimary);
+
         sectionTitle.setTypeface(
                 null,
                 Typeface.BOLD
@@ -223,17 +267,16 @@ public class StudentSubjectActivity extends AppCompatActivity {
 
     private void loadSubjects() {
 
-        subjectContainer.removeAllViews();
+        if (studentMedium.trim().isEmpty()) {
 
-        if (studentMedium == null ||
-                studentMedium.trim().isEmpty()) {
-
-            showMessage(
-                    "Medium information is missing. Please login again."
+            showEmpty(
+                    "Medium information is missing. Please update your profile."
             );
 
             return;
         }
+
+        showLoading();
 
         db.collection("subjects")
                 .whereEqualTo(
@@ -248,18 +291,40 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 .addOnSuccessListener(
                         querySnapshot -> {
 
+                            subjectContainer
+                                    .removeAllViews();
+
                             if (querySnapshot.isEmpty()) {
 
-                                showMessage(
+                                showEmpty(
                                         "No subjects available for " +
                                                 className +
                                                 " - " +
                                                 studentMedium +
-                                                "."
+                                                " yet."
                                 );
 
                                 return;
                             }
+
+                            int subjectCount =
+                                    querySnapshot.size();
+
+                            statusView.setText(
+                                    "✅ " +
+                                            subjectCount +
+                                            " subject" +
+                                            (
+                                                    subjectCount == 1
+                                                            ? ""
+                                                            : "s"
+                                            ) +
+                                            " available"
+                            );
+
+                            statusView.setTextColor(
+                                    primaryColor
+                            );
 
                             for (
                                     QueryDocumentSnapshot document :
@@ -270,7 +335,20 @@ public class StudentSubjectActivity extends AppCompatActivity {
                                         document.getId();
 
                                 String subjectName =
-                                        document.getString("name");
+                                        document.getString(
+                                                "name"
+                                        );
+
+                                if (
+                                        subjectName == null ||
+                                        subjectName.trim().isEmpty()
+                                ) {
+
+                                    subjectName =
+                                            document.getString(
+                                                    "subjectName"
+                                            );
+                                }
 
                                 if (
                                         subjectName == null ||
@@ -291,7 +369,7 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 .addOnFailureListener(
                         error -> {
 
-                            showMessage(
+                            showError(
                                     "Unable to load subjects."
                             );
 
@@ -336,10 +414,18 @@ public class StudentSubjectActivity extends AppCompatActivity {
         GradientDrawable background =
                 new GradientDrawable();
 
-        background.setColor(Color.WHITE);
-        background.setCornerRadius(30);
+        background.setColor(
+                Color.WHITE
+        );
 
-        card.setBackground(background);
+        background.setCornerRadius(
+                30
+        );
+
+        card.setBackground(
+                background
+        );
+
         card.setElevation(6);
 
         TextView icon =
@@ -352,7 +438,10 @@ public class StudentSubjectActivity extends AppCompatActivity {
         );
 
         icon.setTextSize(30);
-        icon.setGravity(Gravity.CENTER);
+
+        icon.setGravity(
+                Gravity.CENTER
+        );
 
         GradientDrawable iconBackground =
                 new GradientDrawable();
@@ -363,7 +452,9 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 )
         );
 
-        iconBackground.setCornerRadius(22);
+        iconBackground.setCornerRadius(
+                22
+        );
 
         icon.setBackground(
                 iconBackground
@@ -400,6 +491,7 @@ public class StudentSubjectActivity extends AppCompatActivity {
 
         name.setTextSize(20);
         name.setTextColor(textPrimary);
+
         name.setTypeface(
                 null,
                 Typeface.BOLD
@@ -413,7 +505,10 @@ public class StudentSubjectActivity extends AppCompatActivity {
         );
 
         description.setTextSize(14);
-        description.setTextColor(textSecondary);
+        description.setTextColor(
+                textSecondary
+        );
+
         description.setPadding(
                 0,
                 5,
@@ -438,8 +533,14 @@ public class StudentSubjectActivity extends AppCompatActivity {
 
         arrow.setText("›");
         arrow.setTextSize(34);
-        arrow.setTextColor(primaryColor);
-        arrow.setGravity(Gravity.CENTER);
+        arrow.setTextColor(
+                primaryColor
+        );
+
+        arrow.setGravity(
+                Gravity.CENTER
+        );
+
         arrow.setTypeface(
                 null,
                 Typeface.BOLD
@@ -507,12 +608,10 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 view -> {
 
                     Intent intent =
-                            new Intent();
-
-                    intent.setClassName(
-                            StudentSubjectActivity.this,
-                            "com.mystudy.app.StudentChapterActivity"
-                    );
+                            new Intent(
+                                    StudentSubjectActivity.this,
+                                    StudentChapterActivity.class
+                            );
 
                     intent.putExtra(
                             "classId",
@@ -650,17 +749,55 @@ public class StudentSubjectActivity extends AppCompatActivity {
         );
     }
 
-    private void showMessage(
+    private void showLoading() {
+
+        if (statusView != null) {
+
+            statusView.setText(
+                    "⏳ Loading subjects..."
+            );
+
+            statusView.setTextColor(
+                    primaryColor
+            );
+        }
+
+        if (subjectContainer != null) {
+
+            subjectContainer.removeAllViews();
+        }
+    }
+
+    private void showEmpty(
             String message
     ) {
 
+        if (subjectContainer == null) {
+            return;
+        }
+
         subjectContainer.removeAllViews();
+
+        if (statusView != null) {
+
+            statusView.setText(
+                    "📚 No subjects available"
+            );
+
+            statusView.setTextColor(
+                    textSecondary
+            );
+        }
 
         TextView messageView =
                 new TextView(this);
 
-        messageView.setText(message);
+        messageView.setText(
+                message
+        );
+
         messageView.setTextSize(16);
+
         messageView.setTextColor(
                 textSecondary
         );
@@ -683,5 +820,58 @@ public class StudentSubjectActivity extends AppCompatActivity {
                         -2
                 )
         );
+    }
+
+    private void showError(
+            String message
+    ) {
+
+        if (subjectContainer != null) {
+
+            subjectContainer.removeAllViews();
+
+            TextView errorView =
+                    new TextView(this);
+
+            errorView.setText(
+                    "⚠️ " + message
+            );
+
+            errorView.setTextSize(16);
+
+            errorView.setTextColor(
+                    errorColor
+            );
+
+            errorView.setGravity(
+                    Gravity.CENTER
+            );
+
+            errorView.setPadding(
+                    20,
+                    50,
+                    20,
+                    50
+            );
+
+            subjectContainer.addView(
+                    errorView,
+                    new LinearLayout.LayoutParams(
+                            -1,
+                            -2
+                    )
+            );
+        }
+
+        if (statusView != null) {
+
+            statusView.setText(
+                    "Something went wrong"
+            );
+
+            statusView.setTextColor(
+                    errorColor
+            );
+        }
     }
 }

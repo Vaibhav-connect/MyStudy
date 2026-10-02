@@ -5,9 +5,7 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
         android:label="MyStudy"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyStudy">
 
@@ -20,121 +18,40 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="false" />
+        <activity android:name=".MainActivity" android:exported="false" />
+        <activity android:name=".LoginActivity" android:exported="false" />
+        <activity android:name=".RegisterActivity" android:exported="false" />
 
-        <activity
-            android:name=".LoginActivity"
-            android:exported="false" />
+        <activity android:name=".AdminLoginActivity" android:exported="false" />
+        <activity android:name=".AdminDashboardActivity" android:exported="false" />
+        <activity android:name=".StudentManagementActivity" android:exported="false" />
+        <activity android:name=".ClassManagementActivity" android:exported="false" />
+        <activity android:name=".SubjectManagementActivity" android:exported="false" />
+        <activity android:name=".ChapterManagementActivity" android:exported="false" />
+        <activity android:name=".LessonManagementActivity" android:exported="false" />
+        <activity android:name=".QuestionManagementActivity" android:exported="false" />
+        <activity android:name=".QuizManagementActivity" android:exported="false" />
+        <activity android:name=".GamificationManagementActivity" android:exported="false" />
+        <activity android:name=".AnnouncementManagementActivity" android:exported="false" />
+        <activity android:name=".AdminManagementActivity" android:exported="false" />
+        <activity android:name=".AdminExamResultsActivity" android:exported="false" />
+        <activity android:name=".AdminSettingsActivity" android:exported="false" />
 
-        <activity
-            android:name=".RegisterActivity"
-            android:exported="false" />
+        <activity android:name=".StudentClassActivity" android:exported="false" />
+        <activity android:name=".StudentSubjectActivity" android:exported="false" />
+        <activity android:name=".StudentChapterActivity" android:exported="false" />
+        <activity android:name=".StudentLessonActivity" android:exported="false" />
+        <activity android:name=".StudentPracticeActivity" android:exported="false" />
+        <activity android:name=".StudentDashboardActivity" android:exported="false" />
 
-        <activity
-            android:name=".AdminLoginActivity"
-            android:exported="false" />
+        <activity android:name=".StudentExamActivity" android:exported="false" />
+        <activity android:name=".StudentExamAttemptActivity" android:exported="false" />
+        <activity android:name=".StudentExamHistoryActivity" android:exported="false" />
 
-        <activity
-            android:name=".AdminDashboardActivity"
-            android:exported="false" />
+        <activity android:name=".ParentPinActivity" android:exported="false" />
+        <activity android:name=".ParentDashboardActivity" android:exported="false" />
 
-        <activity
-            android:name=".StudentManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ClassManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".SubjectManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ChapterManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".LessonManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".QuestionManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".QuizManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".GamificationManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".AnnouncementManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".AdminManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".AdminExamResultsActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".AdminSettingsActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StudentClassActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StudentSubjectActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StudentChapterActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StudentLessonActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StudentPracticeActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StudentDashboardActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StudentExamActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StudentExamAttemptActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StudentExamHistoryActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ParentPinActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ParentDashboardActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".SettingsActivity"
-            android:exported="false" />
+        <activity android:name=".SettingsActivity" android:exported="false" />
 
     </application>
 

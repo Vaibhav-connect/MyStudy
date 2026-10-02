@@ -27,6 +27,11 @@ public class StudentChapterActivity extends AppCompatActivity {
     private String subjectId;
     private String subjectName;
 
+    private final int backgroundColor = Color.rgb(248, 250, 252);
+    private final int textPrimary = Color.rgb(17, 24, 39);
+    private final int textSecondary = Color.rgb(100, 116, 139);
+    private final int primaryColor = Color.rgb(79, 70, 229);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,33 +65,25 @@ public class StudentChapterActivity extends AppCompatActivity {
     private void createUI() {
 
         ScrollView scrollView = new ScrollView(this);
+        scrollView.setFillViewport(true);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(20, 24, 20, 30);
-        root.setBackgroundColor(
-                Color.rgb(248, 250, 252)
-        );
+        root.setBackgroundColor(backgroundColor);
 
         TextView title = new TextView(this);
+
         title.setText("📚 Chapters");
-        title.setTextSize(26);
-        title.setTextColor(
-                Color.rgb(17, 24, 39)
-        );
-        title.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-        title.setGravity(
-                Gravity.CENTER_VERTICAL
-        );
+        title.setTextSize(28);
+        title.setTextColor(textPrimary);
+        title.setTypeface(null, Typeface.BOLD);
 
         root.addView(
                 title,
                 new LinearLayout.LayoutParams(
                         -1,
-                        65
+                        -2
                 )
         );
 
@@ -96,8 +93,7 @@ public class StudentChapterActivity extends AppCompatActivity {
                 !subjectName.trim().isEmpty()) {
 
             subtitle.setText(
-                    subjectName +
-                            " • Choose a chapter"
+                    subjectName + " • Choose a chapter"
             );
 
         } else {
@@ -108,17 +104,32 @@ public class StudentChapterActivity extends AppCompatActivity {
         }
 
         subtitle.setTextSize(16);
-        subtitle.setTextColor(
-                Color.rgb(100, 116, 139)
-        );
-        subtitle.setPadding(
-                0,
-                0,
-                0,
-                22
+        subtitle.setTextColor(textSecondary);
+        subtitle.setPadding(0, 8, 0, 24);
+
+        root.addView(
+                subtitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
         );
 
-        root.addView(subtitle);
+        TextView sectionTitle = new TextView(this);
+
+        sectionTitle.setText("Your Chapters");
+        sectionTitle.setTextSize(18);
+        sectionTitle.setTextColor(textPrimary);
+        sectionTitle.setTypeface(null, Typeface.BOLD);
+        sectionTitle.setPadding(0, 0, 0, 14);
+
+        root.addView(
+                sectionTitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
 
         chapterContainer =
                 new LinearLayout(this);
@@ -175,17 +186,14 @@ public class StudentChapterActivity extends AppCompatActivity {
                                         document.getId();
 
                                 String chapterName =
-                                        document.getString(
-                                                "name"
-                                        );
+                                        document.getString("name");
 
                                 if (
                                         chapterName == null ||
                                         chapterName.trim().isEmpty()
                                 ) {
 
-                                    chapterName =
-                                            "Chapter";
+                                    chapterName = "Chapter";
                                 }
 
                                 addChapterCard(
@@ -234,43 +242,44 @@ public class StudentChapterActivity extends AppCompatActivity {
         );
 
         card.setPadding(
-                20,
-                16,
-                16,
-                16
+                18,
+                18,
+                14,
+                18
         );
 
         GradientDrawable background =
                 new GradientDrawable();
 
-        background.setColor(
-                Color.WHITE
-        );
+        background.setColor(Color.WHITE);
+        background.setCornerRadius(30);
 
-        background.setCornerRadius(
-                28
-        );
-
-        card.setBackground(
-                background
-        );
-
-        card.setElevation(4);
+        card.setBackground(background);
+        card.setElevation(6);
 
         TextView icon =
                 new TextView(this);
 
         icon.setText("📘");
         icon.setTextSize(30);
-        icon.setGravity(
-                Gravity.CENTER
+        icon.setGravity(Gravity.CENTER);
+
+        GradientDrawable iconBackground =
+                new GradientDrawable();
+
+        iconBackground.setColor(
+                Color.rgb(219, 234, 254)
         );
+
+        iconBackground.setCornerRadius(22);
+
+        icon.setBackground(iconBackground);
 
         card.addView(
                 icon,
                 new LinearLayout.LayoutParams(
-                        60,
-                        70
+                        68,
+                        68
                 )
         );
 
@@ -282,7 +291,7 @@ public class StudentChapterActivity extends AppCompatActivity {
         );
 
         textContainer.setPadding(
-                18,
+                16,
                 0,
                 8,
                 0
@@ -296,10 +305,7 @@ public class StudentChapterActivity extends AppCompatActivity {
         );
 
         name.setTextSize(19);
-        name.setTextColor(
-                Color.rgb(17, 24, 39)
-        );
-
+        name.setTextColor(textPrimary);
         name.setTypeface(
                 null,
                 Typeface.BOLD
@@ -313,10 +319,7 @@ public class StudentChapterActivity extends AppCompatActivity {
         );
 
         description.setTextSize(14);
-        description.setTextColor(
-                Color.rgb(100, 116, 139)
-        );
-
+        description.setTextColor(textSecondary);
         description.setPadding(
                 0,
                 5,
@@ -340,33 +343,33 @@ public class StudentChapterActivity extends AppCompatActivity {
                 new TextView(this);
 
         arrow.setText("›");
-        arrow.setTextSize(32);
-        arrow.setTextColor(
-                Color.rgb(79, 70, 229)
-        );
-        arrow.setGravity(
-                Gravity.CENTER
+        arrow.setTextSize(34);
+        arrow.setTextColor(primaryColor);
+        arrow.setGravity(Gravity.CENTER);
+        arrow.setTypeface(
+                null,
+                Typeface.BOLD
         );
 
         card.addView(
                 arrow,
                 new LinearLayout.LayoutParams(
-                        45,
-                        70
+                        42,
+                        68
                 )
         );
 
         LinearLayout.LayoutParams cardParams =
                 new LinearLayout.LayoutParams(
                         -1,
-                        100
+                        -2
                 );
 
         cardParams.setMargins(
                 0,
                 0,
                 0,
-                18
+                16
         );
 
         chapterContainer.addView(
@@ -452,28 +455,21 @@ public class StudentChapterActivity extends AppCompatActivity {
         );
     }
 
-    private void showMessage(
-            String message
-    ) {
+    private void showMessage(String message) {
 
         TextView messageView =
                 new TextView(this);
 
         messageView.setText(message);
         messageView.setTextSize(16);
-        messageView.setTextColor(
-                Color.rgb(100, 116, 139)
-        );
-
-        messageView.setGravity(
-                Gravity.CENTER
-        );
+        messageView.setTextColor(textSecondary);
+        messageView.setGravity(Gravity.CENTER);
 
         messageView.setPadding(
                 20,
-                40,
+                50,
                 20,
-                40
+                50
         );
 
         chapterContainer.addView(

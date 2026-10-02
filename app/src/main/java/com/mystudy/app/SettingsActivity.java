@@ -1,4 +1,3 @@
-```java
 package com.mystudy.app;
 
 import android.content.Intent;
@@ -613,4 +612,4 @@ public class SettingsActivity extends AppCompatActivity {
         return params;
     }
 }
-```
+

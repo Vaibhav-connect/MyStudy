@@ -1,6 +1,8 @@
+```java
 package com.mystudy.app;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.widget.LinearLayout;
@@ -10,6 +12,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.os.LocaleListCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -19,6 +23,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SettingsActivity extends AppCompatActivity {
+
+    private static final String PREF_NAME = "MyStudySettings";
+    private static final String LANGUAGE_KEY = "appLanguage";
+    private static final String DARK_MODE_KEY = "darkMode";
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
@@ -31,13 +39,73 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        LanguageManager.applySavedLanguage(this);
+        applySavedLanguage();
 
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
         buildUI();
         loadUserData();
+    }
+
+    private void applySavedLanguage() {
+
+        SharedPreferences preferences =
+                getSharedPreferences(
+                        PREF_NAME,
+                        MODE_PRIVATE
+                );
+
+        String language =
+                preferences.getString(
+                        LANGUAGE_KEY,
+                        "English"
+                );
+
+        applyLanguage(language);
+    }
+
+    private void applyLanguage(String language) {
+
+        String languageTag;
+
+        if ("Marathi".equalsIgnoreCase(language)) {
+
+            languageTag = "mr";
+
+        } else if ("Hindi".equalsIgnoreCase(language)) {
+
+            languageTag = "hi";
+
+        } else {
+
+            languageTag = "en";
+        }
+
+        LocaleListCompat localeList =
+                LocaleListCompat.forLanguageTags(
+                        languageTag
+                );
+
+        AppCompatDelegate.setApplicationLocales(
+                localeList
+        );
+    }
+
+    private void saveLocalLanguage(String language) {
+
+        getSharedPreferences(
+                PREF_NAME,
+                MODE_PRIVATE
+        )
+                .edit()
+                .putString(
+                        LANGUAGE_KEY,
+                        language
+                )
+                .apply();
+
+        applyLanguage(language);
     }
 
     private void buildUI() {
@@ -56,27 +124,39 @@ public class SettingsActivity extends AppCompatActivity {
         title.setTextColor(0xFF111827);
         title.setTypeface(null, 1);
 
-        root.addView(title, createParams(0, 0, 0, 20));
+        root.addView(
+                title,
+                createParams(0, 0, 0, 20)
+        );
 
         TextView subtitle = new TextView(this);
         subtitle.setText("Manage your MyStudy preferences");
         subtitle.setTextSize(15);
         subtitle.setTextColor(0xFF64748B);
 
-        root.addView(subtitle, createParams(0, 0, 0, 24));
+        root.addView(
+                subtitle,
+                createParams(0, 0, 0, 24)
+        );
 
         LinearLayout profileCard = createCard();
 
-        TextView profileTitle = createSectionTitle("Profile");
+        TextView profileTitle =
+                createSectionTitle("Profile");
+
         profileCard.addView(profileTitle);
 
-        nameText = createInfoText("Loading name...");
+        nameText =
+                createInfoText("Loading name...");
+
         profileCard.addView(
                 nameText,
                 createParams(0, 12, 0, 4)
         );
 
-        emailText = createInfoText("Loading email...");
+        emailText =
+                createInfoText("Loading email...");
+
         profileCard.addView(emailText);
 
         root.addView(
@@ -93,7 +173,13 @@ public class SettingsActivity extends AppCompatActivity {
 
         languageText =
                 createInfoText(
-                        LanguageManager.getLanguage(this)
+                        getSharedPreferences(
+                                PREF_NAME,
+                                MODE_PRIVATE
+                        ).getString(
+                                LANGUAGE_KEY,
+                                "English"
+                        )
                 );
 
         languageCard.addView(
@@ -192,10 +278,10 @@ public class SettingsActivity extends AppCompatActivity {
 
         boolean darkMode =
                 getSharedPreferences(
-                        "MyStudySettings",
+                        PREF_NAME,
                         MODE_PRIVATE
                 ).getBoolean(
-                        "darkMode",
+                        DARK_MODE_KEY,
                         false
                 );
 
@@ -227,12 +313,12 @@ public class SettingsActivity extends AppCompatActivity {
                 (buttonView, isChecked) -> {
 
                     getSharedPreferences(
-                            "MyStudySettings",
+                            PREF_NAME,
                             MODE_PRIVATE
                     )
                             .edit()
                             .putBoolean(
-                                    "darkMode",
+                                    DARK_MODE_KEY,
                                     isChecked
                             )
                             .apply();
@@ -343,10 +429,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                         languageText.setText(language);
 
-                        LanguageManager.saveLanguage(
-                                SettingsActivity.this,
-                                language
-                        );
+                        saveLocalLanguage(language);
                     }
                 });
     }
@@ -378,10 +461,7 @@ public class SettingsActivity extends AppCompatActivity {
                 )
                 .addOnSuccessListener(unused -> {
 
-                    LanguageManager.saveLanguage(
-                            SettingsActivity.this,
-                            language
-                    );
+                    saveLocalLanguage(language);
 
                     languageText.setText(language);
 
@@ -533,3 +613,4 @@ public class SettingsActivity extends AppCompatActivity {
         return params;
     }
 }
+```

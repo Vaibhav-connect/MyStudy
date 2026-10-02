@@ -347,7 +347,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                         startActivity(
                                 new Intent(
                                         this,
-                                        QuestionManagementActivity.class
+                                        QuizManagementActivity.class
                                 )
                         );
 

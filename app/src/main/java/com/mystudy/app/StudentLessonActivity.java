@@ -1,9 +1,12 @@
 package com.mystudy.app;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -11,13 +14,18 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class StudentLessonActivity extends AppCompatActivity {
 
     private LinearLayout lessonContainer;
+
     private FirebaseFirestore db;
+    private FirebaseAuth auth;
+    private ProgressManager progressManager;
 
     private String classId;
     private String className;
@@ -37,7 +45,10 @@ public class StudentLessonActivity extends AppCompatActivity {
         chapterId = getIntent().getStringExtra("chapterId");
         chapterName = getIntent().getStringExtra("chapterName");
 
-        if (classId == null || subjectId == null || chapterId == null) {
+        if (classId == null ||
+                subjectId == null ||
+                chapterId == null) {
+
             Toast.makeText(
                     this,
                     "Lesson information missing",
@@ -49,6 +60,8 @@ public class StudentLessonActivity extends AppCompatActivity {
         }
 
         db = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
+        progressManager = new ProgressManager();
 
         createUI();
         loadLessons();
@@ -61,13 +74,21 @@ public class StudentLessonActivity extends AppCompatActivity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(24, 24, 24, 24);
-        root.setBackgroundColor(Color.rgb(248, 250, 252));
+        root.setBackgroundColor(
+                Color.rgb(248, 250, 252)
+        );
 
         TextView title = new TextView(this);
+
         title.setText("📖 Lessons");
         title.setTextSize(26);
-        title.setTextColor(Color.rgb(17, 24, 39));
-        title.setTypeface(null, Typeface.BOLD);
+        title.setTextColor(
+                Color.rgb(17, 24, 39)
+        );
+        title.setTypeface(
+                null,
+                Typeface.BOLD
+        );
 
         root.addView(
                 title,
@@ -83,22 +104,34 @@ public class StudentLessonActivity extends AppCompatActivity {
                 !chapterName.trim().isEmpty()) {
 
             subtitle.setText(
-                    chapterName + " • Choose a lesson"
+                    chapterName +
+                            " • Choose a lesson"
             );
 
         } else {
-            subtitle.setText("Choose a lesson");
+
+            subtitle.setText(
+                    "Choose a lesson"
+            );
         }
 
         subtitle.setTextSize(16);
         subtitle.setTextColor(
                 Color.rgb(100, 116, 139)
         );
-        subtitle.setPadding(0, 0, 0, 24);
+
+        subtitle.setPadding(
+                0,
+                0,
+                0,
+                24
+        );
 
         root.addView(subtitle);
 
-        lessonContainer = new LinearLayout(this);
+        lessonContainer =
+                new LinearLayout(this);
+
         lessonContainer.setOrientation(
                 LinearLayout.VERTICAL
         );
@@ -121,58 +154,79 @@ public class StudentLessonActivity extends AppCompatActivity {
         lessonContainer.removeAllViews();
 
         db.collection("lessons")
-                .whereEqualTo("classId", classId)
-                .whereEqualTo("subjectId", subjectId)
-                .whereEqualTo("chapterId", chapterId)
+                .whereEqualTo(
+                        "classId",
+                        classId
+                )
+                .whereEqualTo(
+                        "subjectId",
+                        subjectId
+                )
+                .whereEqualTo(
+                        "chapterId",
+                        chapterId
+                )
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addOnSuccessListener(
+                        querySnapshot -> {
 
-                    if (querySnapshot.isEmpty()) {
+                            if (querySnapshot.isEmpty()) {
 
-                        showMessage(
-                                "No lessons available yet."
-                        );
+                                showMessage(
+                                        "No lessons available yet."
+                                );
 
-                        return;
-                    }
+                                return;
+                            }
 
-                    for (QueryDocumentSnapshot document :
-                            querySnapshot) {
+                            for (
+                                    QueryDocumentSnapshot document :
+                                    querySnapshot
+                            ) {
 
-                        String lessonId =
-                                document.getId();
+                                String lessonId =
+                                        document.getId();
 
-                        String title =
-                                document.getString("title");
+                                String title =
+                                        document.getString(
+                                                "title"
+                                        );
 
-                        String description =
-                                document.getString("description");
+                                String description =
+                                        document.getString(
+                                                "description"
+                                        );
 
-                        String content =
-                                document.getString("content");
+                                String content =
+                                        document.getString(
+                                                "content"
+                                        );
 
-                        if (title == null ||
-                                title.trim().isEmpty()) {
+                                if (title == null ||
+                                        title.trim().isEmpty()) {
 
-                            title = "Lesson";
+                                    title = "Lesson";
+                                }
+
+                                addLessonCard(
+                                        lessonId,
+                                        title,
+                                        description,
+                                        content
+                                );
+                            }
                         }
+                )
+                .addOnFailureListener(
+                        error -> {
 
-                        addLessonCard(
-                                lessonId,
-                                title,
-                                description,
-                                content
-                        );
-                    }
-                })
-                .addOnFailureListener(error -> {
-
-                    Toast.makeText(
-                            StudentLessonActivity.this,
-                            "Unable to load lessons",
-                            Toast.LENGTH_SHORT
-                    ).show();
-                });
+                            Toast.makeText(
+                                    StudentLessonActivity.this,
+                                    "Unable to load lessons",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+                        }
+                );
     }
 
     private void addLessonCard(
@@ -193,11 +247,11 @@ public class StudentLessonActivity extends AppCompatActivity {
                 20,
                 18,
                 20,
-                18
+                20
         );
 
-        android.graphics.drawable.GradientDrawable background =
-                new android.graphics.drawable.GradientDrawable();
+        GradientDrawable background =
+                new GradientDrawable();
 
         background.setColor(Color.WHITE);
         background.setCornerRadius(28);
@@ -215,6 +269,7 @@ public class StudentLessonActivity extends AppCompatActivity {
         lessonTitle.setTextColor(
                 Color.rgb(17, 24, 39)
         );
+
         lessonTitle.setTypeface(
                 null,
                 Typeface.BOLD
@@ -268,7 +323,7 @@ public class StudentLessonActivity extends AppCompatActivity {
                     0,
                     12,
                     0,
-                    0
+                    12
             );
 
             card.addView(
@@ -276,32 +331,88 @@ public class StudentLessonActivity extends AppCompatActivity {
             );
         }
 
-        TextView openText =
-                new TextView(this);
+        Button completeButton =
+                new Button(this);
 
-        openText.setText(
-                "Start Learning →"
+        completeButton.setText(
+                "✓ Mark Lesson Complete"
         );
 
-        openText.setTextSize(15);
-        openText.setTextColor(
+        completeButton.setAllCaps(false);
+        completeButton.setTextSize(15);
+
+        GradientDrawable completeBackground =
+                new GradientDrawable();
+
+        completeBackground.setColor(
+                Color.rgb(34, 197, 94)
+        );
+
+        completeBackground.setCornerRadius(
+                30
+        );
+
+        completeButton.setTextColor(
+                Color.WHITE
+        );
+
+        completeButton.setBackground(
+                completeBackground
+        );
+
+        LinearLayout.LayoutParams completeParams =
+                new LinearLayout.LayoutParams(
+                        -1,
+                        58
+                );
+
+        completeParams.topMargin = 8;
+
+        card.addView(
+                completeButton,
+                completeParams
+        );
+
+        Button practiceButton =
+                new Button(this);
+
+        practiceButton.setText(
+                "Start Practice →"
+        );
+
+        practiceButton.setAllCaps(false);
+        practiceButton.setTextSize(15);
+        practiceButton.setTextColor(
+                Color.WHITE
+        );
+
+        GradientDrawable practiceBackground =
+                new GradientDrawable();
+
+        practiceBackground.setColor(
                 Color.rgb(79, 70, 229)
         );
-        openText.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-        openText.setGravity(
-                Gravity.END
-        );
-        openText.setPadding(
-                0,
-                16,
-                0,
-                0
+
+        practiceBackground.setCornerRadius(
+                30
         );
 
-        card.addView(openText);
+        practiceButton.setBackground(
+                practiceBackground
+        );
+
+        LinearLayout.LayoutParams practiceParams =
+                new LinearLayout.LayoutParams(
+                        -1,
+                        58
+                );
+
+        practiceParams.topMargin = 10;
+
+        card.addView(
+                practiceButton,
+                practiceParams
+        );
 
         LinearLayout.LayoutParams cardParams =
                 new LinearLayout.LayoutParams(
@@ -321,14 +432,111 @@ public class StudentLessonActivity extends AppCompatActivity {
                 cardParams
         );
 
-        card.setOnClickListener(view -> {
+        completeButton.setOnClickListener(
+                view -> {
 
-            Toast.makeText(
-                    StudentLessonActivity.this,
-                    "Lesson opened",
-                    Toast.LENGTH_SHORT
-            ).show();
-        });
+                    FirebaseUser user =
+                            auth.getCurrentUser();
+
+                    if (user == null) {
+
+                        Toast.makeText(
+                                StudentLessonActivity.this,
+                                "Please login again.",
+                                Toast.LENGTH_SHORT
+                        ).show();
+
+                        return;
+                    }
+
+                    progressManager.saveLessonCompleted(
+                            user.getUid(),
+                            classId,
+                            subjectId,
+                            chapterId,
+                            lessonId
+                    );
+
+                    progressManager.addPoints(
+                            user.getUid(),
+                            10
+                    );
+
+                    progressManager.updateStreak(
+                            user.getUid()
+                    );
+
+                    completeButton.setText(
+                            "✓ Lesson Completed"
+                    );
+
+                    Toast.makeText(
+                            StudentLessonActivity.this,
+                            "+10 points 🎉",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                }
+        );
+
+        practiceButton.setOnClickListener(
+                view -> {
+
+                    Intent intent =
+                            new Intent();
+
+                    intent.setClassName(
+                            StudentLessonActivity.this,
+                            "com.mystudy.app.StudentPracticeActivity"
+                    );
+
+                    intent.putExtra(
+                            "classId",
+                            classId
+                    );
+
+                    intent.putExtra(
+                            "className",
+                            className
+                    );
+
+                    intent.putExtra(
+                            "subjectId",
+                            subjectId
+                    );
+
+                    intent.putExtra(
+                            "subjectName",
+                            subjectName
+                    );
+
+                    intent.putExtra(
+                            "chapterId",
+                            chapterId
+                    );
+
+                    intent.putExtra(
+                            "chapterName",
+                            chapterName
+                    );
+
+                    intent.putExtra(
+                            "lessonId",
+                            lessonId
+                    );
+
+                    intent.putExtra(
+                            "lessonTitle",
+                            title
+                    );
+
+                    startActivity(intent);
+
+                    overridePendingTransition(
+                            android.R.anim.fade_in,
+                            android.R.anim.fade_out
+                    );
+                }
+        );
     }
 
     private void showMessage(
@@ -338,11 +546,16 @@ public class StudentLessonActivity extends AppCompatActivity {
         TextView messageView =
                 new TextView(this);
 
-        messageView.setText(message);
+        messageView.setText(
+                message
+        );
+
         messageView.setTextSize(16);
+
         messageView.setTextColor(
                 Color.rgb(100, 116, 139)
         );
+
         messageView.setGravity(
                 Gravity.CENTER
         );

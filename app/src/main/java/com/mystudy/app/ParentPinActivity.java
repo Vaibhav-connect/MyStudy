@@ -282,11 +282,12 @@ public class ParentPinActivity extends AppCompatActivity {
                                     savedPin.equals(enteredPin)
                             ) {
 
-                                Intent intent =
-                                        new Intent(
-                                                ParentPinActivity.this,
-                                                ParentDashboardActivity.class
-                                        );
+                                Intent intent = new Intent();
+
+                                intent.setClassName(
+                                        ParentPinActivity.this,
+                                        "com.mystudy.app.ParentDashboardActivity"
+                                );
 
                                 startActivity(intent);
                                 finish();

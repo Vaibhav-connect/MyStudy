@@ -31,6 +31,7 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText parentPinInput;
 
     private Spinner classSpinner;
+    private Spinner mediumSpinner;
     private Spinner languageSpinner;
 
     private FirebaseAuth auth;
@@ -66,15 +67,12 @@ public class RegisterActivity extends AppCompatActivity {
         root.setBackground(background);
 
         TextView logo = new TextView(this);
-
         logo.setText("📚");
         logo.setTextSize(50);
         logo.setGravity(Gravity.CENTER);
-
         root.addView(logo);
 
         TextView title = new TextView(this);
-
         title.setText("Create Account ✨");
         title.setTextSize(30);
         title.setTextColor(Color.WHITE);
@@ -87,11 +85,9 @@ public class RegisterActivity extends AppCompatActivity {
                 );
 
         titleParams.topMargin = 10;
-
         root.addView(title, titleParams);
 
         TextView subtitle = new TextView(this);
-
         subtitle.setText("Start your learning journey");
         subtitle.setTextSize(16);
         subtitle.setTextColor(Color.WHITE);
@@ -104,7 +100,6 @@ public class RegisterActivity extends AppCompatActivity {
                 );
 
         subtitleParams.topMargin = 6;
-
         root.addView(subtitle, subtitleParams);
 
         nameInput = createInput(
@@ -146,70 +141,54 @@ public class RegisterActivity extends AppCompatActivity {
 
         addInput(root, parentPinInput, 12);
 
-        classSpinner = new Spinner(this);
-
-        String[] classes = {
-                "Select Class",
-                "Class 3",
-                "Class 4",
-                "Class 5",
-                "Class 6"
-        };
-
-        ArrayAdapter<String> classAdapter =
-                new ArrayAdapter<>(
-                        this,
-                        android.R.layout.simple_spinner_item,
-                        classes
-                );
-
-        classAdapter.setDropDownViewResource(
-                android.R.layout.simple_spinner_dropdown_item
+        classSpinner = createSpinner(
+                new String[]{
+                        "Select Class",
+                        "Class 1",
+                        "Class 2",
+                        "Class 3",
+                        "Class 4",
+                        "Class 5",
+                        "Class 6",
+                        "Class 7",
+                        "Class 8",
+                        "Class 9",
+                        "Class 10"
+                }
         );
 
-        classSpinner.setAdapter(classAdapter);
-
-        LinearLayout.LayoutParams classParams =
-                new LinearLayout.LayoutParams(
-                        650,
-                        60
-                );
-
-        classParams.topMargin = 12;
-
-        root.addView(classSpinner, classParams);
-
-        languageSpinner = new Spinner(this);
-
-        String[] languages = {
-                "Select Language",
-                "English",
-                "Marathi",
-                "Hindi"
-        };
-
-        ArrayAdapter<String> languageAdapter =
-                new ArrayAdapter<>(
-                        this,
-                        android.R.layout.simple_spinner_item,
-                        languages
-                );
-
-        languageAdapter.setDropDownViewResource(
-                android.R.layout.simple_spinner_dropdown_item
+        root.addView(
+                classSpinner,
+                createSpinnerParams(12)
         );
 
-        languageSpinner.setAdapter(languageAdapter);
+        mediumSpinner = createSpinner(
+                new String[]{
+                        "Select Medium",
+                        "English",
+                        "Semi-English",
+                        "Marathi"
+                }
+        );
 
-        LinearLayout.LayoutParams languageParams =
-                new LinearLayout.LayoutParams(
-                        650,
-                        60
-                );
+        root.addView(
+                mediumSpinner,
+                createSpinnerParams(12)
+        );
 
-        languageParams.topMargin = 12;
+        languageSpinner = createSpinner(
+                new String[]{
+                        "Select App Language",
+                        "English",
+                        "Marathi",
+                        "Hindi"
+                }
+        );
 
-        root.addView(languageSpinner, languageParams);
+        root.addView(
+                languageSpinner,
+                createSpinnerParams(12)
+        );
 
         Button registerButton = new Button(this);
 
@@ -282,6 +261,41 @@ public class RegisterActivity extends AppCompatActivity {
         input.setBackground(background);
 
         return input;
+    }
+
+    private Spinner createSpinner(String[] items) {
+
+        Spinner spinner = new Spinner(this);
+
+        ArrayAdapter<String> adapter =
+                new ArrayAdapter<>(
+                        this,
+                        android.R.layout.simple_spinner_item,
+                        items
+                );
+
+        adapter.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item
+        );
+
+        spinner.setAdapter(adapter);
+
+        return spinner;
+    }
+
+    private LinearLayout.LayoutParams createSpinnerParams(
+            int topMargin
+    ) {
+
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(
+                        650,
+                        60
+                );
+
+        params.topMargin = topMargin;
+
+        return params;
     }
 
     private void addInput(
@@ -396,11 +410,22 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
+        if (mediumSpinner.getSelectedItemPosition() == 0) {
+
+            Toast.makeText(
+                    this,
+                    "Please select your medium",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
         if (languageSpinner.getSelectedItemPosition() == 0) {
 
             Toast.makeText(
                     this,
-                    "Please select your language",
+                    "Please select your app language",
                     Toast.LENGTH_SHORT
             ).show();
 
@@ -409,6 +434,9 @@ public class RegisterActivity extends AppCompatActivity {
 
         String selectedClass =
                 classSpinner.getSelectedItem().toString();
+
+        String selectedMedium =
+                mediumSpinner.getSelectedItem().toString();
 
         String selectedLanguage =
                 languageSpinner.getSelectedItem().toString();
@@ -461,18 +489,18 @@ public class RegisterActivity extends AppCompatActivity {
 
             userData.put("name", name);
             userData.put("email", email);
+
             userData.put("class", selectedClass);
+            userData.put("medium", selectedMedium);
             userData.put("language", selectedLanguage);
+
             userData.put("parentPin", parentPin);
+
             userData.put("role", "student");
-            userData.put(
-                    "points",
-                    0
-            );
-            userData.put(
-                    "streak",
-                    0
-            );
+
+            userData.put("points", 0);
+            userData.put("streak", 0);
+
             userData.put(
                     "createdAt",
                     com.google.firebase.firestore.FieldValue.serverTimestamp()

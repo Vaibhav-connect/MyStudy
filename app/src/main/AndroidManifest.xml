@@ -63,6 +63,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".QuizManagementActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".GamificationManagementActivity"
             android:exported="false" />
 
@@ -96,6 +100,14 @@
 
         <activity
             android:name=".StudentDashboardActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".StudentExamActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".StudentExamAttemptActivity"
             android:exported="false" />
 
         <activity

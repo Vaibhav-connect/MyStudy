@@ -6,10 +6,13 @@ import android.content.SharedPreferences;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.LocaleListCompat;
 
-public class LanguageManager {
+public final class LanguageManager {
 
     private static final String PREF_NAME = "MyStudySettings";
     private static final String LANGUAGE_KEY = "appLanguage";
+
+    private LanguageManager() {
+    }
 
     public static void saveLanguage(
             Context context,
@@ -23,13 +26,18 @@ public class LanguageManager {
                 );
 
         preferences.edit()
-                .putString(LANGUAGE_KEY, language)
+                .putString(
+                        LANGUAGE_KEY,
+                        language
+                )
                 .apply();
 
         applyLanguage(language);
     }
 
-    public static String getLanguage(Context context) {
+    public static String getLanguage(
+            Context context
+    ) {
 
         SharedPreferences preferences =
                 context.getSharedPreferences(
@@ -43,11 +51,14 @@ public class LanguageManager {
         );
     }
 
-    public static void applySavedLanguage(Context context) {
+    public static void applySavedLanguage(
+            Context context
+    ) {
 
-        applyLanguage(
-                getLanguage(context)
-        );
+        String language =
+                getLanguage(context);
+
+        applyLanguage(language);
     }
 
     private static void applyLanguage(
@@ -69,13 +80,13 @@ public class LanguageManager {
             languageTag = "en";
         }
 
-        LocaleListCompat appLocale =
+        LocaleListCompat localeList =
                 LocaleListCompat.forLanguageTags(
                         languageTag
                 );
 
         AppCompatDelegate.setApplicationLocales(
-                appLocale
+                localeList
         );
     }
 }

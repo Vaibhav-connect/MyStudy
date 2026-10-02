@@ -26,19 +26,38 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 public class StudentLessonActivity extends AppCompatActivity {
 
     private LinearLayout lessonContainer;
+    private TextView statusView;
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
     private ProgressManager progressManager;
 
-    private String classId;
-    private String className;
-    private String studentMedium;
-    private String studentName;
-    private String subjectId;
-    private String subjectName;
-    private String chapterId;
-    private String chapterName;
+    private String classId = "";
+    private String className = "";
+    private String studentMedium = "";
+    private String studentName = "";
+    private String subjectId = "";
+    private String subjectName = "";
+    private String chapterId = "";
+    private String chapterName = "";
+
+    private final int backgroundColor =
+            Color.rgb(248, 250, 252);
+
+    private final int textPrimary =
+            Color.rgb(17, 24, 39);
+
+    private final int textSecondary =
+            Color.rgb(100, 116, 139);
+
+    private final int primaryColor =
+            Color.rgb(79, 70, 229);
+
+    private final int successColor =
+            Color.rgb(22, 163, 74);
+
+    private final int errorColor =
+            Color.rgb(220, 38, 38);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,15 +72,41 @@ public class StudentLessonActivity extends AppCompatActivity {
         chapterId = getIntent().getStringExtra("chapterId");
         chapterName = getIntent().getStringExtra("chapterName");
 
-        if (studentMedium == null || studentMedium.trim().isEmpty()) {
+        if (classId == null) {
+            classId = "";
+        }
+
+        if (className == null) {
+            className = "";
+        }
+
+        if (studentMedium == null ||
+                studentMedium.trim().isEmpty()) {
             studentMedium = "English";
         }
 
-        if (classId == null ||
-                classId.trim().isEmpty() ||
-                subjectId == null ||
+        if (studentName == null) {
+            studentName = "";
+        }
+
+        if (subjectId == null) {
+            subjectId = "";
+        }
+
+        if (subjectName == null) {
+            subjectName = "";
+        }
+
+        if (chapterId == null) {
+            chapterId = "";
+        }
+
+        if (chapterName == null) {
+            chapterName = "";
+        }
+
+        if (classId.trim().isEmpty() ||
                 subjectId.trim().isEmpty() ||
-                chapterId == null ||
                 chapterId.trim().isEmpty()) {
 
             Toast.makeText(
@@ -79,16 +124,23 @@ public class StudentLessonActivity extends AppCompatActivity {
         progressManager = new ProgressManager();
 
         createUI();
+        showLoading();
         loadLessons();
     }
 
     private void createUI() {
 
-        ScrollView scrollView = new ScrollView(this);
+        ScrollView scrollView =
+                new ScrollView(this);
+
         scrollView.setFillViewport(true);
 
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout root =
+                new LinearLayout(this);
+
+        root.setOrientation(
+                LinearLayout.VERTICAL
+        );
 
         root.setPadding(
                 20,
@@ -98,16 +150,18 @@ public class StudentLessonActivity extends AppCompatActivity {
         );
 
         root.setBackgroundColor(
-                Color.rgb(248, 250, 252)
+                backgroundColor
         );
 
-        TextView title = new TextView(this);
+        TextView title =
+                new TextView(this);
 
-        title.setText("📖 Lessons");
+        title.setText(
+                "📖 Lessons"
+        );
+
         title.setTextSize(27);
-        title.setTextColor(
-                Color.rgb(17, 24, 39)
-        );
+        title.setTextColor(textPrimary);
 
         title.setTypeface(
                 null,
@@ -126,17 +180,15 @@ public class StudentLessonActivity extends AppCompatActivity {
                 )
         );
 
-        TextView subtitle = new TextView(this);
+        TextView subtitle =
+                new TextView(this);
 
-        StringBuilder subtitleText = new StringBuilder();
+        StringBuilder subtitleText =
+                new StringBuilder();
 
-        if (chapterName != null &&
-                !chapterName.trim().isEmpty()) {
-
+        if (!chapterName.trim().isEmpty()) {
             subtitleText.append(chapterName);
-
         } else {
-
             subtitleText.append("Choose a lesson");
         }
 
@@ -149,17 +201,47 @@ public class StudentLessonActivity extends AppCompatActivity {
 
         subtitle.setTextSize(16);
         subtitle.setTextColor(
-                Color.rgb(100, 116, 139)
+                textSecondary
         );
 
         subtitle.setPadding(
                 0,
                 0,
                 0,
-                22
+                12
         );
 
-        root.addView(subtitle);
+        root.addView(
+                subtitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
+
+        statusView =
+                new TextView(this);
+
+        statusView.setTextSize(14);
+
+        statusView.setGravity(
+                Gravity.CENTER
+        );
+
+        statusView.setPadding(
+                0,
+                8,
+                0,
+                16
+        );
+
+        root.addView(
+                statusView,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
 
         lessonContainer =
                 new LinearLayout(this);
@@ -183,7 +265,7 @@ public class StudentLessonActivity extends AppCompatActivity {
 
     private void loadLessons() {
 
-        lessonContainer.removeAllViews();
+        showLoading();
 
         db.collection("lessons")
                 .whereEqualTo(
@@ -206,9 +288,11 @@ public class StudentLessonActivity extends AppCompatActivity {
                 .addOnSuccessListener(
                         querySnapshot -> {
 
+                            lessonContainer.removeAllViews();
+
                             if (querySnapshot.isEmpty()) {
 
-                                showMessage(
+                                showEmpty(
                                         "No lessons available for " +
                                                 studentMedium +
                                                 " medium yet."
@@ -216,6 +300,25 @@ public class StudentLessonActivity extends AppCompatActivity {
 
                                 return;
                             }
+
+                            int lessonCount =
+                                    querySnapshot.size();
+
+                            statusView.setText(
+                                    "✅ " +
+                                            lessonCount +
+                                            " lesson" +
+                                            (
+                                                    lessonCount == 1
+                                                            ? ""
+                                                            : "s"
+                                            ) +
+                                            " available"
+                            );
+
+                            statusView.setTextColor(
+                                    successColor
+                            );
 
                             for (
                                     QueryDocumentSnapshot document :
@@ -253,6 +356,15 @@ public class StudentLessonActivity extends AppCompatActivity {
                                 if (title == null ||
                                         title.trim().isEmpty()) {
 
+                                    title =
+                                            document.getString(
+                                                    "lessonName"
+                                            );
+                                }
+
+                                if (title == null ||
+                                        title.trim().isEmpty()) {
+
                                     title = "Lesson";
                                 }
 
@@ -270,7 +382,7 @@ public class StudentLessonActivity extends AppCompatActivity {
                 .addOnFailureListener(
                         error -> {
 
-                            showMessage(
+                            showError(
                                     "Unable to load lessons."
                             );
 
@@ -338,7 +450,7 @@ public class StudentLessonActivity extends AppCompatActivity {
 
         lessonTitle.setTextSize(20);
         lessonTitle.setTextColor(
-                Color.rgb(17, 24, 39)
+                textPrimary
         );
 
         lessonTitle.setTypeface(
@@ -359,7 +471,7 @@ public class StudentLessonActivity extends AppCompatActivity {
 
         mediumText.setTextSize(13);
         mediumText.setTextColor(
-                Color.rgb(79, 70, 229)
+                primaryColor
         );
 
         mediumText.setTypeface(
@@ -390,7 +502,7 @@ public class StudentLessonActivity extends AppCompatActivity {
 
             lessonDescription.setTextSize(14);
             lessonDescription.setTextColor(
-                    Color.rgb(100, 116, 139)
+                    textSecondary
             );
 
             lessonDescription.setPadding(
@@ -501,7 +613,7 @@ public class StudentLessonActivity extends AppCompatActivity {
                 new GradientDrawable();
 
         practiceBackground.setColor(
-                Color.rgb(79, 70, 229)
+                primaryColor
         );
 
         practiceBackground.setCornerRadius(
@@ -564,6 +676,8 @@ public class StudentLessonActivity extends AppCompatActivity {
                         return;
                     }
 
+                    completeButton.setEnabled(false);
+
                     progressManager.saveLessonCompleted(
                             user.getUid(),
                             classId,
@@ -585,10 +699,6 @@ public class StudentLessonActivity extends AppCompatActivity {
                             "✓ Lesson Completed"
                     );
 
-                    completeButton.setEnabled(
-                            false
-                    );
-
                     Toast.makeText(
                             StudentLessonActivity.this,
                             "+10 points 🎉",
@@ -601,12 +711,10 @@ public class StudentLessonActivity extends AppCompatActivity {
                 view -> {
 
                     Intent intent =
-                            new Intent();
-
-                    intent.setClassName(
-                            StudentLessonActivity.this,
-                            "com.mystudy.app.StudentPracticeActivity"
-                    );
+                            new Intent(
+                                    StudentLessonActivity.this,
+                                    StudentPracticeActivity.class
+                            );
 
                     intent.putExtra(
                             "classId",
@@ -871,9 +979,44 @@ public class StudentLessonActivity extends AppCompatActivity {
         );
     }
 
-    private void showMessage(
+    private void showLoading() {
+
+        if (statusView != null) {
+
+            statusView.setText(
+                    "⏳ Loading lessons..."
+            );
+
+            statusView.setTextColor(
+                    primaryColor
+            );
+        }
+
+        if (lessonContainer != null) {
+            lessonContainer.removeAllViews();
+        }
+    }
+
+    private void showEmpty(
             String message
     ) {
+
+        if (lessonContainer == null) {
+            return;
+        }
+
+        lessonContainer.removeAllViews();
+
+        if (statusView != null) {
+
+            statusView.setText(
+                    "📖 No lessons available"
+            );
+
+            statusView.setTextColor(
+                    textSecondary
+            );
+        }
 
         TextView messageView =
                 new TextView(this);
@@ -883,9 +1026,8 @@ public class StudentLessonActivity extends AppCompatActivity {
         );
 
         messageView.setTextSize(16);
-
         messageView.setTextColor(
-                Color.rgb(100, 116, 139)
+                textSecondary
         );
 
         messageView.setGravity(
@@ -906,5 +1048,57 @@ public class StudentLessonActivity extends AppCompatActivity {
                         -2
                 )
         );
+    }
+
+    private void showError(
+            String message
+    ) {
+
+        if (lessonContainer != null) {
+
+            lessonContainer.removeAllViews();
+
+            TextView errorView =
+                    new TextView(this);
+
+            errorView.setText(
+                    "⚠️ " + message
+            );
+
+            errorView.setTextSize(16);
+            errorView.setTextColor(
+                    errorColor
+            );
+
+            errorView.setGravity(
+                    Gravity.CENTER
+            );
+
+            errorView.setPadding(
+                    20,
+                    50,
+                    20,
+                    50
+            );
+
+            lessonContainer.addView(
+                    errorView,
+                    new LinearLayout.LayoutParams(
+                            -1,
+                            -2
+                    )
+            );
+        }
+
+        if (statusView != null) {
+
+            statusView.setText(
+                    "Something went wrong"
+            );
+
+            statusView.setTextColor(
+                    errorColor
+            );
+        }
     }
 }

@@ -1409,6 +1409,11 @@ public class QuizManagementActivity extends AppCompatActivity {
             type = "MCQ";
         }
 
+        // IMPORTANT:
+        // question is modified above, so create a final copy
+        // before using it inside the lambda below.
+        final String questionForDelete = question;
+
         LinearLayout card =
                 new LinearLayout(this);
 
@@ -1475,7 +1480,7 @@ public class QuizManagementActivity extends AppCompatActivity {
         deleteButton.setOnClickListener(
                 v -> confirmDeleteQuestion(
                         id,
-                        question
+                        questionForDelete
                 )
         );
 
@@ -2629,7 +2634,7 @@ public class QuizManagementActivity extends AppCompatActivity {
 
     private void confirmDeleteQuestion(
             String id,
-            String question
+            final String question
     ) {
 
         new AlertDialog.Builder(this)

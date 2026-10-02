@@ -46,50 +46,31 @@ public class StudentExamHistoryActivity extends AppCompatActivity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(24, 28, 24, 24);
-        root.setBackgroundColor(
-                Color.rgb(248, 250, 252)
-        );
+        root.setBackgroundColor(Color.rgb(248, 250, 252));
 
         TextView title = new TextView(this);
         title.setText("Exam History");
         title.setTextSize(27);
-        title.setTextColor(
-                Color.rgb(17, 24, 39)
-        );
+        title.setTextColor(Color.rgb(17, 24, 39));
         title.setGravity(Gravity.CENTER);
         title.setPadding(0, 0, 0, 8);
 
         root.addView(title);
 
         TextView subtitle = new TextView(this);
-        subtitle.setText(
-                "Your previous exam and quiz results"
-        );
+        subtitle.setText("Your previous exam and quiz results");
         subtitle.setTextSize(14);
-        subtitle.setTextColor(
-                Color.rgb(100, 116, 139)
-        );
+        subtitle.setTextColor(Color.rgb(100, 116, 139));
         subtitle.setGravity(Gravity.CENTER);
         subtitle.setPadding(0, 0, 0, 20);
 
         root.addView(subtitle);
 
-        ScrollView scrollView =
-                new ScrollView(this);
+        ScrollView scrollView = new ScrollView(this);
 
-        container =
-                new LinearLayout(this);
-
-        container.setOrientation(
-                LinearLayout.VERTICAL
-        );
-
-        container.setPadding(
-                0,
-                10,
-                0,
-                20
-        );
+        container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(0, 10, 0, 20);
 
         scrollView.addView(container);
 
@@ -102,15 +83,11 @@ public class StudentExamHistoryActivity extends AppCompatActivity {
                 )
         );
 
-        Button backButton =
-                new Button(this);
-
+        Button backButton = new Button(this);
         backButton.setText("Back");
         backButton.setAllCaps(false);
 
-        backButton.setOnClickListener(
-                v -> finish()
-        );
+        backButton.setOnClickListener(v -> finish());
 
         root.addView(backButton);
 
@@ -124,169 +101,103 @@ public class StudentExamHistoryActivity extends AppCompatActivity {
 
         if (auth.getCurrentUser() == null) {
 
-            showMessage(
-                    "Please login again."
-            );
-
+            showMessage("Please login again.");
             return;
         }
 
-        String userId =
-                auth.getCurrentUser().getUid();
+        String userId = auth.getCurrentUser().getUid();
 
         db.collection("examResults")
-                .whereEqualTo(
-                        "userId",
-                        userId
-                )
+                .whereEqualTo("userId", userId)
                 .get()
-                .addOnSuccessListener(
-                        snapshot -> {
+                .addOnSuccessListener(snapshot -> {
 
-                            for (
-                                    DocumentSnapshot doc :
-                                    snapshot.getDocuments()
-                            ) {
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
 
-                                ResultData result =
-                                        new ResultData();
+                        ResultData result = new ResultData();
 
-                                result.id =
-                                        doc.getId();
+                        result.id = doc.getId();
 
-                                result.quizTitle =
-                                        value(
-                                                doc.getString(
-                                                        "quizTitle"
-                                                ),
-                                                "Quiz"
-                                        );
+                        result.quizTitle = value(
+                                doc.getString("quizTitle"),
+                                "Quiz"
+                        );
 
-                                result.className =
-                                        value(
-                                                doc.getString(
-                                                        "className"
-                                                ),
-                                                ""
-                                        );
+                        result.className = value(
+                                doc.getString("className"),
+                                ""
+                        );
 
-                                result.medium =
-                                        value(
-                                                doc.getString(
-                                                        "medium"
-                                                ),
-                                                "English"
-                                        );
+                        result.medium = value(
+                                doc.getString("medium"),
+                                "English"
+                        );
 
-                                result.subjectName =
-                                        value(
-                                                doc.getString(
-                                                        "subjectName"
-                                                ),
-                                                "Subject"
-                                        );
+                        result.subjectName = value(
+                                doc.getString("subjectName"),
+                                "Subject"
+                        );
 
-                                result.chapterName =
-                                        value(
-                                                doc.getString(
-                                                        "chapterName"
-                                                ),
-                                                "Chapter"
-                                        );
+                        result.chapterName = value(
+                                doc.getString("chapterName"),
+                                "Chapter"
+                        );
 
-                                Long score =
-                                        doc.getLong(
-                                                "score"
-                                        );
+                        Long score = doc.getLong("score");
+                        Long totalMarks = doc.getLong("totalMarks");
+                        Long answered = doc.getLong("answered");
+                        Long totalQuestions = doc.getLong("totalQuestions");
+                        Double accuracy = doc.getDouble("accuracy");
+                        Long completedAt = doc.getLong("completedAt");
 
-                                Long totalMarks =
-                                        doc.getLong(
-                                                "totalMarks"
-                                        );
+                        result.score =
+                                score != null ? score : 0L;
 
-                                Long answered =
-                                        doc.getLong(
-                                                "answered"
-                                        );
+                        result.totalMarks =
+                                totalMarks != null ? totalMarks : 0L;
 
-                                Long totalQuestions =
-                                        doc.getLong(
-                                                "totalQuestions"
-                                        );
+                        result.answered =
+                                answered != null ? answered : 0L;
 
-                                Double accuracy =
-                                        doc.getDouble(
-                                                "accuracy"
-                                        );
+                        result.totalQuestions =
+                                totalQuestions != null
+                                        ? totalQuestions
+                                        : 0L;
 
-                                Long completedAt =
-                                        doc.getLong(
-                                                "completedAt"
-                                        );
+                        result.accuracy =
+                                accuracy != null ? accuracy : 0.0;
 
-                                result.score =
-                                        score != null
-                                                ? score
-                                                : 0;
+                        result.completedAt =
+                                completedAt != null
+                                        ? completedAt
+                                        : 0L;
 
-                                result.totalMarks =
-                                        totalMarks != null
-                                                ? totalMarks
-                                                : 0;
+                        results.add(result);
+                    }
 
-                                result.answered =
-                                        answered != null
-                                                ? answered
-                                                : 0;
+                    results.sort(
+                            (a, b) ->
+                                    Long.compare(
+                                            b.completedAt,
+                                            a.completedAt
+                                    )
+                    );
 
-                                result.totalQuestions =
-                                        totalQuestions != null
-                                                ? totalQuestions
-                                                : 0;
+                    if (results.isEmpty()) {
 
-                                result.accuracy =
-                                        accuracy != null
-                                                ? accuracy
-                                                : 0;
+                        showMessage(
+                                "No exam history available yet."
+                        );
 
-                                result.completedAt =
-                                        completedAt != null
-                                                ? completedAt
-                                                : 0;
+                        return;
+                    }
 
-                                results.add(result);
-                            }
+                    addSummary();
 
-                            results.sort(
-                                    (a, b) ->
-                                            Long.compare(
-                                                    b.completedAt,
-                                                    a.completedAt
-                                            )
-                            );
-
-                            if (results.isEmpty()) {
-
-                                showMessage(
-                                        "No exam history available yet."
-                                );
-
-                                return;
-                            }
-
-                            addSummary();
-
-                            for (
-                                    ResultData result :
-                                    results
-                            ) {
-
-                                addResultCard(
-                                        result
-                                );
-                            }
-                        }
-                )
+                    for (ResultData result : results) {
+                        addResultCard(result);
+                    }
+                })
                 .addOnFailureListener(
                         e -> Toast.makeText(
                                 this,
@@ -299,72 +210,50 @@ public class StudentExamHistoryActivity extends AppCompatActivity {
 
     private void addSummary() {
 
-        int totalAttempts =
-                results.size();
+        int totalAttempts = results.size();
 
-        int totalScore = 0;
-        int totalMarks = 0;
+        long totalScore = 0;
+        long totalMarks = 0;
 
         double accuracyTotal = 0;
 
-        for (
-                ResultData result :
-                results
-        ) {
+        for (ResultData result : results) {
 
-            totalScore +=
-                    result.score;
-
-            totalMarks +=
-                    result.totalMarks;
-
-            accuracyTotal +=
-                    result.accuracy;
+            totalScore += result.score;
+            totalMarks += result.totalMarks;
+            accuracyTotal += result.accuracy;
         }
 
         double averageAccuracy =
                 totalAttempts > 0
-                        ? accuracyTotal /
-                        totalAttempts
+                        ? accuracyTotal / totalAttempts
                         : 0;
 
-        LinearLayout card =
-                createCard();
+        LinearLayout card = createCard();
 
-        TextView heading =
-                new TextView(this);
-
-        heading.setText(
-                "Overall Performance"
-        );
-
+        TextView heading = new TextView(this);
+        heading.setText("Overall Performance");
         heading.setTextSize(20);
-        heading.setTextColor(
-                Color.rgb(17, 24, 39)
+        heading.setTextColor(Color.rgb(17, 24, 39));
+
+        TextView attempts = createInfoText(
+                "Total Attempts: " + totalAttempts
         );
 
-        TextView attempts =
-                createInfoText(
-                        "Total Attempts: " +
-                                totalAttempts
-                );
+        TextView score = createInfoText(
+                "Total Score: " +
+                        totalScore +
+                        " / " +
+                        totalMarks
+        );
 
-        TextView score =
-                createInfoText(
-                        "Total Score: " +
-                                totalScore +
-                                " / " +
-                                totalMarks
-                );
-
-        TextView accuracy =
-                createInfoText(
-                        String.format(
-                                Locale.US,
-                                "Average Accuracy: %.1f%%",
-                                averageAccuracy
-                        )
-                );
+        TextView accuracy = createInfoText(
+                String.format(
+                        Locale.US,
+                        "Average Accuracy: %.1f%%",
+                        averageAccuracy
+                )
+        );
 
         card.addView(heading);
         card.addView(attempts);
@@ -377,87 +266,60 @@ public class StudentExamHistoryActivity extends AppCompatActivity {
                         -2
                 );
 
-        params.setMargins(
-                0,
-                0,
-                0,
-                18
-        );
+        params.setMargins(0, 0, 0, 18);
 
-        container.addView(
-                card,
-                params
-        );
+        container.addView(card, params);
     }
 
-    private void addResultCard(
-            ResultData result
-    ) {
+    private void addResultCard(ResultData result) {
 
-        LinearLayout card =
-                createCard();
+        LinearLayout card = createCard();
 
-        TextView title =
-                new TextView(this);
-
-        title.setText(
-                result.quizTitle
-        );
-
+        TextView title = new TextView(this);
+        title.setText(result.quizTitle);
         title.setTextSize(19);
+        title.setTextColor(Color.rgb(17, 24, 39));
 
-        title.setTextColor(
-                Color.rgb(17, 24, 39)
+        TextView subject = createInfoText(
+                "Subject: " + result.subjectName
         );
 
-        TextView subject =
-                createInfoText(
-                        "Subject: " +
-                                result.subjectName
-                );
+        TextView chapter = createInfoText(
+                "Chapter: " + result.chapterName
+        );
 
-        TextView chapter =
-                createInfoText(
-                        "Chapter: " +
-                                result.chapterName
-                );
+        TextView classInfo = createInfoText(
+                "Class: " +
+                        result.className +
+                        " • Medium: " +
+                        result.medium
+        );
 
-        TextView classInfo =
-                createInfoText(
-                        "Class: " +
-                                result.className +
-                                " • Medium: " +
-                                result.medium
-                );
-
-        TextView score =
-                createInfoText(
-                        "Score: " +
-                                result.score +
-                                " / " +
-                                result.totalMarks
-                );
+        TextView score = createInfoText(
+                "Score: " +
+                        result.score +
+                        " / " +
+                        result.totalMarks
+        );
 
         score.setTextColor(
                 Color.rgb(79, 70, 229)
         );
 
-        TextView questions =
-                createInfoText(
-                        "Answered: " +
-                                result.answered +
-                                " / " +
-                                result.totalQuestions
-                );
+        TextView questions = createInfoText(
+                "Answered: " +
+                        result.answered +
+                        " / " +
+                        result.totalQuestions
+        );
 
-        TextView accuracy =
-                createInfoText(
-                        String.format(
-                                Locale.US,
-                                "Accuracy: %.1f%%",
-                                result.accuracy
-                        )
-                );
+        TextView accuracy = createInfoText(
+                String.format(
+                        Locale.US,
+                        "Accuracy: %.1f%%",
+                        result.accuracy
+                )
+        );
 
         if (result.accuracy >= 80) {
 
@@ -478,13 +340,10 @@ public class StudentExamHistoryActivity extends AppCompatActivity {
             );
         }
 
-        TextView date =
-                createInfoText(
-                        "Completed: " +
-                                formatDate(
-                                        result.completedAt
-                                )
-                );
+        TextView date = createInfoText(
+                "Completed: " +
+                        formatDate(result.completedAt)
+        );
 
         card.addView(title);
         card.addView(subject);
@@ -501,23 +360,14 @@ public class StudentExamHistoryActivity extends AppCompatActivity {
                         -2
                 );
 
-        params.setMargins(
-                0,
-                0,
-                0,
-                16
-        );
+        params.setMargins(0, 0, 0, 16);
 
-        container.addView(
-                card,
-                params
-        );
+        container.addView(card, params);
     }
 
     private LinearLayout createCard() {
 
-        LinearLayout card =
-                new LinearLayout(this);
+        LinearLayout card = new LinearLayout(this);
 
         card.setOrientation(
                 LinearLayout.VERTICAL
@@ -541,8 +391,7 @@ public class StudentExamHistoryActivity extends AppCompatActivity {
             String text
     ) {
 
-        TextView view =
-                new TextView(this);
+        TextView view = new TextView(this);
 
         view.setText(text);
         view.setTextSize(14);
@@ -564,17 +413,15 @@ public class StudentExamHistoryActivity extends AppCompatActivity {
             String message
     ) {
 
-        TextView text =
-                new TextView(this);
+        TextView text = new TextView(this);
 
         text.setText(message);
         text.setTextSize(16);
         text.setTextColor(
                 Color.rgb(100, 116, 139)
         );
-        text.setGravity(
-                Gravity.CENTER
-        );
+
+        text.setGravity(Gravity.CENTER);
 
         text.setPadding(
                 20,
@@ -634,10 +481,10 @@ public class StudentExamHistoryActivity extends AppCompatActivity {
         String subjectName = "";
         String chapterName = "";
 
-        int score = 0;
-        int totalMarks = 0;
-        int answered = 0;
-        int totalQuestions = 0;
+        long score = 0;
+        long totalMarks = 0;
+        long answered = 0;
+        long totalQuestions = 0;
 
         double accuracy = 0;
 

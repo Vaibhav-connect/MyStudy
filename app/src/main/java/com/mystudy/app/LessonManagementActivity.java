@@ -47,6 +47,13 @@ public class LessonManagementActivity extends AppCompatActivity {
     private final List<String> chapterIds = new ArrayList<>();
     private final List<String> chapterNames = new ArrayList<>();
 
+    private final String[] mediums = {
+            "English",
+            "Semi-English",
+            "Marathi",
+            "Hindi"
+    };
+
     private Uri selectedFileUri = null;
 
     @Override
@@ -111,7 +118,6 @@ public class LessonManagementActivity extends AppCompatActivity {
         Button backButton = new Button(this);
         backButton.setText("Back");
         backButton.setAllCaps(false);
-
         backButton.setOnClickListener(v -> finish());
 
         root.addView(backButton);
@@ -147,28 +153,41 @@ public class LessonManagementActivity extends AppCompatActivity {
                     for (DocumentSnapshot document :
                             querySnapshot.getDocuments()) {
 
-                        final String documentId = document.getId();
+                        String documentId = document.getId();
 
                         String title = document.getString("title");
-                        String description = document.getString("description");
-                        String content = document.getString("content");
+                        String description =
+                                document.getString("description");
+                        String content =
+                                document.getString("content");
 
-                        String classId = document.getString("classId");
-                        String className = document.getString("className");
+                        String classId =
+                                document.getString("classId");
+                        String className =
+                                document.getString("className");
 
-                        String medium = document.getString("medium");
+                        String medium =
+                                document.getString("medium");
 
-                        String subjectId = document.getString("subjectId");
-                        String subjectName = document.getString("subjectName");
+                        String subjectId =
+                                document.getString("subjectId");
+                        String subjectName =
+                                document.getString("subjectName");
 
-                        String chapterId = document.getString("chapterId");
-                        String chapterName = document.getString("chapterName");
+                        String chapterId =
+                                document.getString("chapterId");
+                        String chapterName =
+                                document.getString("chapterName");
 
-                        String contentType = document.getString("contentType");
-                        String contentUrl = document.getString("contentUrl");
-                        String storagePath = document.getString("storagePath");
+                        String contentType =
+                                document.getString("contentType");
+                        String contentUrl =
+                                document.getString("contentUrl");
+                        String storagePath =
+                                document.getString("storagePath");
 
-                        Long orderValue = document.getLong("order");
+                        Long orderValue =
+                                document.getLong("order");
 
                         if (title == null) {
                             title = "Untitled Lesson";
@@ -190,7 +209,8 @@ public class LessonManagementActivity extends AppCompatActivity {
                             className = "Unknown Class";
                         }
 
-                        if (medium == null) {
+                        if (medium == null ||
+                                medium.trim().isEmpty()) {
                             medium = "English";
                         }
 
@@ -210,7 +230,8 @@ public class LessonManagementActivity extends AppCompatActivity {
                             chapterName = "Unknown Chapter";
                         }
 
-                        if (contentType == null || contentType.trim().isEmpty()) {
+                        if (contentType == null ||
+                                contentType.trim().isEmpty()) {
                             contentType = "text";
                         }
 
@@ -222,46 +243,35 @@ public class LessonManagementActivity extends AppCompatActivity {
                             storagePath = "";
                         }
 
-                        final String finalTitle = title;
-                        final String finalDescription = description;
-                        final String finalContent = content;
-                        final String finalClassId = classId;
-                        final String finalClassName = className;
-                        final String finalMedium = medium;
-                        final String finalSubjectId = subjectId;
-                        final String finalSubjectName = subjectName;
-                        final String finalChapterId = chapterId;
-                        final String finalChapterName = chapterName;
-                        final String finalContentType = contentType;
-                        final String finalContentUrl = contentUrl;
-                        final String finalStoragePath = storagePath;
-
-                        final long finalOrder =
-                                orderValue != null ? orderValue : 0;
+                        long order =
+                                orderValue != null
+                                        ? orderValue
+                                        : 0;
 
                         addLessonCard(
                                 documentId,
-                                finalTitle,
-                                finalDescription,
-                                finalContent,
-                                finalClassId,
-                                finalClassName,
-                                finalMedium,
-                                finalSubjectId,
-                                finalSubjectName,
-                                finalChapterId,
-                                finalChapterName,
-                                finalContentType,
-                                finalContentUrl,
-                                finalStoragePath,
-                                finalOrder
+                                title,
+                                description,
+                                content,
+                                classId,
+                                className,
+                                medium,
+                                subjectId,
+                                subjectName,
+                                chapterId,
+                                chapterName,
+                                contentType,
+                                contentUrl,
+                                storagePath,
+                                order
                         );
                     }
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(
                                 this,
-                                "Failed to load lessons: " + e.getMessage(),
+                                "Failed to load lessons: "
+                                        + e.getMessage(),
                                 Toast.LENGTH_LONG
                         ).show()
                 );
@@ -505,12 +515,16 @@ public class LessonManagementActivity extends AppCompatActivity {
                         return;
                     }
 
-                    showLessonDialog(editMode, editData);
+                    showLessonDialog(
+                            editMode,
+                            editData
+                    );
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(
                                 this,
-                                "Failed to load classes: " + e.getMessage(),
+                                "Failed to load classes: "
+                                        + e.getMessage(),
                                 Toast.LENGTH_LONG
                         ).show()
                 );
@@ -562,13 +576,6 @@ public class LessonManagementActivity extends AppCompatActivity {
         classSpinner.setAdapter(classAdapter);
 
         Spinner mediumSpinner = new Spinner(this);
-
-        String[] mediums = {
-                "English",
-                "Semi-English",
-                "Marathi",
-                "Hindi"
-        };
 
         ArrayAdapter<String> mediumAdapter =
                 new ArrayAdapter<>(
@@ -694,7 +701,7 @@ public class LessonManagementActivity extends AppCompatActivity {
             int contentTypePosition =
                     findPosition(
                             contentTypes,
-                            editData.contentType.toUpperCase()
+                            editData.contentType
                     );
 
             if (contentTypePosition >= 0) {
@@ -703,17 +710,27 @@ public class LessonManagementActivity extends AppCompatActivity {
                 );
             }
 
-            if ("LINK".equalsIgnoreCase(editData.contentType)) {
+            if ("LINK".equalsIgnoreCase(
+                    editData.contentType
+            )) {
 
                 linkInput.setVisibility(View.VISIBLE);
                 linkInput.setText(editData.contentUrl);
 
-            } else if (!"TEXT".equalsIgnoreCase(editData.contentType)
-                    && !editData.contentUrl.isEmpty()) {
+            } else if (
+                    !"TEXT".equalsIgnoreCase(
+                            editData.contentType
+                    )
+                            && !editData.contentUrl.isEmpty()
+            ) {
 
-                selectedFileText.setVisibility(View.VISIBLE);
+                selectedFileText.setVisibility(
+                        View.VISIBLE
+                );
+
                 selectedFileText.setText(
-                        "Existing file: " + editData.contentUrl
+                        "Existing file: "
+                                + editData.contentUrl
                 );
             }
         }
@@ -729,17 +746,43 @@ public class LessonManagementActivity extends AppCompatActivity {
                             long id
                     ) {
 
-                        if (position >= 0 &&
-                                position < classIds.size()) {
+                        refreshSubjects(
+                                classSpinner,
+                                mediumSpinner,
+                                subjectSpinner,
+                                chapterSpinner,
+                                editMode,
+                                editData
+                        );
+                    }
 
-                            loadSubjectsForClass(
-                                    classIds.get(position),
-                                    subjectSpinner,
-                                    chapterSpinner,
-                                    editMode,
-                                    editData
-                            );
-                        }
+                    @Override
+                    public void onNothingSelected(
+                            AdapterView<?> parent
+                    ) {
+                    }
+                }
+        );
+
+        mediumSpinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+
+                    @Override
+                    public void onItemSelected(
+                            AdapterView<?> parent,
+                            View view,
+                            int position,
+                            long id
+                    ) {
+
+                        refreshSubjects(
+                                classSpinner,
+                                mediumSpinner,
+                                subjectSpinner,
+                                chapterSpinner,
+                                editMode,
+                                editData
+                        );
                     }
 
                     @Override
@@ -763,7 +806,11 @@ public class LessonManagementActivity extends AppCompatActivity {
 
                         if (position >= 0 &&
                                 position < subjectIds.size() &&
-                                classSpinner.getSelectedItemPosition()
+                                classSpinner
+                                        .getSelectedItemPosition()
+                                        >= 0 &&
+                                mediumSpinner
+                                        .getSelectedItemPosition()
                                         >= 0) {
 
                             String selectedClassId =
@@ -772,9 +819,16 @@ public class LessonManagementActivity extends AppCompatActivity {
                                                     .getSelectedItemPosition()
                                     );
 
-                            loadChaptersForClassAndSubject(
+                            String selectedMedium =
+                                    mediums[
+                                            mediumSpinner
+                                                    .getSelectedItemPosition()
+                                    ];
+
+                            loadChaptersForClassSubjectAndMedium(
                                     selectedClassId,
                                     subjectIds.get(position),
+                                    selectedMedium,
                                     chapterSpinner,
                                     editMode,
                                     editData
@@ -801,16 +855,20 @@ public class LessonManagementActivity extends AppCompatActivity {
                             long id
                     ) {
 
-                        String selectedType =
-                                contentTypes[position];
+                        if (position >= 0 &&
+                                position < contentTypes.length) {
 
-                        updateContentControls(
-                                selectedType,
-                                linkInput,
-                                fileButton,
-                                selectedFileText,
-                                contentInput
-                        );
+                            String selectedType =
+                                    contentTypes[position];
+
+                            updateContentControls(
+                                    selectedType,
+                                    linkInput,
+                                    fileButton,
+                                    selectedFileText,
+                                    contentInput
+                            );
+                        }
                     }
 
                     @Override
@@ -886,31 +944,40 @@ public class LessonManagementActivity extends AppCompatActivity {
                                 .trim();
 
                 int classPosition =
-                        classSpinner.getSelectedItemPosition();
-
-                int subjectPosition =
-                        subjectSpinner.getSelectedItemPosition();
-
-                int chapterPosition =
-                        chapterSpinner.getSelectedItemPosition();
+                        classSpinner
+                                .getSelectedItemPosition();
 
                 int mediumPosition =
-                        mediumSpinner.getSelectedItemPosition();
+                        mediumSpinner
+                                .getSelectedItemPosition();
+
+                int subjectPosition =
+                        subjectSpinner
+                                .getSelectedItemPosition();
+
+                int chapterPosition =
+                        chapterSpinner
+                                .getSelectedItemPosition();
 
                 int contentTypePosition =
-                        contentTypeSpinner.getSelectedItemPosition();
+                        contentTypeSpinner
+                                .getSelectedItemPosition();
 
                 if (title.isEmpty()) {
+
                     titleInput.setError(
                             "Enter lesson title"
                     );
+
                     return;
                 }
 
                 if (orderString.isEmpty()) {
+
                     orderInput.setError(
                             "Enter order"
                     );
+
                     return;
                 }
 
@@ -926,12 +993,24 @@ public class LessonManagementActivity extends AppCompatActivity {
                     return;
                 }
 
+                if (mediumPosition < 0 ||
+                        mediumPosition >= mediums.length) {
+
+                    Toast.makeText(
+                            this,
+                            "Select a medium.",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    return;
+                }
+
                 if (subjectPosition < 0 ||
                         subjectPosition >= subjectIds.size()) {
 
                     Toast.makeText(
                             this,
-                            "Select a subject.",
+                            "Select a subject for selected medium.",
                             Toast.LENGTH_SHORT
                     ).show();
 
@@ -943,19 +1022,7 @@ public class LessonManagementActivity extends AppCompatActivity {
 
                     Toast.makeText(
                             this,
-                            "Select a chapter.",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
-                    return;
-                }
-
-                if (mediumPosition < 0 ||
-                        mediumPosition >= mediums.length) {
-
-                    Toast.makeText(
-                            this,
-                            "Select a medium.",
+                            "Select a chapter for selected medium.",
                             Toast.LENGTH_SHORT
                     ).show();
 
@@ -991,10 +1058,13 @@ public class LessonManagementActivity extends AppCompatActivity {
                 }
 
                 String selectedContentType =
-                        contentTypes[contentTypePosition];
+                        contentTypes[
+                                contentTypePosition
+                        ];
 
-                if ("TEXT".equals(selectedContentType)
-                        && content.isEmpty()) {
+                if ("TEXT".equals(
+                        selectedContentType
+                ) && content.isEmpty()) {
 
                     contentInput.setError(
                             "Enter lesson content"
@@ -1008,8 +1078,9 @@ public class LessonManagementActivity extends AppCompatActivity {
                                 .toString()
                                 .trim();
 
-                if ("LINK".equals(selectedContentType)
-                        && selectedLink.isEmpty()) {
+                if ("LINK".equals(
+                        selectedContentType
+                ) && selectedLink.isEmpty()) {
 
                     linkInput.setError(
                             "Enter external URL"
@@ -1018,8 +1089,12 @@ public class LessonManagementActivity extends AppCompatActivity {
                     return;
                 }
 
-                if (!"TEXT".equals(selectedContentType)
-                        && !"LINK".equals(selectedContentType)
+                if (!"TEXT".equals(
+                        selectedContentType
+                )
+                        && !"LINK".equals(
+                        selectedContentType
+                )
                         && !editMode
                         && selectedFileUri == null) {
 
@@ -1056,29 +1131,69 @@ public class LessonManagementActivity extends AppCompatActivity {
                 Map<String, Object> data =
                         new HashMap<>();
 
-                data.put("title", title);
-                data.put("description", description);
-                data.put("content", content);
+                data.put(
+                        "title",
+                        title
+                );
 
-                data.put("classId", selectedClassId);
-                data.put("className", selectedClassName);
+                data.put(
+                        "description",
+                        description
+                );
 
-                data.put("medium", selectedMedium);
+                data.put(
+                        "content",
+                        content
+                );
 
-                data.put("subjectId", selectedSubjectId);
-                data.put("subjectName", selectedSubjectName);
+                data.put(
+                        "classId",
+                        selectedClassId
+                );
 
-                data.put("chapterId", selectedChapterId);
-                data.put("chapterName", selectedChapterName);
+                data.put(
+                        "className",
+                        selectedClassName
+                );
 
-                data.put("order", order);
+                data.put(
+                        "medium",
+                        selectedMedium
+                );
+
+                data.put(
+                        "subjectId",
+                        selectedSubjectId
+                );
+
+                data.put(
+                        "subjectName",
+                        selectedSubjectName
+                );
+
+                data.put(
+                        "chapterId",
+                        selectedChapterId
+                );
+
+                data.put(
+                        "chapterName",
+                        selectedChapterName
+                );
+
+                data.put(
+                        "order",
+                        order
+                );
 
                 data.put(
                         "contentType",
                         selectedContentType.toLowerCase()
                 );
 
-                if ("LINK".equals(selectedContentType)) {
+                if ("LINK".equals(
+                        selectedContentType
+                )) {
 
                     data.put(
                             "contentUrl",
@@ -1095,9 +1210,19 @@ public class LessonManagementActivity extends AppCompatActivity {
                     return;
                 }
 
-                if ("TEXT".equals(selectedContentType)) {
+                if ("TEXT".equals(
+                        selectedContentType
+                )) {
 
-                    data.put("contentUrl", "");
+                    data.put(
+                            "contentUrl",
+                            ""
+                    );
+
+                    data.put(
+                            "storagePath",
+                            ""
+                    );
 
                     saveLessonData(
                             editMode,
@@ -1121,8 +1246,10 @@ public class LessonManagementActivity extends AppCompatActivity {
                             dialog
                     );
 
-                } else if (editMode &&
-                        editData != null) {
+                } else if (
+                        editMode &&
+                                editData != null
+                ) {
 
                     data.put(
                             "contentUrl",
@@ -1145,6 +1272,47 @@ public class LessonManagementActivity extends AppCompatActivity {
         });
 
         dialog.show();
+    }
+
+    private void refreshSubjects(
+            Spinner classSpinner,
+            Spinner mediumSpinner,
+            Spinner subjectSpinner,
+            Spinner chapterSpinner,
+            boolean editMode,
+            LessonEditData editData
+    ) {
+
+        int classPosition =
+                classSpinner.getSelectedItemPosition();
+
+        int mediumPosition =
+                mediumSpinner.getSelectedItemPosition();
+
+        if (classPosition < 0 ||
+                classPosition >= classIds.size()) {
+            return;
+        }
+
+        if (mediumPosition < 0 ||
+                mediumPosition >= mediums.length) {
+            return;
+        }
+
+        String selectedClassId =
+                classIds.get(classPosition);
+
+        String selectedMedium =
+                mediums[mediumPosition];
+
+        loadSubjectsForClassAndMedium(
+                selectedClassId,
+                selectedMedium,
+                subjectSpinner,
+                chapterSpinner,
+                editMode,
+                editData
+        );
     }
 
     private void updateContentControls(
@@ -1198,30 +1366,30 @@ public class LessonManagementActivity extends AppCompatActivity {
         ).show();
 
         String safeTitle =
-                lessonTitle
-                        .replaceAll(
-                                "[^a-zA-Z0-9_-]",
-                                "_"
-                        );
+                lessonTitle.replaceAll(
+                        "[^a-zA-Z0-9_-]",
+                        "_"
+                );
 
         String extension =
                 getFileExtension(fileUri);
 
         String fileName =
                 System.currentTimeMillis()
-                        + "_" + safeTitle;
+                        + "_"
+                        + safeTitle;
 
         if (!extension.isEmpty()) {
             fileName += "." + extension;
         }
 
         String storagePath =
-                "lessons/" +
-                        data.get("classId") +
-                        "/" +
-                        data.get("subjectId") +
-                        "/" +
-                        fileName;
+                "lessons/"
+                        + data.get("classId")
+                        + "/"
+                        + data.get("subjectId")
+                        + "/"
+                        + fileName;
 
         StorageReference fileReference =
                 storage.getReference()
@@ -1349,8 +1517,9 @@ public class LessonManagementActivity extends AppCompatActivity {
         }
     }
 
-    private void loadSubjectsForClass(
+    private void loadSubjectsForClassAndMedium(
             String classId,
+            String medium,
             Spinner subjectSpinner,
             Spinner chapterSpinner,
             boolean editMode,
@@ -1361,6 +1530,10 @@ public class LessonManagementActivity extends AppCompatActivity {
                 .whereEqualTo(
                         "classId",
                         classId
+                )
+                .whereEqualTo(
+                        "medium",
+                        medium
                 )
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
@@ -1398,6 +1571,24 @@ public class LessonManagementActivity extends AppCompatActivity {
 
                     subjectSpinner.setAdapter(adapter);
 
+                    chapterIds.clear();
+                    chapterNames.clear();
+
+                    ArrayAdapter<String> emptyChapterAdapter =
+                            new ArrayAdapter<>(
+                                    this,
+                                    android.R.layout.simple_spinner_item,
+                                    chapterNames
+                            );
+
+                    emptyChapterAdapter.setDropDownViewResource(
+                            android.R.layout.simple_spinner_dropdown_item
+                    );
+
+                    chapterSpinner.setAdapter(
+                            emptyChapterAdapter
+                    );
+
                     if (editMode &&
                             editData != null) {
 
@@ -1426,9 +1617,10 @@ public class LessonManagementActivity extends AppCompatActivity {
                 );
     }
 
-    private void loadChaptersForClassAndSubject(
+    private void loadChaptersForClassSubjectAndMedium(
             String classId,
             String subjectId,
+            String medium,
             Spinner chapterSpinner,
             boolean editMode,
             LessonEditData editData
@@ -1442,6 +1634,10 @@ public class LessonManagementActivity extends AppCompatActivity {
                 .whereEqualTo(
                         "subjectId",
                         subjectId
+                )
+                .whereEqualTo(
+                        "medium",
+                        medium
                 )
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
@@ -1532,7 +1728,9 @@ public class LessonManagementActivity extends AppCompatActivity {
 
         for (int i = 0; i < values.length; i++) {
 
-            if (values[i].equalsIgnoreCase(value)) {
+            if (values[i].equalsIgnoreCase(
+                    value.trim()
+            )) {
                 return i;
             }
         }
@@ -1599,9 +1797,9 @@ public class LessonManagementActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Lesson")
                 .setMessage(
-                        "Delete \"" +
-                                lessonTitle +
-                                "\"?"
+                        "Delete \""
+                                + lessonTitle
+                                + "\"?"
                 )
                 .setNegativeButton(
                         "Cancel",
@@ -1643,6 +1841,7 @@ public class LessonManagementActivity extends AppCompatActivity {
     private static class LessonEditData {
 
         String documentId;
+
         String title;
         String description;
         String content;

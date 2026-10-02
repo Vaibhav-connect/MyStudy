@@ -1,15 +1,11 @@
 package com.mystudy.app;
 
-import android.content.Intent;
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.view.Gravity;
-import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,49 +13,25 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 public class StudentExamActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
 
-    private LinearLayout rootLayout;
-    private LinearLayout questionContainer;
-    private TextView titleText;
-    private TextView infoText;
-    private TextView timerText;
-    private Button submitButton;
+    private LinearLayout container;
 
-    private String examId;
-    private String studentClassId;
-    private String studentClassName;
+    private String studentClass;
     private String studentMedium;
     private String studentName;
-    private String studentSubjectId;
-    private String studentSubjectName;
-    private String studentChapterId;
-    private String studentChapterName;
 
-    private int questionCount = 10;
-    private int durationMinutes = 15;
-    private int totalMarks = 10;
-
-    private CountDownTimer countDownTimer;
-
-    private final List<ExamQuestion> questions = new ArrayList<>();
-    private final Map<Integer, String> selectedAnswers = new HashMap<>();
-
-    private int currentScore = 0;
-    private boolean submitted = false;
+    private final List<QuizData> quizzes = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,939 +40,631 @@ public class StudentExamActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
 
-        readIntentData();
-        buildUi();
-        loadExam();
-    }
+        studentClass = getIntent().getStringExtra("classId");
+        if (studentClass == null) {
+            studentClass = getIntent().getStringExtra("studentClass");
+        }
 
-    private void readIntentData() {
-        Intent intent = getIntent();
-
-        examId = intent.getStringExtra("examId");
-
-        studentClassId = intent.getStringExtra("classId");
-        studentClassName = intent.getStringExtra("className");
-        studentMedium = intent.getStringExtra("studentMedium");
-        studentName = intent.getStringExtra("studentName");
-
-        studentSubjectId = intent.getStringExtra("subjectId");
-        studentSubjectName = intent.getStringExtra("subjectName");
-
-        studentChapterId = intent.getStringExtra("chapterId");
-        studentChapterName = intent.getStringExtra("chapterName");
+        studentMedium = getIntent().getStringExtra("studentMedium");
+        studentName = getIntent().getStringExtra("studentName");
 
         if (studentMedium == null || studentMedium.trim().isEmpty()) {
             studentMedium = "English";
         }
+
+        createUI();
+        loadPublishedQuizzes();
     }
 
-    private void buildUi() {
+    private void createUI() {
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(24, 30, 24, 24);
+        root.setBackgroundColor(Color.rgb(248, 250, 252));
+
+        TextView title = new TextView(this);
+        title.setText("Exams & Quizzes");
+        title.setTextSize(27);
+        title.setTextColor(Color.rgb(17, 24, 39));
+        title.setGravity(Gravity.CENTER);
+        title.setPadding(0, 0, 0, 8);
+
+        root.addView(title);
+
+        TextView studentInfo = new TextView(this);
+        studentInfo.setText(
+                "Class: " +
+                        (studentClass == null ? "Not selected" : studentClass) +
+                        " • Medium: " +
+                        studentMedium
+        );
+        studentInfo.setTextSize(14);
+        studentInfo.setTextColor(Color.rgb(100, 116, 139));
+        studentInfo.setGravity(Gravity.CENTER);
+        studentInfo.setPadding(0, 0, 0, 20);
+
+        root.addView(studentInfo);
 
         ScrollView scrollView = new ScrollView(this);
-        scrollView.setFillViewport(true);
 
-        rootLayout = new LinearLayout(this);
-        rootLayout.setOrientation(LinearLayout.VERTICAL);
-        rootLayout.setPadding(24, 24, 24, 40);
-        rootLayout.setBackgroundColor(Color.rgb(248, 250, 252));
+        container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(0, 10, 0, 20);
 
-        titleText = new TextView(this);
-        titleText.setText("Exam");
-        titleText.setTextSize(25);
-        titleText.setTextColor(Color.rgb(17, 24, 39));
-        titleText.setGravity(Gravity.CENTER);
-        titleText.setTypeface(null, android.graphics.Typeface.BOLD);
+        scrollView.addView(container);
 
-        rootLayout.addView(titleText, new LinearLayout.LayoutParams(
-                -1,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
-
-        infoText = new TextView(this);
-        infoText.setText("Loading exam...");
-        infoText.setTextSize(15);
-        infoText.setTextColor(Color.rgb(100, 116, 139));
-        infoText.setGravity(Gravity.CENTER);
-        infoText.setPadding(0, 8, 0, 8);
-
-        rootLayout.addView(infoText, new LinearLayout.LayoutParams(
-                -1,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
-
-        timerText = new TextView(this);
-        timerText.setText("Time: --:--");
-        timerText.setTextSize(18);
-        timerText.setTextColor(Color.rgb(220, 38, 38));
-        timerText.setGravity(Gravity.CENTER);
-        timerText.setTypeface(null, android.graphics.Typeface.BOLD);
-        timerText.setPadding(0, 12, 0, 16);
-
-        rootLayout.addView(timerText, new LinearLayout.LayoutParams(
-                -1,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
-
-        questionContainer = new LinearLayout(this);
-        questionContainer.setOrientation(LinearLayout.VERTICAL);
-
-        rootLayout.addView(questionContainer, new LinearLayout.LayoutParams(
-                -1,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
-
-        submitButton = new Button(this);
-        submitButton.setText("Submit Exam");
-        submitButton.setTextSize(16);
-        submitButton.setAllCaps(false);
-
-        submitButton.setOnClickListener(v -> submitExam());
-
-        LinearLayout.LayoutParams submitParams =
+        root.addView(
+                scrollView,
                 new LinearLayout.LayoutParams(
                         -1,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
+                        0,
+                        1
+                )
+        );
 
-        submitParams.topMargin = 24;
+        Button backButton = new Button(this);
+        backButton.setText("Back");
+        backButton.setAllCaps(false);
 
-        rootLayout.addView(submitButton, submitParams);
+        backButton.setOnClickListener(v -> finish());
 
-        scrollView.addView(rootLayout);
-        setContentView(scrollView);
+        root.addView(backButton);
+
+        setContentView(root);
     }
 
-    private void loadExam() {
+    private void loadPublishedQuizzes() {
 
-        if (examId == null || examId.trim().isEmpty()) {
-            Toast.makeText(this, "Exam not found.", Toast.LENGTH_LONG).show();
-            finish();
+        container.removeAllViews();
+        quizzes.clear();
+
+        if (studentClass == null || studentClass.trim().isEmpty()) {
+
+            showMessage(
+                    "Class information is missing. Please login again."
+            );
+
             return;
         }
 
         db.collection("quizzes")
-                .document(examId)
+                .whereEqualTo("published", true)
                 .get()
-                .addOnSuccessListener(document -> {
+                .addOnSuccessListener(snapshot -> {
 
-                    if (!document.exists()) {
-                        Toast.makeText(
-                                this,
-                                "Exam does not exist.",
-                                Toast.LENGTH_LONG
-                        ).show();
-                        finish();
+                    for (DocumentSnapshot doc :
+                            snapshot.getDocuments()) {
+
+                        String classId =
+                                doc.getString("classId");
+
+                        String medium =
+                                doc.getString("medium");
+
+                        if (classId == null) {
+                            continue;
+                        }
+
+                        if (!studentClass.equals(classId)) {
+                            continue;
+                        }
+
+                        if (medium == null ||
+                                medium.trim().isEmpty()) {
+                            medium = "English";
+                        }
+
+                        if (!studentMedium.equalsIgnoreCase(medium)) {
+                            continue;
+                        }
+
+                        QuizData quiz = new QuizData();
+
+                        quiz.id = doc.getId();
+                        quiz.title = value(
+                                doc.getString("title"),
+                                "Untitled Quiz"
+                        );
+
+                        quiz.type = value(
+                                doc.getString("type"),
+                                "PRACTICE_QUIZ"
+                        );
+
+                        quiz.className = value(
+                                doc.getString("className"),
+                                studentClass
+                        );
+
+                        quiz.medium = medium;
+
+                        quiz.subjectId = value(
+                                doc.getString("subjectId"),
+                                ""
+                        );
+
+                        quiz.subjectName = value(
+                                doc.getString("subjectName"),
+                                "All Subjects"
+                        );
+
+                        quiz.chapterId = value(
+                                doc.getString("chapterId"),
+                                ""
+                        );
+
+                        quiz.chapterName = value(
+                                doc.getString("chapterName"),
+                                "All Chapters"
+                        );
+
+                        quiz.difficulty = value(
+                                doc.getString("difficulty"),
+                                "easy"
+                        );
+
+                        Long questionCount =
+                                doc.getLong("questionCount");
+
+                        Long totalMarks =
+                                doc.getLong("totalMarks");
+
+                        Long duration =
+                                doc.getLong("durationMinutes");
+
+                        quiz.questionCount =
+                                questionCount != null
+                                        ? questionCount.intValue()
+                                        : 10;
+
+                        quiz.totalMarks =
+                                totalMarks != null
+                                        ? totalMarks
+                                        : 0;
+
+                        quiz.durationMinutes =
+                                duration != null
+                                        ? duration
+                                        : 10;
+
+                        quizzes.add(quiz);
+                    }
+
+                    if (quizzes.isEmpty()) {
+
+                        showMessage(
+                                "No published exams or quizzes are available for your class and medium."
+                        );
+
                         return;
                     }
 
-                    String title = document.getString("title");
-
-                    if (title == null || title.trim().isEmpty()) {
-                        title = "MyStudy Exam";
-                    }
-
-                    titleText.setText(title);
-
-                    Long countValue = document.getLong("questionCount");
-                    if (countValue != null && countValue > 0) {
-                        questionCount = countValue.intValue();
-                    }
-
-                    Long durationValue = document.getLong("durationMinutes");
-                    if (durationValue != null && durationValue > 0) {
-                        durationMinutes = durationValue.intValue();
-                    }
-
-                    Long marksValue = document.getLong("totalMarks");
-                    if (marksValue != null && marksValue > 0) {
-                        totalMarks = marksValue.intValue();
-                    }
-
-                    String examClassId = document.getString("classId");
-                    String examMedium = document.getString("medium");
-
-                    if (examClassId != null &&
-                            studentClassId != null &&
-                            !examClassId.equals(studentClassId)) {
-
-                        Toast.makeText(
-                                this,
-                                "This exam is not for your class.",
-                                Toast.LENGTH_LONG
-                        ).show();
-
-                        finish();
-                        return;
-                    }
-
-                    if (examMedium != null &&
-                            studentMedium != null &&
-                            !examMedium.equalsIgnoreCase(studentMedium)) {
-
-                        Toast.makeText(
-                                this,
-                                "This exam is not available for your medium.",
-                                Toast.LENGTH_LONG
-                        ).show();
-
-                        finish();
-                        return;
-                    }
-
-                    infoText.setText(
-                            "Class " + safe(studentClassName)
-                                    + " • " + safe(studentMedium)
-                                    + " • " + questionCount + " Questions"
+                    Collections.sort(
+                            quizzes,
+                            (a, b) ->
+                                    a.title.compareToIgnoreCase(
+                                            b.title
+                                    )
                     );
 
-                    loadQuestions(document);
-
-                })
-                .addOnFailureListener(e -> {
-
-                    Toast.makeText(
-                            this,
-                            "Unable to load exam.",
-                            Toast.LENGTH_LONG
-                    ).show();
-
-                    finish();
-                });
-    }
-
-    private void loadQuestions(
-            com.google.firebase.firestore.DocumentSnapshot examDocument
-    ) {
-
-        questions.clear();
-
-        String classId = examDocument.getString("classId");
-        String medium = examDocument.getString("medium");
-        String subjectId = examDocument.getString("subjectId");
-        String chapterId = examDocument.getString("chapterId");
-
-        db.collection("questions")
-                .whereEqualTo("classId", classId)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-
-                    for (QueryDocumentSnapshot doc : querySnapshot) {
-
-                        String questionMedium = doc.getString("medium");
-
-                        if (questionMedium == null) {
-                            questionMedium = "English";
-                        }
-
-                        if (!questionMedium.equalsIgnoreCase(
-                                medium == null ? "English" : medium
-                        )) {
-                            continue;
-                        }
-
-                        String questionSubjectId =
-                                doc.getString("subjectId");
-
-                        String questionChapterId =
-                                doc.getString("chapterId");
-
-                        if (subjectId != null &&
-                                !subjectId.trim().isEmpty() &&
-                                !subjectId.equals("ALL") &&
-                                !subjectId.equals(questionSubjectId)) {
-                            continue;
-                        }
-
-                        if (chapterId != null &&
-                                !chapterId.trim().isEmpty() &&
-                                !chapterId.equals("ALL") &&
-                                !chapterId.equals(questionChapterId)) {
-                            continue;
-                        }
-
-                        ExamQuestion question = new ExamQuestion();
-
-                        question.id = doc.getId();
-                        question.question =
-                                safe(doc.getString("question"));
-
-                        question.type =
-                                safe(doc.getString("type"));
-
-                        question.optionA =
-                                safe(doc.getString("optionA"));
-
-                        question.optionB =
-                                safe(doc.getString("optionB"));
-
-                        question.optionC =
-                                safe(doc.getString("optionC"));
-
-                        question.optionD =
-                                safe(doc.getString("optionD"));
-
-                        question.answer =
-                                safe(doc.getString("answer"));
-
-                        question.explanation =
-                                safe(doc.getString("explanation"));
-
-                        question.marks = 1;
-
-                        Long marks = doc.getLong("marks");
-
-                        if (marks != null && marks > 0) {
-                            question.marks = marks.intValue();
-                        }
-
-                        if (!question.question.trim().isEmpty()) {
-                            questions.add(question);
-                        }
+                    for (QuizData quiz : quizzes) {
+                        addQuizCard(quiz);
                     }
-
-                    if (questions.isEmpty()) {
-
+                })
+                .addOnFailureListener(e ->
                         Toast.makeText(
                                 this,
-                                "No questions available for this exam.",
+                                "Failed to load exams: " +
+                                        e.getMessage(),
                                 Toast.LENGTH_LONG
-                        ).show();
-
-                        return;
-                    }
-
-                    Collections.shuffle(questions);
-
-                    if (questions.size() > questionCount) {
-                        while (questions.size() > questionCount) {
-                            questions.remove(questions.size() - 1);
-                        }
-                    }
-
-                    totalMarks = 0;
-
-                    for (ExamQuestion question : questions) {
-                        totalMarks += question.marks;
-                    }
-
-                    displayQuestions();
-                    startTimer();
-
-                })
-                .addOnFailureListener(e -> {
-
-                    Toast.makeText(
-                            this,
-                            "Unable to load questions.",
-                            Toast.LENGTH_LONG
-                    ).show();
-                });
+                        ).show()
+                );
     }
 
-    private void displayQuestions() {
+    private void addQuizCard(QuizData quiz) {
 
-        questionContainer.removeAllViews();
+        LinearLayout card = new LinearLayout(this);
 
-        for (int i = 0; i < questions.size(); i++) {
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(24, 22, 24, 22);
+        card.setBackgroundColor(Color.WHITE);
 
-            final int index = i;
-            ExamQuestion question = questions.get(i);
+        TextView title = new TextView(this);
+        title.setText(quiz.title);
+        title.setTextSize(20);
+        title.setTextColor(Color.rgb(17, 24, 39));
 
-            LinearLayout card = new LinearLayout(this);
-            card.setOrientation(LinearLayout.VERTICAL);
-            card.setPadding(20, 20, 20, 20);
-            card.setBackgroundColor(Color.WHITE);
+        TextView type = new TextView(this);
+        type.setText(
+                "Type: " +
+                        quiz.type
+        );
+        type.setTextSize(14);
+        type.setTextColor(Color.rgb(79, 70, 229));
+        type.setPadding(0, 8, 0, 0);
 
-            LinearLayout.LayoutParams cardParams =
-                    new LinearLayout.LayoutParams(
-                            -1,
-                            LinearLayout.LayoutParams.WRAP_CONTENT
-                    );
+        TextView subject = new TextView(this);
+        subject.setText(
+                "Subject: " +
+                        quiz.subjectName
+        );
+        subject.setTextSize(14);
+        subject.setTextColor(Color.rgb(14, 116, 144));
+        subject.setPadding(0, 6, 0, 0);
 
-            cardParams.setMargins(0, 0, 0, 18);
+        TextView chapter = new TextView(this);
+        chapter.setText(
+                "Chapter: " +
+                        quiz.chapterName
+        );
+        chapter.setTextSize(14);
+        chapter.setTextColor(Color.rgb(124, 58, 237));
+        chapter.setPadding(0, 6, 0, 0);
 
-            card.setLayoutParams(cardParams);
+        TextView details = new TextView(this);
+        details.setText(
+                "Questions: " +
+                        quiz.questionCount +
+                        " • Marks: " +
+                        quiz.totalMarks +
+                        " • Time: " +
+                        quiz.durationMinutes +
+                        " min"
+        );
+        details.setTextSize(14);
+        details.setTextColor(Color.rgb(100, 116, 139));
+        details.setPadding(0, 8, 0, 0);
 
-            TextView numberText = new TextView(this);
+        TextView difficulty = new TextView(this);
+        difficulty.setText(
+                "Difficulty: " +
+                        quiz.difficulty +
+                        " • " +
+                        quiz.medium
+        );
+        difficulty.setTextSize(13);
+        difficulty.setTextColor(Color.rgb(22, 163, 74));
+        difficulty.setPadding(0, 6, 0, 14);
 
-            numberText.setText(
-                    "Question " + (index + 1)
-                            + "   [" + question.marks + " mark]"
-            );
+        Button startButton = new Button(this);
+        startButton.setText("Start Quiz");
+        startButton.setAllCaps(false);
+        startButton.setTextSize(15);
 
-            numberText.setTextSize(14);
-            numberText.setTextColor(Color.rgb(79, 70, 229));
-            numberText.setTypeface(
-                    null,
-                    android.graphics.Typeface.BOLD
-            );
+        startButton.setOnClickListener(v ->
+                showStartConfirmation(quiz)
+        );
 
-            card.addView(numberText);
+        card.addView(title);
+        card.addView(type);
+        card.addView(subject);
+        card.addView(chapter);
+        card.addView(details);
+        card.addView(difficulty);
+        card.addView(startButton);
 
-            TextView questionText = new TextView(this);
-
-            questionText.setText(question.question);
-            questionText.setTextSize(18);
-            questionText.setTextColor(Color.rgb(17, 24, 39));
-            questionText.setPadding(0, 12, 0, 16);
-
-            card.addView(questionText);
-
-            String type = question.type.toUpperCase(Locale.ROOT);
-
-            if (type.equals("TRUE_FALSE")) {
-
-                RadioGroup group = new RadioGroup(this);
-
-                RadioButton trueButton =
-                        createRadioButton("True");
-
-                RadioButton falseButton =
-                        createRadioButton("False");
-
-                group.addView(trueButton);
-                group.addView(falseButton);
-
-                group.setOnCheckedChangeListener(
-                        (radioGroup, checkedId) -> {
-
-                            RadioButton selected =
-                                    radioGroup.findViewById(checkedId);
-
-                            if (selected != null) {
-                                selectedAnswers.put(
-                                        index,
-                                        selected.getText().toString()
-                                );
-                            }
-                        }
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
                 );
 
-                card.addView(group);
+        params.setMargins(
+                0,
+                0,
+                0,
+                18
+        );
 
-            } else if (type.equals("MCQ")
-                    || type.equals("MULTIPLE_CHOICE")
-                    || type.equals("SINGLE_SELECT")) {
-
-                RadioGroup group = new RadioGroup(this);
-
-                addOption(group, index, question.optionA);
-                addOption(group, index, question.optionB);
-                addOption(group, index, question.optionC);
-                addOption(group, index, question.optionD);
-
-                card.addView(group);
-
-            } else {
-
-                android.widget.EditText answerInput =
-                        new android.widget.EditText(this);
-
-                answerInput.setHint("Enter your answer");
-                answerInput.setTextSize(16);
-                answerInput.setSingleLine(false);
-                answerInput.setPadding(16, 12, 16, 12);
-
-                answerInput.setOnFocusChangeListener(
-                        (v, hasFocus) -> {
-
-                            if (!hasFocus) {
-                                selectedAnswers.put(
-                                        index,
-                                        answerInput.getText()
-                                                .toString()
-                                                .trim()
-                                );
-                            }
-                        }
-                );
-
-                answerInput.addTextChangedListener(
-                        new android.text.TextWatcher() {
-
-                            @Override
-                            public void beforeTextChanged(
-                                    CharSequence s,
-                                    int start,
-                                    int count,
-                                    int after
-                            ) {
-                            }
-
-                            @Override
-                            public void onTextChanged(
-                                    CharSequence s,
-                                    int start,
-                                    int before,
-                                    int count
-                            ) {
-                                selectedAnswers.put(
-                                        index,
-                                        s.toString().trim()
-                                );
-                            }
-
-                            @Override
-                            public void afterTextChanged(
-                                    android.text.Editable s
-                            ) {
-                            }
-                        }
-                );
-
-                card.addView(answerInput);
-            }
-
-            questionContainer.addView(card);
-        }
+        container.addView(card, params);
     }
 
-    private RadioButton createRadioButton(String text) {
+    private void showStartConfirmation(QuizData quiz) {
 
-        RadioButton button = new RadioButton(this);
+        String message =
+                "Quiz: " +
+                        quiz.title +
+                        "\n\n" +
+                        "Questions: " +
+                        quiz.questionCount +
+                        "\n" +
+                        "Total Marks: " +
+                        quiz.totalMarks +
+                        "\n" +
+                        "Time: " +
+                        quiz.durationMinutes +
+                        " minutes\n" +
+                        "Difficulty: " +
+                        quiz.difficulty +
+                        "\n\n" +
+                        "Do you want to start this quiz?";
 
-        button.setText(text);
-        button.setTextSize(16);
-        button.setTextColor(Color.rgb(31, 41, 55));
-        button.setPadding(0, 8, 0, 8);
-
-        return button;
+        new AlertDialog.Builder(this)
+                .setTitle("Start Quiz")
+                .setMessage(message)
+                .setNegativeButton(
+                        "Cancel",
+                        null
+                )
+                .setPositiveButton(
+                        "Start",
+                        (dialog, which) ->
+                                startQuiz(quiz)
+                )
+                .show();
     }
 
-    private void addOption(
-            RadioGroup group,
-            int questionIndex,
-            String option
-    ) {
+    private void startQuiz(QuizData quiz) {
 
-        if (option == null || option.trim().isEmpty()) {
-            return;
-        }
-
-        RadioButton button = createRadioButton(option);
-
-        button.setOnClickListener(v -> {
-
-            RadioButton selected =
-                    (RadioButton) v;
-
-            selectedAnswers.put(
-                    questionIndex,
-                    selected.getText().toString().trim()
-            );
-        });
-
-        group.addView(button);
-    }
-
-    private void startTimer() {
-
-        long duration =
-                durationMinutes * 60L * 1000L;
-
-        countDownTimer = new CountDownTimer(
-                duration,
-                1000
-        ) {
-
-            @Override
-            public void onTick(long millisUntilFinished) {
-
-                long totalSeconds =
-                        millisUntilFinished / 1000;
-
-                long minutes =
-                        totalSeconds / 60;
-
-                long seconds =
-                        totalSeconds % 60;
-
-                timerText.setText(
-                        String.format(
-                                Locale.getDefault(),
-                                "Time: %02d:%02d",
-                                minutes,
-                                seconds
-                        )
-                );
-            }
-
-            @Override
-            public void onFinish() {
-
-                timerText.setText("Time Over");
-                submitExam();
-            }
-
-        }.start();
-    }
-
-    private void submitExam() {
-
-        if (submitted) {
-            return;
-        }
-
-        if (questions.isEmpty()) {
-            Toast.makeText(
-                    this,
-                    "No questions to submit.",
-                    Toast.LENGTH_SHORT
-            ).show();
-            return;
-        }
-
-        submitted = true;
-
-        if (countDownTimer != null) {
-            countDownTimer.cancel();
-        }
-
-        submitButton.setEnabled(false);
-
-        currentScore = 0;
-
-        for (int i = 0; i < questions.size(); i++) {
-
-            ExamQuestion question = questions.get(i);
-
-            String selected =
-                    selectedAnswers.get(i);
-
-            if (selected == null) {
-                continue;
-            }
-
-            if (isAnswerCorrect(question, selected)) {
-                currentScore += question.marks;
-            }
-        }
-
-        saveResult();
-    }
-
-    private boolean isAnswerCorrect(
-            ExamQuestion question,
-            String selected
-    ) {
-
-        if (selected == null ||
-                question.answer == null) {
-            return false;
-        }
-
-        String userAnswer =
-                selected.trim();
-
-        String correctAnswer =
-                question.answer.trim();
-
-        if (userAnswer.equalsIgnoreCase(correctAnswer)) {
-            return true;
-        }
-
-        String type =
-                question.type.toUpperCase(Locale.ROOT);
-
-        if (type.equals("TRUE_FALSE")) {
-
-            String normalizedUser =
-                    userAnswer.equalsIgnoreCase("true")
-                            ? "true"
-                            : userAnswer.equalsIgnoreCase("false")
-                            ? "false"
-                            : userAnswer;
-
-            String normalizedCorrect =
-                    correctAnswer.equalsIgnoreCase("true")
-                            ? "true"
-                            : correctAnswer.equalsIgnoreCase("false")
-                            ? "false"
-                            : correctAnswer;
-
-            return normalizedUser.equalsIgnoreCase(
-                    normalizedCorrect
-            );
-        }
-
-        try {
-
-            double userNumber =
-                    Double.parseDouble(userAnswer);
-
-            double correctNumber =
-                    Double.parseDouble(correctAnswer);
-
-            return Math.abs(
-                    userNumber - correctNumber
-            ) < 0.0001;
-
-        } catch (Exception ignored) {
-        }
-
-        return false;
-    }
-
-    private void saveResult() {
-
-        String userId =
-                auth.getCurrentUser() == null
-                        ? null
-                        : auth.getCurrentUser().getUid();
-
-        if (userId == null) {
+        if (auth.getCurrentUser() == null) {
 
             Toast.makeText(
                     this,
                     "Please login again.",
-                    Toast.LENGTH_LONG
+                    Toast.LENGTH_SHORT
             ).show();
 
-            finish();
             return;
         }
 
-        double accuracy = 0;
-
-        if (!questions.isEmpty()) {
-            accuracy =
-                    (currentScore * 100.0)
-                            / totalMarks;
-        }
-
-        Map<String, Object> result =
-                new HashMap<>();
-
-        result.put("userId", userId);
-        result.put("studentName", studentName);
-        result.put("examId", examId);
-
-        result.put(
-                "classId",
-                studentClassId == null
-                        ? ""
-                        : studentClassId
-        );
-
-        result.put(
-                "className",
-                studentClassName == null
-                        ? ""
-                        : studentClassName
-        );
-
-        result.put(
-                "medium",
-                studentMedium == null
-                        ? "English"
-                        : studentMedium
-        );
-
-        result.put(
-                "subjectId",
-                studentSubjectId == null
-                        ? ""
-                        : studentSubjectId
-        );
-
-        result.put(
-                "subjectName",
-                studentSubjectName == null
-                        ? ""
-                        : studentSubjectName
-        );
-
-        result.put(
-                "chapterId",
-                studentChapterId == null
-                        ? ""
-                        : studentChapterId
-        );
-
-        result.put(
-                "chapterName",
-                studentChapterName == null
-                        ? ""
-                        : studentChapterName
-        );
-
-        result.put("score", currentScore);
-        result.put("totalMarks", totalMarks);
-        result.put("totalQuestions", questions.size());
-        result.put("accuracy", accuracy);
-        result.put("completedAt",
-                System.currentTimeMillis());
-
-        db.collection("examResults")
-                .add(result)
-                .addOnSuccessListener(documentReference -> {
-
-                    int earnedPoints =
-                            currentScore * 5;
-
-                    addStudentPoints(
-                            userId,
-                            earnedPoints
-                    );
-
-                    Toast.makeText(
-                            this,
-                            "Exam submitted successfully!",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
-                    openResultScreen(
-                            currentScore,
-                            totalMarks,
-                            questions.size(),
-                            accuracy
-                    );
-                })
-                .addOnFailureListener(e -> {
-
-                    submitted = false;
-                    submitButton.setEnabled(true);
-
-                    Toast.makeText(
-                            this,
-                            "Result save failed.",
-                            Toast.LENGTH_LONG
-                    ).show();
-                });
-    }
-
-    private void addStudentPoints(
-            String userId,
-            int points
-    ) {
-
-        if (points <= 0) {
-            return;
-        }
-
-        db.collection("users")
-                .document(userId)
+        db.collection("questions")
+                .whereEqualTo(
+                        "classId",
+                        studentClass
+                )
                 .get()
-                .addOnSuccessListener(document -> {
+                .addOnSuccessListener(snapshot -> {
 
-                    long oldPoints = 0;
+                    List<DocumentSnapshot> matchingQuestions =
+                            new ArrayList<>();
 
-                    if (document.exists()) {
+                    for (DocumentSnapshot doc :
+                            snapshot.getDocuments()) {
 
-                        Long value =
-                                document.getLong("points");
+                        String medium =
+                                doc.getString("medium");
 
-                        if (value != null) {
-                            oldPoints = value;
+                        if (medium == null ||
+                                medium.trim().isEmpty()) {
+                            medium = "English";
                         }
+
+                        if (!studentMedium.equalsIgnoreCase(
+                                medium
+                        )) {
+                            continue;
+                        }
+
+                        if (!quiz.subjectId.isEmpty()) {
+
+                            String subjectId =
+                                    doc.getString("subjectId");
+
+                            if (subjectId == null ||
+                                    !quiz.subjectId.equals(
+                                            subjectId
+                                    )) {
+                                continue;
+                            }
+                        }
+
+                        if (!quiz.chapterId.isEmpty()) {
+
+                            String chapterId =
+                                    doc.getString("chapterId");
+
+                            if (chapterId == null ||
+                                    !quiz.chapterId.equals(
+                                            chapterId
+                                    )) {
+                                continue;
+                            }
+                        }
+
+                        if (!quiz.difficulty.isEmpty()) {
+
+                            String difficulty =
+                                    doc.getString("difficulty");
+
+                            if (difficulty != null &&
+                                    !quiz.difficulty.equalsIgnoreCase(
+                                            difficulty
+                                    )) {
+                                continue;
+                            }
+                        }
+
+                        matchingQuestions.add(doc);
                     }
 
-                    Map<String, Object> update =
-                            new HashMap<>();
+                    if (matchingQuestions.isEmpty()) {
 
-                    update.put(
-                            "points",
-                            oldPoints + points
+                        Toast.makeText(
+                                this,
+                                "No matching questions found for this quiz.",
+                                Toast.LENGTH_LONG
+                        ).show();
+
+                        return;
+                    }
+
+                    Collections.shuffle(
+                            matchingQuestions
                     );
 
-                    db.collection("users")
-                            .document(userId)
-                            .set(
-                                    update,
-                                    com.google.firebase.firestore
-                                            .SetOptions.merge()
+                    int required =
+                            Math.min(
+                                    quiz.questionCount,
+                                    matchingQuestions.size()
                             );
-                });
-    }
 
-    private void openResultScreen(
-            int score,
-            int total,
-            int questionsCount,
-            double accuracy
-    ) {
+                    ArrayList<String> questionIds =
+                            new ArrayList<>();
 
-        Intent intent =
-                new Intent(
-                        this,
-                        ExamResultActivity.class
+                    for (int i = 0;
+                         i < required;
+                         i++) {
+
+                        questionIds.add(
+                                matchingQuestions
+                                        .get(i)
+                                        .getId()
+                        );
+                    }
+
+                    if (required <= 0) {
+
+                        Toast.makeText(
+                                this,
+                                "No questions available.",
+                                Toast.LENGTH_LONG
+                        ).show();
+
+                        return;
+                    }
+
+                    android.content.Intent intent =
+                            new android.content.Intent(
+                                    this,
+                                    StudentExamAttemptActivity.class
+                            );
+
+                    intent.putExtra(
+                            "quizId",
+                            quiz.id
+                    );
+
+                    intent.putExtra(
+                            "quizTitle",
+                            quiz.title
+                    );
+
+                    intent.putExtra(
+                            "quizType",
+                            quiz.type
+                    );
+
+                    intent.putExtra(
+                            "classId",
+                            studentClass
+                    );
+
+                    intent.putExtra(
+                            "className",
+                            quiz.className
+                    );
+
+                    intent.putExtra(
+                            "studentMedium",
+                            studentMedium
+                    );
+
+                    intent.putExtra(
+                            "studentName",
+                            studentName
+                    );
+
+                    intent.putExtra(
+                            "subjectId",
+                            quiz.subjectId
+                    );
+
+                    intent.putExtra(
+                            "subjectName",
+                            quiz.subjectName
+                    );
+
+                    intent.putExtra(
+                            "chapterId",
+                            quiz.chapterId
+                    );
+
+                    intent.putExtra(
+                            "chapterName",
+                            quiz.chapterName
+                    );
+
+                    intent.putExtra(
+                            "durationMinutes",
+                            quiz.durationMinutes
+                    );
+
+                    intent.putExtra(
+                            "totalMarks",
+                            quiz.totalMarks
+                    );
+
+                    intent.putExtra(
+                            "questionCount",
+                            required
+                    );
+
+                    intent.putStringArrayListExtra(
+                            "questionIds",
+                            questionIds
+                    );
+
+                    startActivity(intent);
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(
+                                this,
+                                "Failed to prepare quiz: " +
+                                        e.getMessage(),
+                                Toast.LENGTH_LONG
+                        ).show()
                 );
-
-        intent.putExtra(
-                "examId",
-                examId
-        );
-
-        intent.putExtra(
-                "score",
-                score
-        );
-
-        intent.putExtra(
-                "totalMarks",
-                total
-        );
-
-        intent.putExtra(
-                "totalQuestions",
-                questionsCount
-        );
-
-        intent.putExtra(
-                "accuracy",
-                accuracy
-        );
-
-        intent.putExtra(
-                "studentName",
-                studentName
-        );
-
-        intent.putExtra(
-                "className",
-                studentClassName
-        );
-
-        intent.putExtra(
-                "studentMedium",
-                studentMedium
-        );
-
-        startActivity(intent);
-        finish();
     }
 
-    private String safe(String value) {
+    private void showMessage(String message) {
+
+        TextView text = new TextView(this);
+
+        text.setText(message);
+        text.setTextSize(16);
+        text.setTextColor(Color.rgb(100, 116, 139));
+        text.setGravity(Gravity.CENTER);
+        text.setPadding(30, 80, 30, 80);
+
+        container.addView(
+                text,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
+    }
+
+    private String value(
+            String value,
+            String fallback
+    ) {
 
         if (value == null ||
                 value.trim().isEmpty()) {
-            return "";
+
+            return fallback;
         }
 
         return value;
     }
 
-    @Override
-    protected void onDestroy() {
-
-        if (countDownTimer != null) {
-            countDownTimer.cancel();
-        }
-
-        super.onDestroy();
-    }
-
-    private static class ExamQuestion {
+    private static class QuizData {
 
         String id = "";
-        String question = "";
+        String title = "";
         String type = "";
-        String optionA = "";
-        String optionB = "";
-        String optionC = "";
-        String optionD = "";
-        String answer = "";
-        String explanation = "";
-        int marks = 1;
+        String className = "";
+        String medium = "";
+        String subjectId = "";
+        String subjectName = "";
+        String chapterId = "";
+        String chapterName = "";
+        String difficulty = "";
+
+        int questionCount = 10;
+        long totalMarks = 0;
+        long durationMinutes = 10;
     }
 }

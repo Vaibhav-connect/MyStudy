@@ -28,6 +28,7 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText emailInput;
     private EditText passwordInput;
     private EditText confirmPasswordInput;
+    private EditText parentPinInput;
 
     private Spinner classSpinner;
     private Spinner languageSpinner;
@@ -136,6 +137,14 @@ public class RegisterActivity extends AppCompatActivity {
         );
 
         addInput(root, confirmPasswordInput, 12);
+
+        parentPinInput = createInput(
+                "Parent PIN (4 digits)",
+                InputType.TYPE_CLASS_NUMBER |
+                        InputType.TYPE_NUMBER_VARIATION_PASSWORD
+        );
+
+        addInput(root, parentPinInput, 12);
 
         classSpinner = new Spinner(this);
 
@@ -306,6 +315,9 @@ public class RegisterActivity extends AppCompatActivity {
         String confirmPassword =
                 confirmPasswordInput.getText().toString();
 
+        String parentPin =
+                parentPinInput.getText().toString().trim();
+
         if (name.isEmpty()) {
             nameInput.setError("Enter student name");
             nameInput.requestFocus();
@@ -354,6 +366,22 @@ public class RegisterActivity extends AppCompatActivity {
                     "Passwords do not match"
             );
             confirmPasswordInput.requestFocus();
+            return;
+        }
+
+        if (parentPin.isEmpty()) {
+            parentPinInput.setError(
+                    "Enter a 4-digit Parent PIN"
+            );
+            parentPinInput.requestFocus();
+            return;
+        }
+
+        if (!parentPin.matches("\\d{4}")) {
+            parentPinInput.setError(
+                    "Parent PIN must contain exactly 4 digits"
+            );
+            parentPinInput.requestFocus();
             return;
         }
 
@@ -435,7 +463,16 @@ public class RegisterActivity extends AppCompatActivity {
             userData.put("email", email);
             userData.put("class", selectedClass);
             userData.put("language", selectedLanguage);
+            userData.put("parentPin", parentPin);
             userData.put("role", "student");
+            userData.put(
+                    "points",
+                    0
+            );
+            userData.put(
+                    "streak",
+                    0
+            );
             userData.put(
                     "createdAt",
                     com.google.firebase.firestore.FieldValue.serverTimestamp()

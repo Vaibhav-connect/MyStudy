@@ -90,6 +90,10 @@
             android:name=".StudentLessonActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".StudentPracticeActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

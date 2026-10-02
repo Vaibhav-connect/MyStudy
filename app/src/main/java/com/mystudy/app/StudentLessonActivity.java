@@ -6,6 +6,8 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -46,8 +48,11 @@ public class StudentLessonActivity extends AppCompatActivity {
         chapterName = getIntent().getStringExtra("chapterName");
 
         if (classId == null ||
+                classId.trim().isEmpty() ||
                 subjectId == null ||
-                chapterId == null) {
+                subjectId.trim().isEmpty() ||
+                chapterId == null ||
+                chapterId.trim().isEmpty()) {
 
             Toast.makeText(
                     this,
@@ -71,9 +76,18 @@ public class StudentLessonActivity extends AppCompatActivity {
 
         ScrollView scrollView = new ScrollView(this);
 
+        scrollView.setFillViewport(true);
+
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(24, 24, 24, 24);
+
+        root.setPadding(
+                20,
+                24,
+                20,
+                30
+        );
+
         root.setBackgroundColor(
                 Color.rgb(248, 250, 252)
         );
@@ -81,20 +95,25 @@ public class StudentLessonActivity extends AppCompatActivity {
         TextView title = new TextView(this);
 
         title.setText("📖 Lessons");
-        title.setTextSize(26);
+        title.setTextSize(27);
         title.setTextColor(
                 Color.rgb(17, 24, 39)
         );
+
         title.setTypeface(
                 null,
                 Typeface.BOLD
+        );
+
+        title.setGravity(
+                Gravity.CENTER_VERTICAL
         );
 
         root.addView(
                 title,
                 new LinearLayout.LayoutParams(
                         -1,
-                        70
+                        65
                 )
         );
 
@@ -124,7 +143,7 @@ public class StudentLessonActivity extends AppCompatActivity {
                 0,
                 0,
                 0,
-                24
+                22
         );
 
         root.addView(subtitle);
@@ -220,6 +239,10 @@ public class StudentLessonActivity extends AppCompatActivity {
                 .addOnFailureListener(
                         error -> {
 
+                            showMessage(
+                                    "Unable to load lessons."
+                            );
+
                             Toast.makeText(
                                     StudentLessonActivity.this,
                                     "Unable to load lessons",
@@ -236,6 +259,12 @@ public class StudentLessonActivity extends AppCompatActivity {
             String content
     ) {
 
+        final String selectedLessonId =
+                lessonId;
+
+        final String selectedLessonTitle =
+                title;
+
         LinearLayout card =
                 new LinearLayout(this);
 
@@ -245,7 +274,7 @@ public class StudentLessonActivity extends AppCompatActivity {
 
         card.setPadding(
                 20,
-                18,
+                20,
                 20,
                 20
         );
@@ -253,19 +282,28 @@ public class StudentLessonActivity extends AppCompatActivity {
         GradientDrawable background =
                 new GradientDrawable();
 
-        background.setColor(Color.WHITE);
-        background.setCornerRadius(28);
+        background.setColor(
+                Color.WHITE
+        );
 
-        card.setBackground(background);
+        background.setCornerRadius(
+                28
+        );
+
+        card.setBackground(
+                background
+        );
+
+        card.setElevation(5);
 
         TextView lessonTitle =
                 new TextView(this);
 
         lessonTitle.setText(
-                "📘 " + title
+                "📘 " + selectedLessonTitle
         );
 
-        lessonTitle.setTextSize(19);
+        lessonTitle.setTextSize(20);
         lessonTitle.setTextColor(
                 Color.rgb(17, 24, 39)
         );
@@ -275,7 +313,9 @@ public class StudentLessonActivity extends AppCompatActivity {
                 Typeface.BOLD
         );
 
-        card.addView(lessonTitle);
+        card.addView(
+                lessonTitle
+        );
 
         if (description != null &&
                 !description.trim().isEmpty()) {
@@ -294,7 +334,7 @@ public class StudentLessonActivity extends AppCompatActivity {
 
             lessonDescription.setPadding(
                     0,
-                    8,
+                    9,
                     0,
                     0
             );
@@ -319,9 +359,14 @@ public class StudentLessonActivity extends AppCompatActivity {
                     Color.rgb(55, 65, 81)
             );
 
+            lessonContent.setLineSpacing(
+                    3,
+                    1.05f
+            );
+
             lessonContent.setPadding(
                     0,
-                    12,
+                    14,
                     0,
                     12
             );
@@ -340,6 +385,9 @@ public class StudentLessonActivity extends AppCompatActivity {
 
         completeButton.setAllCaps(false);
         completeButton.setTextSize(15);
+        completeButton.setTextColor(
+                Color.WHITE
+        );
 
         GradientDrawable completeBackground =
                 new GradientDrawable();
@@ -350,10 +398,6 @@ public class StudentLessonActivity extends AppCompatActivity {
 
         completeBackground.setCornerRadius(
                 30
-        );
-
-        completeButton.setTextColor(
-                Color.WHITE
         );
 
         completeButton.setBackground(
@@ -432,6 +476,10 @@ public class StudentLessonActivity extends AppCompatActivity {
                 cardParams
         );
 
+        addPressAnimation(card);
+        addPressAnimation(completeButton);
+        addPressAnimation(practiceButton);
+
         completeButton.setOnClickListener(
                 view -> {
 
@@ -454,7 +502,7 @@ public class StudentLessonActivity extends AppCompatActivity {
                             classId,
                             subjectId,
                             chapterId,
-                            lessonId
+                            selectedLessonId
                     );
 
                     progressManager.addPoints(
@@ -468,6 +516,10 @@ public class StudentLessonActivity extends AppCompatActivity {
 
                     completeButton.setText(
                             "✓ Lesson Completed"
+                    );
+
+                    completeButton.setEnabled(
+                            false
                     );
 
                     Toast.makeText(
@@ -521,12 +573,12 @@ public class StudentLessonActivity extends AppCompatActivity {
 
                     intent.putExtra(
                             "lessonId",
-                            lessonId
+                            selectedLessonId
                     );
 
                     intent.putExtra(
                             "lessonTitle",
-                            title
+                            selectedLessonTitle
                     );
 
                     startActivity(intent);
@@ -535,6 +587,39 @@ public class StudentLessonActivity extends AppCompatActivity {
                             android.R.anim.fade_in,
                             android.R.anim.fade_out
                     );
+                }
+        );
+    }
+
+    private void addPressAnimation(View view) {
+
+        view.setOnTouchListener(
+                (v, event) -> {
+
+                    if (event.getAction() ==
+                            MotionEvent.ACTION_DOWN) {
+
+                        v.animate()
+                                .scaleX(0.97f)
+                                .scaleY(0.97f)
+                                .setDuration(100)
+                                .start();
+
+                    } else if (
+                            event.getAction() ==
+                                    MotionEvent.ACTION_UP ||
+                            event.getAction() ==
+                                    MotionEvent.ACTION_CANCEL
+                    ) {
+
+                        v.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(100)
+                                .start();
+                    }
+
+                    return false;
                 }
         );
     }

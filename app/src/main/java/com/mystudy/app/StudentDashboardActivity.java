@@ -36,6 +36,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
     private TextView streakValue;
     private TextView accuracyValue;
     private TextView lessonProgressValue;
+    private TextView dashboardStatus;
     private LinearLayout weakTopicsContainer;
 
     private int totalQuizScore = 0;
@@ -182,10 +183,36 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 0,
                 0,
                 0,
-                20
+                10
         );
 
         root.addView(subtitle);
+
+        dashboardStatus =
+                new TextView(this);
+
+        dashboardStatus.setText(
+                "⏳ Loading your dashboard..."
+        );
+
+        dashboardStatus.setTextSize(14);
+
+        dashboardStatus.setTextColor(
+                Color.rgb(79, 70, 229)
+        );
+
+        dashboardStatus.setGravity(
+                Gravity.CENTER
+        );
+
+        dashboardStatus.setPadding(
+                0,
+                8,
+                0,
+                16
+        );
+
+        root.addView(dashboardStatus);
 
         LinearLayout stats =
                 new LinearLayout(this);
@@ -834,7 +861,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 new TextView(this);
 
         lessonProgressValue.setText(
-                "0 lessons completed"
+                "⏳ Loading lessons..."
         );
 
         lessonProgressValue.setTextSize(14);
@@ -910,13 +937,17 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 new TextView(this);
 
         loading.setText(
-                "Checking your practice performance..."
+                "⏳ Checking your practice performance..."
         );
 
         loading.setTextSize(14);
 
         loading.setTextColor(
                 Color.rgb(100, 116, 139)
+        );
+
+        loading.setGravity(
+                Gravity.CENTER
         );
 
         card.addView(loading);
@@ -932,8 +963,15 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 auth.getCurrentUser();
 
         if (user == null) {
+
+            showDashboardError(
+                    "Please login again to load your dashboard."
+            );
+
             return;
         }
+
+        showDashboardLoading();
 
         String userId =
                 user.getUid();
@@ -945,6 +983,11 @@ public class StudentDashboardActivity extends AppCompatActivity {
                         document -> {
 
                             if (!document.exists()) {
+
+                                showDashboardError(
+                                        "Your profile data was not found."
+                                );
+
                                 return;
                             }
 
@@ -970,6 +1013,10 @@ public class StudentDashboardActivity extends AppCompatActivity {
                                                 points
                                         )
                                 );
+
+                            } else {
+
+                                pointsValue.setText("0");
                             }
 
                             if (streak != null) {
@@ -979,6 +1026,10 @@ public class StudentDashboardActivity extends AppCompatActivity {
                                                 streak
                                         )
                                 );
+
+                            } else {
+
+                                streakValue.setText("0");
                             }
 
                             if (overallAccuracy != null) {
@@ -998,6 +1049,10 @@ public class StudentDashboardActivity extends AppCompatActivity {
                                 );
                             }
 
+                            dashboardStatus.setText(
+                                    "✅ Dashboard updated"
+                            );
+
                             loadWeakTopics(
                                     document
                             );
@@ -1006,11 +1061,9 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 .addOnFailureListener(
                         e -> {
 
-                            Toast.makeText(
-                                    StudentDashboardActivity.this,
-                                    "Unable to load profile stats",
-                                    Toast.LENGTH_SHORT
-                            ).show();
+                            showDashboardError(
+                                    "Unable to load profile data. Please try again."
+                            );
 
                             accuracyValue.setText(
                                     "0%"
@@ -1020,6 +1073,49 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         loadQuizAccuracy(userId);
         loadCompletedLessons(userId);
+    }
+
+    private void showDashboardLoading() {
+
+        if (dashboardStatus != null) {
+
+            dashboardStatus.setText(
+                    "⏳ Loading your latest data..."
+            );
+
+            dashboardStatus.setTextColor(
+                    Color.rgb(79, 70, 229)
+            );
+        }
+
+        if (lessonProgressValue != null) {
+
+            lessonProgressValue.setText(
+                    "⏳ Loading lessons..."
+            );
+        }
+    }
+
+    private void showDashboardError(
+            String message
+    ) {
+
+        if (dashboardStatus != null) {
+
+            dashboardStatus.setText(
+                    "⚠️ " + message
+            );
+
+            dashboardStatus.setTextColor(
+                    Color.rgb(220, 38, 38)
+            );
+        }
+
+        Toast.makeText(
+                StudentDashboardActivity.this,
+                message,
+                Toast.LENGTH_SHORT
+        ).show();
     }
 
     private void loadQuizAccuracy(
@@ -1093,10 +1189,23 @@ public class StudentDashboardActivity extends AppCompatActivity {
                         }
                 )
                 .addOnFailureListener(
-                        e ->
-                                accuracyValue.setText(
-                                        "0%"
-                                )
+                        e -> {
+
+                            accuracyValue.setText(
+                                    "0%"
+                            );
+
+                            if (dashboardStatus != null) {
+
+                                dashboardStatus.setText(
+                                        "⚠️ Some practice data could not be loaded."
+                                );
+
+                                dashboardStatus.setTextColor(
+                                        Color.rgb(220, 38, 38)
+                                );
+                            }
+                        }
                 );
     }
 
@@ -1120,17 +1229,39 @@ public class StudentDashboardActivity extends AppCompatActivity {
                             completedLessons =
                                     querySnapshot.size();
 
-                            lessonProgressValue.setText(
-                                    completedLessons +
-                                            " lessons completed"
-                            );
+                            if (completedLessons == 0) {
+
+                                lessonProgressValue.setText(
+                                        "No lessons completed yet"
+                                );
+
+                            } else {
+
+                                lessonProgressValue.setText(
+                                        completedLessons +
+                                                " lessons completed"
+                                );
+                            }
                         }
                 )
                 .addOnFailureListener(
-                        e ->
-                                lessonProgressValue.setText(
-                                        "0 lessons completed"
-                                )
+                        e -> {
+
+                            lessonProgressValue.setText(
+                                    "Unable to load lesson progress"
+                            );
+
+                            if (dashboardStatus != null) {
+
+                                dashboardStatus.setText(
+                                        "⚠️ Lesson progress could not be loaded."
+                                );
+
+                                dashboardStatus.setTextColor(
+                                        Color.rgb(220, 38, 38)
+                                );
+                            }
+                        }
                 );
     }
 
@@ -1489,8 +1620,8 @@ public class StudentDashboardActivity extends AppCompatActivity {
                     } else if (
                             event.getAction() ==
                                     MotionEvent.ACTION_UP ||
-                            event.getAction() ==
-                                    MotionEvent.ACTION_CANCEL
+                                    event.getAction() ==
+                                            MotionEvent.ACTION_CANCEL
                     ) {
 
                         v.animate()

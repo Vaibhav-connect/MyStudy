@@ -5,12 +5,12 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,6 +31,13 @@ public class SubjectManagementActivity extends AppCompatActivity {
 
     private final List<String> classIds = new ArrayList<>();
     private final List<String> classNames = new ArrayList<>();
+
+    private final String[] mediums = {
+            "English",
+            "Semi-English",
+            "Marathi",
+            "Hindi"
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,6 +146,9 @@ public class SubjectManagementActivity extends AppCompatActivity {
                         String classId =
                                 document.getString("classId");
 
+                        String medium =
+                                document.getString("medium");
+
                         Long order =
                                 document.getLong("order");
 
@@ -150,6 +160,11 @@ public class SubjectManagementActivity extends AppCompatActivity {
                             className = "Unknown Class";
                         }
 
+                        if (medium == null ||
+                                medium.trim().isEmpty()) {
+                            medium = "English";
+                        }
+
                         long subjectOrder =
                                 order != null ? order : 0;
 
@@ -158,6 +173,7 @@ public class SubjectManagementActivity extends AppCompatActivity {
                                 name,
                                 classId,
                                 className,
+                                medium,
                                 subjectOrder
                         );
                     }
@@ -179,6 +195,7 @@ public class SubjectManagementActivity extends AppCompatActivity {
             String name,
             String classId,
             String className,
+            String medium,
             long order
     ) {
 
@@ -197,6 +214,11 @@ public class SubjectManagementActivity extends AppCompatActivity {
         classText.setTextSize(15);
         classText.setTextColor(Color.rgb(79, 70, 229));
 
+        TextView mediumText = new TextView(this);
+        mediumText.setText("Medium: " + medium);
+        mediumText.setTextSize(15);
+        mediumText.setTextColor(Color.rgb(22, 163, 74));
+
         TextView orderText = new TextView(this);
         orderText.setText("Order: " + order);
         orderText.setTextSize(14);
@@ -204,6 +226,7 @@ public class SubjectManagementActivity extends AppCompatActivity {
 
         card.addView(nameText);
         card.addView(classText);
+        card.addView(mediumText);
         card.addView(orderText);
 
         LinearLayout buttonRow = new LinearLayout(this);
@@ -213,13 +236,20 @@ public class SubjectManagementActivity extends AppCompatActivity {
         editButton.setText("Edit");
         editButton.setAllCaps(false);
 
+        final String finalName = name;
+        final String finalClassId = classId;
+        final String finalClassName = className;
+        final String finalMedium = medium;
+        final long finalOrder = order;
+
         editButton.setOnClickListener(v ->
                 showEditSubjectDialog(
                         documentId,
-                        name,
-                        classId,
-                        className,
-                        order
+                        finalName,
+                        finalClassId,
+                        finalClassName,
+                        finalMedium,
+                        finalOrder
                 )
         );
 
@@ -230,7 +260,7 @@ public class SubjectManagementActivity extends AppCompatActivity {
         deleteButton.setOnClickListener(v ->
                 confirmDelete(
                         documentId,
-                        name
+                        finalName
                 )
         );
 
@@ -267,7 +297,10 @@ public class SubjectManagementActivity extends AppCompatActivity {
 
     private void showAddSubjectDialog() {
 
-        loadClassesForDialog(false, null, null, 0);
+        loadClassesForDialog(
+                false,
+                null
+        );
     }
 
     private void showEditSubjectDialog(
@@ -275,6 +308,7 @@ public class SubjectManagementActivity extends AppCompatActivity {
             String oldName,
             String oldClassId,
             String oldClassName,
+            String oldMedium,
             long oldOrder
     ) {
 
@@ -285,18 +319,15 @@ public class SubjectManagementActivity extends AppCompatActivity {
                         oldName,
                         oldClassId,
                         oldClassName,
+                        oldMedium,
                         oldOrder
-                ),
-                null,
-                oldOrder
+                )
         );
     }
 
     private void loadClassesForDialog(
             boolean editMode,
-            EditData editData,
-            String unused,
-            long unusedOrder
+            EditData editData
     ) {
 
         db.collection("classes")
@@ -362,6 +393,36 @@ public class SubjectManagementActivity extends AppCompatActivity {
         nameInput.setHint("Subject name");
         nameInput.setSingleLine(true);
 
+        Spinner classSpinner = new Spinner(this);
+
+        ArrayAdapter<String> classAdapter =
+                new ArrayAdapter<>(
+                        this,
+                        android.R.layout.simple_spinner_item,
+                        classNames
+                );
+
+        classAdapter.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item
+        );
+
+        classSpinner.setAdapter(classAdapter);
+
+        Spinner mediumSpinner = new Spinner(this);
+
+        ArrayAdapter<String> mediumAdapter =
+                new ArrayAdapter<>(
+                        this,
+                        android.R.layout.simple_spinner_item,
+                        mediums
+                );
+
+        mediumAdapter.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item
+        );
+
+        mediumSpinner.setAdapter(mediumAdapter);
+
         EditText orderInput = new EditText(this);
         orderInput.setHint("Order e.g. 1");
         orderInput.setInputType(
@@ -369,37 +430,41 @@ public class SubjectManagementActivity extends AppCompatActivity {
         );
         orderInput.setSingleLine(true);
 
-        Spinner classSpinner = new Spinner(this);
-
-        ArrayAdapter<String> adapter =
-                new ArrayAdapter<>(
-                        this,
-                        android.R.layout.simple_spinner_item,
-                        classNames
-                );
-
-        adapter.setDropDownViewResource(
-                android.R.layout.simple_spinner_dropdown_item
-        );
-
-        classSpinner.setAdapter(adapter);
-
         layout.addView(nameInput);
         layout.addView(classSpinner);
+        layout.addView(mediumSpinner);
         layout.addView(orderInput);
 
         if (editMode && editData != null) {
 
             nameInput.setText(editData.name);
+
             orderInput.setText(
                     String.valueOf(editData.order)
             );
 
-            int selectedIndex =
-                    classIds.indexOf(editData.classId);
+            int selectedClassIndex =
+                    classIds.indexOf(
+                            editData.classId
+                    );
 
-            if (selectedIndex >= 0) {
-                classSpinner.setSelection(selectedIndex);
+            if (selectedClassIndex >= 0) {
+
+                classSpinner.setSelection(
+                        selectedClassIndex
+                );
+            }
+
+            int selectedMediumIndex =
+                    findMediumIndex(
+                            editData.medium
+                    );
+
+            if (selectedMediumIndex >= 0) {
+
+                mediumSpinner.setSelection(
+                        selectedMediumIndex
+                );
             }
         }
 
@@ -464,7 +529,12 @@ public class SubjectManagementActivity extends AppCompatActivity {
                 long order;
 
                 try {
-                    order = Long.parseLong(orderString);
+
+                    order =
+                            Long.parseLong(
+                                    orderString
+                            );
+
                 } catch (Exception e) {
 
                     orderInput.setError(
@@ -474,11 +544,13 @@ public class SubjectManagementActivity extends AppCompatActivity {
                     return;
                 }
 
-                int selectedPosition =
-                        classSpinner.getSelectedItemPosition();
+                int selectedClassPosition =
+                        classSpinner
+                                .getSelectedItemPosition();
 
-                if (selectedPosition < 0 ||
-                        selectedPosition >= classIds.size()) {
+                if (selectedClassPosition < 0 ||
+                        selectedClassPosition >=
+                                classIds.size()) {
 
                     Toast.makeText(
                             this,
@@ -489,19 +561,65 @@ public class SubjectManagementActivity extends AppCompatActivity {
                     return;
                 }
 
+                int selectedMediumPosition =
+                        mediumSpinner
+                                .getSelectedItemPosition();
+
+                if (selectedMediumPosition < 0 ||
+                        selectedMediumPosition >=
+                                mediums.length) {
+
+                    Toast.makeText(
+                            this,
+                            "Select a medium.",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    return;
+                }
+
                 String selectedClassId =
-                        classIds.get(selectedPosition);
+                        classIds.get(
+                                selectedClassPosition
+                        );
 
                 String selectedClassName =
-                        classNames.get(selectedPosition);
+                        classNames.get(
+                                selectedClassPosition
+                        );
+
+                String selectedMedium =
+                        mediums[
+                                selectedMediumPosition
+                        ];
 
                 Map<String, Object> data =
                         new HashMap<>();
 
-                data.put("name", name);
-                data.put("classId", selectedClassId);
-                data.put("className", selectedClassName);
-                data.put("order", order);
+                data.put(
+                        "name",
+                        name
+                );
+
+                data.put(
+                        "classId",
+                        selectedClassId
+                );
+
+                data.put(
+                        "className",
+                        selectedClassName
+                );
+
+                data.put(
+                        "medium",
+                        selectedMedium
+                );
+
+                data.put(
+                        "order",
+                        order
+                );
 
                 if (!editMode) {
 
@@ -538,7 +656,9 @@ public class SubjectManagementActivity extends AppCompatActivity {
                 } else {
 
                     db.collection("subjects")
-                            .document(editData.documentId)
+                            .document(
+                                    editData.documentId
+                            )
                             .update(data)
                             .addOnSuccessListener(
                                     unused -> {
@@ -567,6 +687,25 @@ public class SubjectManagementActivity extends AppCompatActivity {
         });
 
         dialog.show();
+    }
+
+    private int findMediumIndex(String medium) {
+
+        if (medium == null) {
+            return 0;
+        }
+
+        for (int i = 0; i < mediums.length; i++) {
+
+            if (mediums[i].equalsIgnoreCase(
+                    medium.trim()
+            )) {
+
+                return i;
+            }
+        }
+
+        return 0;
     }
 
     private void confirmDelete(
@@ -623,6 +762,7 @@ public class SubjectManagementActivity extends AppCompatActivity {
         String name;
         String classId;
         String className;
+        String medium;
         long order;
 
         EditData(
@@ -630,6 +770,7 @@ public class SubjectManagementActivity extends AppCompatActivity {
                 String name,
                 String classId,
                 String className,
+                String medium,
                 long order
         ) {
 
@@ -637,6 +778,7 @@ public class SubjectManagementActivity extends AppCompatActivity {
             this.name = name;
             this.classId = classId;
             this.className = className;
+            this.medium = medium;
             this.order = order;
         }
     }

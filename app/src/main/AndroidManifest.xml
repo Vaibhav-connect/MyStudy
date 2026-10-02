@@ -5,7 +5,9 @@
 
     <application
         android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
         android:label="MyStudy"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyStudy">
 
@@ -80,6 +82,10 @@
 
         <activity
             android:name=".AdminExamResultsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".AdminSettingsActivity"
             android:exported="false" />
 
         <activity

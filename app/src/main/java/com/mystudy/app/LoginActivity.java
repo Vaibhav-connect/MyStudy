@@ -75,6 +75,7 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         titleParams.topMargin = 15;
+
         root.addView(title, titleParams);
 
         TextView subtitle = new TextView(this);
@@ -90,6 +91,7 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         subtitleParams.topMargin = 8;
+
         root.addView(subtitle, subtitleParams);
 
         email = createInput(
@@ -130,6 +132,7 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         loginParams.topMargin = 25;
+
         root.addView(loginButton, loginParams);
 
         TextView forgotPassword = new TextView(this);
@@ -146,6 +149,7 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         forgotParams.topMargin = 18;
+
         root.addView(forgotPassword, forgotParams);
 
         TextView registerText = new TextView(this);
@@ -162,6 +166,7 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         registerParams.topMargin = 20;
+
         root.addView(registerText, registerParams);
 
         TextView adminLogin = new TextView(this);
@@ -178,6 +183,7 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         adminParams.topMargin = 25;
+
         root.addView(adminLogin, adminParams);
 
         loginButton.setOnClickListener(v -> loginUser());
@@ -269,8 +275,10 @@ public class LoginActivity extends AppCompatActivity {
                 password.getText().toString();
 
         if (emailText.isEmpty()) {
+
             email.setError("Enter your email");
             email.requestFocus();
+
             return;
         }
 
@@ -280,12 +288,15 @@ public class LoginActivity extends AppCompatActivity {
 
             email.setError("Enter a valid email");
             email.requestFocus();
+
             return;
         }
 
         if (passwordText.isEmpty()) {
+
             password.setError("Enter your password");
             password.requestFocus();
+
             return;
         }
 
@@ -350,13 +361,14 @@ public class LoginActivity extends AppCompatActivity {
                         ).show();
 
                         auth.signOut();
+
                         return;
                     }
 
                     String name =
                             document.getString("name");
 
-                    if (name == null || name.isEmpty()) {
+                    if (name == null || name.trim().isEmpty()) {
                         name = "Student";
                     }
 
@@ -369,10 +381,13 @@ public class LoginActivity extends AppCompatActivity {
                     Intent intent =
                             new Intent(
                                     LoginActivity.this,
-                                    MainActivity.class
+                                    StudentDashboardActivity.class
                             );
 
-                    intent.putExtra("studentName", name);
+                    intent.putExtra(
+                            "studentName",
+                            name
+                    );
 
                     startActivity(intent);
 
@@ -406,6 +421,7 @@ public class LoginActivity extends AppCompatActivity {
             );
 
             email.requestFocus();
+
             return;
         }
 
@@ -418,6 +434,7 @@ public class LoginActivity extends AppCompatActivity {
             );
 
             email.requestFocus();
+
             return;
         }
 

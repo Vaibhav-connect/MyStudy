@@ -5,6 +5,8 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -42,6 +44,8 @@ public class StudentPracticeActivity extends AppCompatActivity {
     private int score = 0;
     private int answered = 0;
 
+    private boolean practiceFinished = false;
+
     private final List<String> questionIds =
             new ArrayList<>();
 
@@ -58,7 +62,11 @@ public class StudentPracticeActivity extends AppCompatActivity {
         lessonId = getIntent().getStringExtra("lessonId");
         lessonTitle = getIntent().getStringExtra("lessonTitle");
 
-        if (classId == null || chapterId == null) {
+        if (classId == null ||
+                classId.trim().isEmpty() ||
+                chapterId == null ||
+                chapterId.trim().isEmpty()) {
+
             Toast.makeText(
                     this,
                     "Practice information missing",
@@ -82,6 +90,8 @@ public class StudentPracticeActivity extends AppCompatActivity {
         ScrollView scrollView =
                 new ScrollView(this);
 
+        scrollView.setFillViewport(true);
+
         LinearLayout root =
                 new LinearLayout(this);
 
@@ -90,10 +100,10 @@ public class StudentPracticeActivity extends AppCompatActivity {
         );
 
         root.setPadding(
+                20,
                 24,
-                24,
-                24,
-                24
+                20,
+                30
         );
 
         root.setBackgroundColor(
@@ -117,6 +127,10 @@ public class StudentPracticeActivity extends AppCompatActivity {
                 Typeface.BOLD
         );
 
+        title.setGravity(
+                Gravity.CENTER_VERTICAL
+        );
+
         root.addView(
                 title,
                 new LinearLayout.LayoutParams(
@@ -133,6 +147,14 @@ public class StudentPracticeActivity extends AppCompatActivity {
 
             subtitle.setText(
                     lessonTitle +
+                            " • Test your knowledge"
+            );
+
+        } else if (chapterName != null &&
+                !chapterName.trim().isEmpty()) {
+
+            subtitle.setText(
+                    chapterName +
                             " • Test your knowledge"
             );
 
@@ -180,6 +202,23 @@ public class StudentPracticeActivity extends AppCompatActivity {
                 Gravity.CENTER
         );
 
+        GradientDrawable scoreBackground =
+                new GradientDrawable();
+
+        scoreBackground.setColor(
+                Color.WHITE
+        );
+
+        scoreBackground.setCornerRadius(
+                24
+        );
+
+        scoreText.setBackground(
+                scoreBackground
+        );
+
+        scoreText.setElevation(3);
+
         root.addView(
                 scoreText,
                 new LinearLayout.LayoutParams(
@@ -195,12 +234,17 @@ public class StudentPracticeActivity extends AppCompatActivity {
                 LinearLayout.VERTICAL
         );
 
-        root.addView(
-                questionContainer,
+        LinearLayout.LayoutParams questionParams =
                 new LinearLayout.LayoutParams(
                         -1,
                         -2
-                )
+                );
+
+        questionParams.topMargin = 18;
+
+        root.addView(
+                questionContainer,
+                questionParams
         );
 
         scrollView.addView(root);
@@ -212,6 +256,12 @@ public class StudentPracticeActivity extends AppCompatActivity {
 
         questionContainer.removeAllViews();
         questionIds.clear();
+
+        score = 0;
+        answered = 0;
+        practiceFinished = false;
+
+        updateScore();
 
         db.collection("questions")
                 .whereEqualTo(
@@ -299,10 +349,21 @@ public class StudentPracticeActivity extends AppCompatActivity {
                                         answer
                                 );
                             }
+
+                            if (questionIds.isEmpty()) {
+
+                                showMessage(
+                                        "No valid practice questions available."
+                                );
+                            }
                         }
                 )
                 .addOnFailureListener(
                         error -> {
+
+                            showMessage(
+                                    "Unable to load questions."
+                            );
 
                             Toast.makeText(
                                     StudentPracticeActivity.this,
@@ -341,10 +402,43 @@ public class StudentPracticeActivity extends AppCompatActivity {
         GradientDrawable background =
                 new GradientDrawable();
 
-        background.setColor(Color.WHITE);
-        background.setCornerRadius(26);
+        background.setColor(
+                Color.WHITE
+        );
 
-        card.setBackground(background);
+        background.setCornerRadius(
+                26
+        );
+
+        card.setBackground(
+                background
+        );
+
+        card.setElevation(5);
+
+        TextView questionNumber =
+                new TextView(this);
+
+        int number =
+                questionIds.indexOf(questionId) + 1;
+
+        questionNumber.setText(
+                "Question " + number
+        );
+
+        questionNumber.setTextSize(13);
+        questionNumber.setTextColor(
+                Color.rgb(79, 70, 229)
+        );
+
+        questionNumber.setTypeface(
+                null,
+                Typeface.BOLD
+        );
+
+        card.addView(
+                questionNumber
+        );
 
         TextView questionText =
                 new TextView(this);
@@ -364,7 +458,23 @@ public class StudentPracticeActivity extends AppCompatActivity {
                 Typeface.BOLD
         );
 
-        card.addView(questionText);
+        questionText.setLineSpacing(
+                2,
+                1.05f
+        );
+
+        LinearLayout.LayoutParams questionTextParams =
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                );
+
+        questionTextParams.topMargin = 8;
+
+        card.addView(
+                questionText,
+                questionTextParams
+        );
 
         if ("TRUE_FALSE".equalsIgnoreCase(type)) {
 
@@ -446,6 +556,8 @@ public class StudentPracticeActivity extends AppCompatActivity {
                 card,
                 params
         );
+
+        addPressAnimation(card);
     }
 
     private void addOption(
@@ -458,11 +570,20 @@ public class StudentPracticeActivity extends AppCompatActivity {
         Button button =
                 new Button(this);
 
-        button.setText(option);
+        button.setText(
+                option
+        );
+
         button.setAllCaps(false);
+
         button.setTextSize(15);
+
         button.setTextColor(
                 Color.rgb(17, 24, 39)
+        );
+
+        button.setGravity(
+                Gravity.CENTER
         );
 
         GradientDrawable background =
@@ -476,7 +597,9 @@ public class StudentPracticeActivity extends AppCompatActivity {
                 24
         );
 
-        button.setBackground(background);
+        button.setBackground(
+                background
+        );
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(
@@ -491,14 +614,20 @@ public class StudentPracticeActivity extends AppCompatActivity {
                 params
         );
 
+        addPressAnimation(button);
+
         button.setOnClickListener(
                 view -> {
 
-                    if (!button.isEnabled()) {
+                    if (!button.isEnabled() ||
+                            practiceFinished) {
+
                         return;
                     }
 
-                    button.setEnabled(false);
+                    disableQuestionOptions(
+                            card
+                    );
 
                     answered++;
 
@@ -520,23 +649,17 @@ public class StudentPracticeActivity extends AppCompatActivity {
                                 "✓ " + option
                         );
 
+                        setButtonBackground(
+                                button,
+                                Color.rgb(
+                                        34,
+                                        197,
+                                        94
+                                )
+                        );
+
                         button.setTextColor(
                                 Color.WHITE
-                        );
-
-                        GradientDrawable correctBg =
-                                new GradientDrawable();
-
-                        correctBg.setColor(
-                                Color.rgb(34, 197, 94)
-                        );
-
-                        correctBg.setCornerRadius(
-                                24
-                        );
-
-                        button.setBackground(
-                                correctBg
                         );
 
                         Toast.makeText(
@@ -551,23 +674,17 @@ public class StudentPracticeActivity extends AppCompatActivity {
                                 "✗ " + option
                         );
 
+                        setButtonBackground(
+                                button,
+                                Color.rgb(
+                                        239,
+                                        68,
+                                        68
+                                )
+                        );
+
                         button.setTextColor(
                                 Color.WHITE
-                        );
-
-                        GradientDrawable wrongBg =
-                                new GradientDrawable();
-
-                        wrongBg.setColor(
-                                Color.rgb(239, 68, 68)
-                        );
-
-                        wrongBg.setCornerRadius(
-                                24
-                        );
-
-                        button.setBackground(
-                                wrongBg
                         );
 
                         Toast.makeText(
@@ -577,12 +694,7 @@ public class StudentPracticeActivity extends AppCompatActivity {
                         ).show();
                     }
 
-                    scoreText.setText(
-                            "Score: " +
-                                    score +
-                                    " / " +
-                                    questionIds.size()
-                    );
+                    updateScore();
 
                     if (answered >=
                             questionIds.size()) {
@@ -593,7 +705,66 @@ public class StudentPracticeActivity extends AppCompatActivity {
         );
     }
 
+    private void disableQuestionOptions(
+            LinearLayout card
+    ) {
+
+        for (int i = 0;
+             i < card.getChildCount();
+             i++) {
+
+            View child =
+                    card.getChildAt(i);
+
+            if (child instanceof Button) {
+
+                child.setEnabled(false);
+            }
+        }
+    }
+
+    private void setButtonBackground(
+            Button button,
+            int color
+    ) {
+
+        GradientDrawable background =
+                new GradientDrawable();
+
+        background.setColor(
+                color
+        );
+
+        background.setCornerRadius(
+                24
+        );
+
+        button.setBackground(
+                background
+        );
+    }
+
+    private void updateScore() {
+
+        if (scoreText == null) {
+            return;
+        }
+
+        scoreText.setText(
+                "⭐ Score: " +
+                        score +
+                        " / " +
+                        questionIds.size()
+        );
+    }
+
     private void finishPractice() {
+
+        if (practiceFinished) {
+            return;
+        }
+
+        practiceFinished = true;
 
         int total =
                 questionIds.size();
@@ -627,9 +798,45 @@ public class StudentPracticeActivity extends AppCompatActivity {
                 "Practice complete! Score: " +
                         score +
                         "/" +
-                        total,
+                        total +
+                        " 🎉",
                 Toast.LENGTH_LONG
         ).show();
+    }
+
+    private void addPressAnimation(
+            View view
+    ) {
+
+        view.setOnTouchListener(
+                (v, event) -> {
+
+                    if (event.getAction() ==
+                            MotionEvent.ACTION_DOWN) {
+
+                        v.animate()
+                                .scaleX(0.97f)
+                                .scaleY(0.97f)
+                                .setDuration(100)
+                                .start();
+
+                    } else if (
+                            event.getAction() ==
+                                    MotionEvent.ACTION_UP ||
+                            event.getAction() ==
+                                    MotionEvent.ACTION_CANCEL
+                    ) {
+
+                        v.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(100)
+                                .start();
+                    }
+
+                    return false;
+                }
+        );
     }
 
     private void showMessage(
@@ -660,12 +867,24 @@ public class StudentPracticeActivity extends AppCompatActivity {
                 50
         );
 
-        questionContainer.addView(
-                messageView,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
+        lessonContainerSafeAdd(
+                messageView
         );
+    }
+
+    private void lessonContainerSafeAdd(
+            TextView messageView
+    ) {
+
+        if (questionContainer != null) {
+
+            questionContainer.addView(
+                    messageView,
+                    new LinearLayout.LayoutParams(
+                            -1,
+                            -2
+                    )
+            );
+        }
     }
 }

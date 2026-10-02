@@ -3,7 +3,6 @@ package com.mystudy.app;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
@@ -14,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +30,8 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        LanguageManager.applySavedLanguage(this);
 
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
@@ -66,67 +68,138 @@ public class SettingsActivity extends AppCompatActivity {
         LinearLayout profileCard = createCard();
 
         TextView profileTitle = createSectionTitle("Profile");
-
         profileCard.addView(profileTitle);
 
         nameText = createInfoText("Loading name...");
-        profileCard.addView(nameText, createParams(0, 12, 0, 4));
+        profileCard.addView(
+                nameText,
+                createParams(0, 12, 0, 4)
+        );
 
         emailText = createInfoText("Loading email...");
         profileCard.addView(emailText);
 
-        root.addView(profileCard, createParams(0, 0, 0, 18));
+        root.addView(
+                profileCard,
+                createParams(0, 0, 0, 18)
+        );
 
         LinearLayout languageCard = createCard();
 
-        TextView languageTitle = createSectionTitle("Language");
+        TextView languageTitle =
+                createSectionTitle("Language");
+
         languageCard.addView(languageTitle);
 
-        languageText = createInfoText("English");
-        languageCard.addView(languageText, createParams(0, 12, 0, 12));
+        languageText =
+                createInfoText(
+                        LanguageManager.getLanguage(this)
+                );
 
-        LinearLayout languageButtons = new LinearLayout(this);
-        languageButtons.setOrientation(LinearLayout.HORIZONTAL);
+        languageCard.addView(
+                languageText,
+                createParams(0, 12, 0, 12)
+        );
 
-        TextView english = createChoiceButton("English");
-        TextView marathi = createChoiceButton("मराठी");
-        TextView hindi = createChoiceButton("हिन्दी");
+        LinearLayout languageButtons =
+                new LinearLayout(this);
 
-        english.setOnClickListener(v -> saveLanguage("English"));
-        marathi.setOnClickListener(v -> saveLanguage("Marathi"));
-        hindi.setOnClickListener(v -> saveLanguage("Hindi"));
+        languageButtons.setOrientation(
+                LinearLayout.HORIZONTAL
+        );
+
+        TextView english =
+                createChoiceButton("English");
+
+        TextView marathi =
+                createChoiceButton("मराठी");
+
+        TextView hindi =
+                createChoiceButton("हिन्दी");
+
+        english.setOnClickListener(
+                v -> saveLanguage("English")
+        );
+
+        marathi.setOnClickListener(
+                v -> saveLanguage("Marathi")
+        );
+
+        hindi.setOnClickListener(
+                v -> saveLanguage("Hindi")
+        );
 
         languageButtons.addView(
                 english,
-                new LinearLayout.LayoutParams(0, 52, 1)
+                new LinearLayout.LayoutParams(
+                        0,
+                        52,
+                        1
+                )
         );
 
         languageButtons.addView(
                 marathi,
-                new LinearLayout.LayoutParams(0, 52, 1)
+                new LinearLayout.LayoutParams(
+                        0,
+                        52,
+                        1
+                )
         );
 
         languageButtons.addView(
                 hindi,
-                new LinearLayout.LayoutParams(0, 52, 1)
+                new LinearLayout.LayoutParams(
+                        0,
+                        52,
+                        1
+                )
         );
 
         languageCard.addView(languageButtons);
 
-        root.addView(languageCard, createParams(0, 0, 0, 18));
+        root.addView(
+                languageCard,
+                createParams(0, 0, 0, 18)
+        );
 
-        LinearLayout appearanceCard = createCard();
+        LinearLayout appearanceCard =
+                createCard();
 
-        TextView appearanceTitle = createSectionTitle("Appearance");
-        appearanceCard.addView(appearanceTitle);
+        TextView appearanceTitle =
+                createSectionTitle("Appearance");
 
-        LinearLayout darkRow = new LinearLayout(this);
-        darkRow.setOrientation(LinearLayout.HORIZONTAL);
-        darkRow.setGravity(Gravity.CENTER_VERTICAL);
+        appearanceCard.addView(
+                appearanceTitle
+        );
 
-        TextView darkText = createInfoText("Dark Theme");
+        LinearLayout darkRow =
+                new LinearLayout(this);
 
-        Switch darkSwitch = new Switch(this);
+        darkRow.setOrientation(
+                LinearLayout.HORIZONTAL
+        );
+
+        darkRow.setGravity(
+                Gravity.CENTER_VERTICAL
+        );
+
+        TextView darkText =
+                createInfoText("Dark Theme");
+
+        Switch darkSwitch =
+                new Switch(this);
+
+        boolean darkMode =
+                getSharedPreferences(
+                        "MyStudySettings",
+                        MODE_PRIVATE
+                ).getBoolean(
+                        "darkMode",
+                        false
+                );
+
+        darkSwitch.setChecked(darkMode);
 
         darkRow.addView(
                 darkText,
@@ -158,7 +231,10 @@ public class SettingsActivity extends AppCompatActivity {
                             MODE_PRIVATE
                     )
                             .edit()
-                            .putBoolean("darkMode", isChecked)
+                            .putBoolean(
+                                    "darkMode",
+                                    isChecked
+                            )
                             .apply();
 
                     Toast.makeText(
@@ -176,17 +252,23 @@ public class SettingsActivity extends AppCompatActivity {
                 createParams(0, 0, 0, 18)
         );
 
-        LinearLayout accountCard = createCard();
+        LinearLayout accountCard =
+                createCard();
 
-        TextView accountTitle = createSectionTitle("Account");
+        TextView accountTitle =
+                createSectionTitle("Account");
+
         accountCard.addView(accountTitle);
 
-        TextView logoutButton = createActionButton(
-                "Logout",
-                0xFFEF4444
-        );
+        TextView logoutButton =
+                createActionButton(
+                        "Logout",
+                        0xFFEF4444
+                );
 
-        logoutButton.setOnClickListener(v -> logout());
+        logoutButton.setOnClickListener(
+                v -> logout()
+        );
 
         accountCard.addView(
                 logoutButton,
@@ -195,10 +277,13 @@ public class SettingsActivity extends AppCompatActivity {
 
         root.addView(accountCard);
 
-        TextView developer = new TextView(this);
+        TextView developer =
+                new TextView(this);
+
         developer.setText(
                 "MyStudy\nDeveloped by Vaibhav Bhosale"
         );
+
         developer.setTextSize(13);
         developer.setTextColor(0xFF94A3B8);
         developer.setGravity(Gravity.CENTER);
@@ -210,6 +295,7 @@ public class SettingsActivity extends AppCompatActivity {
         );
 
         scrollView.addView(root);
+
         setContentView(scrollView);
     }
 
@@ -219,7 +305,8 @@ public class SettingsActivity extends AppCompatActivity {
             return;
         }
 
-        String uid = auth.getCurrentUser().getUid();
+        String uid =
+                auth.getCurrentUser().getUid();
 
         db.collection("users")
                 .document(uid)
@@ -230,9 +317,14 @@ public class SettingsActivity extends AppCompatActivity {
                         return;
                     }
 
-                    String name = document.getString("name");
-                    String email = document.getString("email");
-                    String language = document.getString("language");
+                    String name =
+                            document.getString("name");
+
+                    String email =
+                            document.getString("email");
+
+                    String language =
+                            document.getString("language");
 
                     nameText.setText(
                             name == null
@@ -250,30 +342,46 @@ public class SettingsActivity extends AppCompatActivity {
                             !language.trim().isEmpty()) {
 
                         languageText.setText(language);
+
+                        LanguageManager.saveLanguage(
+                                SettingsActivity.this,
+                                language
+                        );
                     }
                 });
     }
 
-    private void saveLanguage(String language) {
+    private void saveLanguage(
+            String language
+    ) {
 
         if (auth.getCurrentUser() == null) {
             return;
         }
 
-        String uid = auth.getCurrentUser().getUid();
+        String uid =
+                auth.getCurrentUser().getUid();
 
         Map<String, Object> data =
                 new HashMap<>();
 
-        data.put("language", language);
+        data.put(
+                "language",
+                language
+        );
 
         db.collection("users")
                 .document(uid)
                 .set(
                         data,
-                        com.google.firebase.firestore.SetOptions.merge()
+                        SetOptions.merge()
                 )
                 .addOnSuccessListener(unused -> {
+
+                    LanguageManager.saveLanguage(
+                            SettingsActivity.this,
+                            language
+                    );
 
                     languageText.setText(language);
 
@@ -308,24 +416,41 @@ public class SettingsActivity extends AppCompatActivity {
         );
 
         startActivity(intent);
+
         finish();
     }
 
     private LinearLayout createCard() {
 
-        LinearLayout card = new LinearLayout(this);
+        LinearLayout card =
+                new LinearLayout(this);
 
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(22, 20, 22, 20);
-        card.setBackgroundColor(0xFFFFFFFF);
+        card.setOrientation(
+                LinearLayout.VERTICAL
+        );
+
+        card.setPadding(
+                22,
+                20,
+                22,
+                20
+        );
+
+        card.setBackgroundColor(
+                0xFFFFFFFF
+        );
+
         card.setElevation(6);
 
         return card;
     }
 
-    private TextView createSectionTitle(String text) {
+    private TextView createSectionTitle(
+            String text
+    ) {
 
-        TextView view = new TextView(this);
+        TextView view =
+                new TextView(this);
 
         view.setText(text);
         view.setTextSize(18);
@@ -335,9 +460,12 @@ public class SettingsActivity extends AppCompatActivity {
         return view;
     }
 
-    private TextView createInfoText(String text) {
+    private TextView createInfoText(
+            String text
+    ) {
 
-        TextView view = new TextView(this);
+        TextView view =
+                new TextView(this);
 
         view.setText(text);
         view.setTextSize(15);
@@ -346,9 +474,12 @@ public class SettingsActivity extends AppCompatActivity {
         return view;
     }
 
-    private TextView createChoiceButton(String text) {
+    private TextView createChoiceButton(
+            String text
+    ) {
 
-        TextView view = new TextView(this);
+        TextView view =
+                new TextView(this);
 
         view.setText(text);
         view.setTextSize(14);
@@ -365,7 +496,8 @@ public class SettingsActivity extends AppCompatActivity {
             int color
     ) {
 
-        TextView view = new TextView(this);
+        TextView view =
+                new TextView(this);
 
         view.setText(text);
         view.setTextSize(16);

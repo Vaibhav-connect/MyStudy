@@ -363,6 +363,9 @@ public class LoginActivity extends AppCompatActivity {
                         return;
                     }
 
+                    String role =
+                            document.getString("role");
+
                     String name =
                             document.getString("name");
 
@@ -375,7 +378,15 @@ public class LoginActivity extends AppCompatActivity {
                     String selectedLanguage =
                             document.getString("language");
 
-                    if (name == null || name.trim().isEmpty()) {
+                    if (role == null ||
+                            role.trim().isEmpty()) {
+
+                        role = "student";
+                    }
+
+                    if (name == null ||
+                            name.trim().isEmpty()) {
+
                         name = "Student";
                     }
 
@@ -395,6 +406,26 @@ public class LoginActivity extends AppCompatActivity {
                             selectedLanguage.trim().isEmpty()) {
 
                         selectedLanguage = "English";
+                    }
+
+                    /*
+                     * Normal Login is only for students.
+                     *
+                     * Admin accounts must use the dedicated
+                     * Admin Login screen.
+                     */
+                    if (role.equals("main_admin") ||
+                            role.equals("admin")) {
+
+                        auth.signOut();
+
+                        Toast.makeText(
+                                this,
+                                "Please use Admin Login for admin access.",
+                                Toast.LENGTH_LONG
+                        ).show();
+
+                        return;
                     }
 
                     Toast.makeText(

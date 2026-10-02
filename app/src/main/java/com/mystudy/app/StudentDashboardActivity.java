@@ -83,6 +83,17 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 Color.rgb(248, 250, 252)
         );
 
+        LinearLayout topBar =
+                new LinearLayout(this);
+
+        topBar.setOrientation(
+                LinearLayout.HORIZONTAL
+        );
+
+        topBar.setGravity(
+                Gravity.CENTER_VERTICAL
+        );
+
         TextView greeting =
                 new TextView(this);
 
@@ -107,13 +118,40 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 Gravity.CENTER_VERTICAL
         );
 
-        root.addView(
+        topBar.addView(
                 greeting,
                 new LinearLayout.LayoutParams(
-                        -1,
-                        65
+                        0,
+                        65,
+                        1
                 )
         );
+
+        TextView settingsButton =
+                createTopButton("⚙️");
+
+        settingsButton.setOnClickListener(
+                view -> {
+
+                    Intent intent =
+                            new Intent(
+                                    StudentDashboardActivity.this,
+                                    SettingsActivity.class
+                            );
+
+                    startActivity(intent);
+                }
+        );
+
+        topBar.addView(
+                settingsButton,
+                new LinearLayout.LayoutParams(
+                        58,
+                        58
+                )
+        );
+
+        root.addView(topBar);
 
         TextView subtitle =
                 new TextView(this);
@@ -300,6 +338,37 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         root.addView(practiceCard);
 
+        TextView familyTitle =
+                createSectionTitle(
+                        "👨‍👩‍👧 Family"
+                );
+
+        root.addView(familyTitle);
+
+        LinearLayout parentCard =
+                createActionCard(
+                        "🔐",
+                        "Parent Area",
+                        "View learning progress and student activity",
+                        view -> {
+
+                            Intent intent =
+                                    new Intent(
+                                            StudentDashboardActivity.this,
+                                            ParentPinActivity.class
+                                    );
+
+                            startActivity(intent);
+
+                            overridePendingTransition(
+                                    android.R.anim.fade_in,
+                                    android.R.anim.fade_out
+                            );
+                        }
+                );
+
+        root.addView(parentCard);
+
         TextView progressTitle =
                 createSectionTitle(
                         "📊 Your Progress"
@@ -343,6 +412,31 @@ public class StudentDashboardActivity extends AppCompatActivity {
         scrollView.addView(root);
 
         setContentView(scrollView);
+    }
+
+    private TextView createTopButton(
+            String text
+    ) {
+
+        TextView button =
+                new TextView(this);
+
+        button.setText(text);
+        button.setTextSize(25);
+        button.setGravity(Gravity.CENTER);
+
+        GradientDrawable background =
+                new GradientDrawable();
+
+        background.setColor(Color.WHITE);
+        background.setCornerRadius(22);
+
+        button.setBackground(background);
+        button.setElevation(4);
+
+        addPressAnimation(button);
+
+        return button;
     }
 
     private TextView createSectionTitle(

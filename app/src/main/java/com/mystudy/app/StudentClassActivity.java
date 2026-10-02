@@ -6,6 +6,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -22,6 +23,11 @@ public class StudentClassActivity extends AppCompatActivity {
     private LinearLayout classContainer;
     private FirebaseFirestore db;
 
+    private final int backgroundColor = Color.rgb(248, 250, 252);
+    private final int textPrimary = Color.rgb(17, 24, 39);
+    private final int textSecondary = Color.rgb(100, 116, 139);
+    private final int primaryColor = Color.rgb(79, 70, 229);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,38 +41,57 @@ public class StudentClassActivity extends AppCompatActivity {
     private void createUI() {
 
         ScrollView scrollView = new ScrollView(this);
+        scrollView.setFillViewport(true);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(20, 24, 20, 30);
-        root.setBackgroundColor(Color.rgb(248, 250, 252));
+        root.setBackgroundColor(backgroundColor);
 
         TextView title = new TextView(this);
         title.setText("📚 Choose Your Class");
-        title.setTextSize(26);
-        title.setTextColor(Color.rgb(17, 24, 39));
+        title.setTextSize(28);
+        title.setTextColor(textPrimary);
         title.setTypeface(null, Typeface.BOLD);
-        title.setGravity(Gravity.CENTER_VERTICAL);
 
         root.addView(
                 title,
                 new LinearLayout.LayoutParams(
                         -1,
-                        65
+                        -2
                 )
         );
 
         TextView subtitle = new TextView(this);
         subtitle.setText(
-                "Select your class to start learning"
+                "Choose your class and start learning."
         );
         subtitle.setTextSize(16);
-        subtitle.setTextColor(
-                Color.rgb(100, 116, 139)
-        );
-        subtitle.setPadding(0, 0, 0, 22);
+        subtitle.setTextColor(textSecondary);
+        subtitle.setPadding(0, 8, 0, 24);
 
-        root.addView(subtitle);
+        root.addView(
+                subtitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
+
+        TextView sectionTitle = new TextView(this);
+        sectionTitle.setText("Available Classes");
+        sectionTitle.setTextSize(18);
+        sectionTitle.setTextColor(textPrimary);
+        sectionTitle.setTypeface(null, Typeface.BOLD);
+        sectionTitle.setPadding(0, 0, 0, 14);
+
+        root.addView(
+                sectionTitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
 
         classContainer = new LinearLayout(this);
         classContainer.setOrientation(
@@ -144,11 +169,8 @@ public class StudentClassActivity extends AppCompatActivity {
             String className
     ) {
 
-        final String selectedClassId =
-                classId;
-
-        final String selectedClassName =
-                className;
+        final String selectedClassId = classId;
+        final String selectedClassName = className;
 
         LinearLayout card =
                 new LinearLayout(this);
@@ -162,21 +184,20 @@ public class StudentClassActivity extends AppCompatActivity {
         );
 
         card.setPadding(
-                20,
-                16,
-                16,
-                16
+                18,
+                18,
+                14,
+                18
         );
 
         GradientDrawable background =
                 new GradientDrawable();
 
         background.setColor(Color.WHITE);
-        background.setCornerRadius(28);
+        background.setCornerRadius(30);
 
         card.setBackground(background);
-
-        card.setElevation(4);
+        card.setElevation(6);
 
         TextView icon =
                 new TextView(this);
@@ -185,11 +206,21 @@ public class StudentClassActivity extends AppCompatActivity {
         icon.setTextSize(30);
         icon.setGravity(Gravity.CENTER);
 
+        GradientDrawable iconBackground =
+                new GradientDrawable();
+
+        iconBackground.setColor(
+                Color.rgb(238, 242, 255)
+        );
+        iconBackground.setCornerRadius(22);
+
+        icon.setBackground(iconBackground);
+
         card.addView(
                 icon,
                 new LinearLayout.LayoutParams(
-                        60,
-                        70
+                        68,
+                        68
                 )
         );
 
@@ -201,7 +232,7 @@ public class StudentClassActivity extends AppCompatActivity {
         );
 
         textContainer.setPadding(
-                18,
+                16,
                 0,
                 8,
                 0
@@ -212,14 +243,8 @@ public class StudentClassActivity extends AppCompatActivity {
 
         name.setText(selectedClassName);
         name.setTextSize(20);
-        name.setTextColor(
-                Color.rgb(17, 24, 39)
-        );
-
-        name.setTypeface(
-                null,
-                Typeface.BOLD
-        );
+        name.setTextColor(textPrimary);
+        name.setTypeface(null, Typeface.BOLD);
 
         TextView description =
                 new TextView(this);
@@ -227,18 +252,9 @@ public class StudentClassActivity extends AppCompatActivity {
         description.setText(
                 "Tap to explore subjects"
         );
-
         description.setTextSize(14);
-        description.setTextColor(
-                Color.rgb(100, 116, 139)
-        );
-
-        description.setPadding(
-                0,
-                5,
-                0,
-                0
-        );
+        description.setTextColor(textSecondary);
+        description.setPadding(0, 5, 0, 0);
 
         textContainer.addView(name);
         textContainer.addView(description);
@@ -256,34 +272,30 @@ public class StudentClassActivity extends AppCompatActivity {
                 new TextView(this);
 
         arrow.setText("›");
-        arrow.setTextSize(32);
-        arrow.setTextColor(
-                Color.rgb(79, 70, 229)
-        );
-
-        arrow.setGravity(
-                Gravity.CENTER
-        );
+        arrow.setTextSize(34);
+        arrow.setTextColor(primaryColor);
+        arrow.setGravity(Gravity.CENTER);
+        arrow.setTypeface(null, Typeface.BOLD);
 
         card.addView(
                 arrow,
                 new LinearLayout.LayoutParams(
-                        45,
-                        70
+                        42,
+                        68
                 )
         );
 
         LinearLayout.LayoutParams cardParams =
                 new LinearLayout.LayoutParams(
                         -1,
-                        100
+                        -2
                 );
 
         cardParams.setMargins(
                 0,
                 0,
                 0,
-                18
+                16
         );
 
         classContainer.addView(
@@ -315,28 +327,27 @@ public class StudentClassActivity extends AppCompatActivity {
         card.setOnTouchListener(
                 (view, event) -> {
 
-                    switch (event.getAction()) {
+                    if (event.getAction() ==
+                            MotionEvent.ACTION_DOWN) {
 
-                        case android.view.MotionEvent.ACTION_DOWN:
+                        view.animate()
+                                .scaleX(0.97f)
+                                .scaleY(0.97f)
+                                .setDuration(100)
+                                .start();
 
-                            view.animate()
-                                    .scaleX(0.97f)
-                                    .scaleY(0.97f)
-                                    .setDuration(100)
-                                    .start();
+                    } else if (
+                            event.getAction() ==
+                                    MotionEvent.ACTION_UP ||
+                            event.getAction() ==
+                                    MotionEvent.ACTION_CANCEL
+                    ) {
 
-                            break;
-
-                        case android.view.MotionEvent.ACTION_UP:
-                        case android.view.MotionEvent.ACTION_CANCEL:
-
-                            view.animate()
-                                    .scaleX(1f)
-                                    .scaleY(1f)
-                                    .setDuration(100)
-                                    .start();
-
-                            break;
+                        view.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(100)
+                                .start();
                     }
 
                     return false;
@@ -351,19 +362,13 @@ public class StudentClassActivity extends AppCompatActivity {
 
         messageView.setText(message);
         messageView.setTextSize(16);
-        messageView.setTextColor(
-                Color.rgb(100, 116, 139)
-        );
-
-        messageView.setGravity(
-                Gravity.CENTER
-        );
-
+        messageView.setTextColor(textSecondary);
+        messageView.setGravity(Gravity.CENTER);
         messageView.setPadding(
                 20,
-                40,
+                50,
                 20,
-                40
+                50
         );
 
         classContainer.addView(

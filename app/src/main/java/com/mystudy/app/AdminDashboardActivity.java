@@ -144,7 +144,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 new GridLayout(this);
 
         grid.setColumnCount(2);
-        grid.setRowCount(6);
+        grid.setRowCount(7);
 
         addDashboardButton(
                 grid,
@@ -180,6 +180,12 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 grid,
                 "❓ Questions",
                 "Quiz Management"
+        );
+
+        addDashboardButton(
+                grid,
+                "📊 Exam Results",
+                "Exam Results"
         );
 
         addDashboardButton(
@@ -221,7 +227,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
         Button logoutButton =
                 new Button(this);
 
-        logoutButton.setText("Logout");
+        logoutButton.setText(
+                "Logout"
+        );
 
         logoutButton.setTextSize(16);
 
@@ -340,6 +348,15 @@ public class AdminDashboardActivity extends AppCompatActivity {
                                 new Intent(
                                         this,
                                         QuestionManagementActivity.class
+                                )
+                        );
+
+                    } else if ("Exam Results".equals(description)) {
+
+                        startActivity(
+                                new Intent(
+                                        this,
+                                        AdminExamResultsActivity.class
                                 )
                         );
 

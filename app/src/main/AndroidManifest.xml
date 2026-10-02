@@ -79,6 +79,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".AdminExamResultsActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".StudentClassActivity"
             android:exported="false" />
 

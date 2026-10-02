@@ -75,7 +75,6 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         titleParams.topMargin = 15;
-
         root.addView(title, titleParams);
 
         TextView subtitle = new TextView(this);
@@ -91,7 +90,6 @@ public class LoginActivity extends AppCompatActivity {
                 );
 
         subtitleParams.topMargin = 8;
-
         root.addView(subtitle, subtitleParams);
 
         email = createInput(
@@ -368,8 +366,35 @@ public class LoginActivity extends AppCompatActivity {
                     String name =
                             document.getString("name");
 
+                    String selectedClass =
+                            document.getString("class");
+
+                    String selectedMedium =
+                            document.getString("medium");
+
+                    String selectedLanguage =
+                            document.getString("language");
+
                     if (name == null || name.trim().isEmpty()) {
                         name = "Student";
+                    }
+
+                    if (selectedClass == null ||
+                            selectedClass.trim().isEmpty()) {
+
+                        selectedClass = "";
+                    }
+
+                    if (selectedMedium == null ||
+                            selectedMedium.trim().isEmpty()) {
+
+                        selectedMedium = "";
+                    }
+
+                    if (selectedLanguage == null ||
+                            selectedLanguage.trim().isEmpty()) {
+
+                        selectedLanguage = "English";
                     }
 
                     Toast.makeText(
@@ -387,6 +412,21 @@ public class LoginActivity extends AppCompatActivity {
                     intent.putExtra(
                             "studentName",
                             name
+                    );
+
+                    intent.putExtra(
+                            "studentClass",
+                            selectedClass
+                    );
+
+                    intent.putExtra(
+                            "studentMedium",
+                            selectedMedium
+                    );
+
+                    intent.putExtra(
+                            "studentLanguage",
+                            selectedLanguage
                     );
 
                     startActivity(intent);

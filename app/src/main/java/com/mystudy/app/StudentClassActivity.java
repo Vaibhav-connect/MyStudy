@@ -15,13 +15,21 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class StudentClassActivity extends AppCompatActivity {
 
     private LinearLayout classContainer;
+
     private FirebaseFirestore db;
+    private FirebaseAuth auth;
+
+    private String studentClass = "";
+    private String studentMedium = "";
+    private String studentName = "";
 
     private final int backgroundColor = Color.rgb(248, 250, 252);
     private final int textPrimary = Color.rgb(17, 24, 39);
@@ -33,9 +41,32 @@ public class StudentClassActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         db = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
+
+        studentName =
+                getIntent().getStringExtra("studentName");
+
+        studentClass =
+                getIntent().getStringExtra("studentClass");
+
+        studentMedium =
+                getIntent().getStringExtra("studentMedium");
+
+        if (studentClass == null) {
+            studentClass = "";
+        }
+
+        if (studentMedium == null) {
+            studentMedium = "";
+        }
+
+        if (studentName == null) {
+            studentName = "";
+        }
 
         createUI();
-        loadClasses();
+
+        loadStudentProfile();
     }
 
     private void createUI() {
@@ -44,15 +75,34 @@ public class StudentClassActivity extends AppCompatActivity {
         scrollView.setFillViewport(true);
 
         LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(20, 24, 20, 30);
-        root.setBackgroundColor(backgroundColor);
+
+        root.setOrientation(
+                LinearLayout.VERTICAL
+        );
+
+        root.setPadding(
+                20,
+                24,
+                20,
+                30
+        );
+
+        root.setBackgroundColor(
+                backgroundColor
+        );
 
         TextView title = new TextView(this);
-        title.setText("📚 Choose Your Class");
+
+        title.setText(
+                "📚 My Class"
+        );
+
         title.setTextSize(28);
         title.setTextColor(textPrimary);
-        title.setTypeface(null, Typeface.BOLD);
+        title.setTypeface(
+                null,
+                Typeface.BOLD
+        );
 
         root.addView(
                 title,
@@ -63,12 +113,19 @@ public class StudentClassActivity extends AppCompatActivity {
         );
 
         TextView subtitle = new TextView(this);
+
         subtitle.setText(
-                "Choose your class and start learning."
+                "Your learning content is based on your selected class and medium."
         );
+
         subtitle.setTextSize(16);
         subtitle.setTextColor(textSecondary);
-        subtitle.setPadding(0, 8, 0, 24);
+        subtitle.setPadding(
+                0,
+                8,
+                0,
+                24
+        );
 
         root.addView(
                 subtitle,
@@ -78,22 +135,9 @@ public class StudentClassActivity extends AppCompatActivity {
                 )
         );
 
-        TextView sectionTitle = new TextView(this);
-        sectionTitle.setText("Available Classes");
-        sectionTitle.setTextSize(18);
-        sectionTitle.setTextColor(textPrimary);
-        sectionTitle.setTypeface(null, Typeface.BOLD);
-        sectionTitle.setPadding(0, 0, 0, 14);
+        classContainer =
+                new LinearLayout(this);
 
-        root.addView(
-                sectionTitle,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
-        );
-
-        classContainer = new LinearLayout(this);
         classContainer.setOrientation(
                 LinearLayout.VERTICAL
         );
@@ -111,19 +155,107 @@ public class StudentClassActivity extends AppCompatActivity {
         setContentView(scrollView);
     }
 
-    private void loadClasses() {
+    private void loadStudentProfile() {
+
+        FirebaseUser user =
+                auth.getCurrentUser();
+
+        if (user == null) {
+
+            showMessage(
+                    "Please login again."
+            );
+
+            return;
+        }
+
+        db.collection("users")
+                .document(user.getUid())
+                .get()
+                .addOnSuccessListener(document -> {
+
+                    if (!document.exists()) {
+
+                        showMessage(
+                                "Student profile not found."
+                        );
+
+                        return;
+                    }
+
+                    String savedClass =
+                            document.getString("class");
+
+                    String savedMedium =
+                            document.getString("medium");
+
+                    String savedName =
+                            document.getString("name");
+
+                    if (savedClass != null &&
+                            !savedClass.trim().isEmpty()) {
+
+                        studentClass =
+                                savedClass.trim();
+                    }
+
+                    if (savedMedium != null &&
+                            !savedMedium.trim().isEmpty()) {
+
+                        studentMedium =
+                                savedMedium.trim();
+                    }
+
+                    if (savedName != null &&
+                            !savedName.trim().isEmpty()) {
+
+                        studentName =
+                                savedName.trim();
+                    }
+
+                    if (studentClass.isEmpty()) {
+
+                        showMessage(
+                                "Your class is not selected in your profile."
+                        );
+
+                        return;
+                    }
+
+                    loadSelectedClass();
+                })
+                .addOnFailureListener(error -> {
+
+                    showMessage(
+                            "Unable to load your profile."
+                    );
+
+                    Toast.makeText(
+                            StudentClassActivity.this,
+                            "Unable to load student profile",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                });
+    }
+
+    private void loadSelectedClass() {
 
         classContainer.removeAllViews();
 
         db.collection("classes")
-                .orderBy("order")
+                .whereEqualTo(
+                        "name",
+                        studentClass
+                )
+                .limit(1)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
 
                     if (querySnapshot.isEmpty()) {
 
                         showMessage(
-                                "No classes available yet."
+                                studentClass +
+                                        " is not available yet."
                         );
 
                         return;
@@ -141,24 +273,27 @@ public class StudentClassActivity extends AppCompatActivity {
                         if (className == null ||
                                 className.trim().isEmpty()) {
 
-                            className = "Class";
+                            className = studentClass;
                         }
 
                         addClassCard(
                                 classId,
-                                className
+                                className,
+                                studentMedium
                         );
+
+                        break;
                     }
                 })
                 .addOnFailureListener(error -> {
 
                     showMessage(
-                            "Unable to load classes."
+                            "Unable to load your class."
                     );
 
                     Toast.makeText(
                             StudentClassActivity.this,
-                            "Unable to load classes",
+                            "Unable to load class",
                             Toast.LENGTH_SHORT
                     ).show();
                 });
@@ -166,11 +301,18 @@ public class StudentClassActivity extends AppCompatActivity {
 
     private void addClassCard(
             String classId,
-            String className
+            String className,
+            String medium
     ) {
 
-        final String selectedClassId = classId;
-        final String selectedClassName = className;
+        final String selectedClassId =
+                classId;
+
+        final String selectedClassName =
+                className;
+
+        final String selectedMedium =
+                medium;
 
         LinearLayout card =
                 new LinearLayout(this);
@@ -212,9 +354,12 @@ public class StudentClassActivity extends AppCompatActivity {
         iconBackground.setColor(
                 Color.rgb(238, 242, 255)
         );
+
         iconBackground.setCornerRadius(22);
 
-        icon.setBackground(iconBackground);
+        icon.setBackground(
+                iconBackground
+        );
 
         card.addView(
                 icon,
@@ -241,10 +386,42 @@ public class StudentClassActivity extends AppCompatActivity {
         TextView name =
                 new TextView(this);
 
-        name.setText(selectedClassName);
+        name.setText(
+                selectedClassName
+        );
+
         name.setTextSize(20);
         name.setTextColor(textPrimary);
-        name.setTypeface(null, Typeface.BOLD);
+        name.setTypeface(
+                null,
+                Typeface.BOLD
+        );
+
+        TextView mediumText =
+                new TextView(this);
+
+        if (selectedMedium == null ||
+                selectedMedium.trim().isEmpty()) {
+
+            mediumText.setText(
+                    "Medium not selected"
+            );
+
+        } else {
+
+            mediumText.setText(
+                    "Medium: " + selectedMedium
+            );
+        }
+
+        mediumText.setTextSize(14);
+        mediumText.setTextColor(textSecondary);
+        mediumText.setPadding(
+                0,
+                5,
+                0,
+                0
+        );
 
         TextView description =
                 new TextView(this);
@@ -252,11 +429,18 @@ public class StudentClassActivity extends AppCompatActivity {
         description.setText(
                 "Tap to explore subjects"
         );
+
         description.setTextSize(14);
         description.setTextColor(textSecondary);
-        description.setPadding(0, 5, 0, 0);
+        description.setPadding(
+                0,
+                3,
+                0,
+                0
+        );
 
         textContainer.addView(name);
+        textContainer.addView(mediumText);
         textContainer.addView(description);
 
         card.addView(
@@ -275,7 +459,10 @@ public class StudentClassActivity extends AppCompatActivity {
         arrow.setTextSize(34);
         arrow.setTextColor(primaryColor);
         arrow.setGravity(Gravity.CENTER);
-        arrow.setTypeface(null, Typeface.BOLD);
+        arrow.setTypeface(
+                null,
+                Typeface.BOLD
+        );
 
         card.addView(
                 arrow,
@@ -321,7 +508,22 @@ public class StudentClassActivity extends AppCompatActivity {
                     selectedClassName
             );
 
+            intent.putExtra(
+                    "studentMedium",
+                    selectedMedium
+            );
+
+            intent.putExtra(
+                    "studentName",
+                    studentName
+            );
+
             startActivity(intent);
+
+            overridePendingTransition(
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out
+            );
         });
 
         card.setOnTouchListener(
@@ -355,15 +557,25 @@ public class StudentClassActivity extends AppCompatActivity {
         );
     }
 
-    private void showMessage(String message) {
+    private void showMessage(
+            String message
+    ) {
+
+        classContainer.removeAllViews();
 
         TextView messageView =
                 new TextView(this);
 
         messageView.setText(message);
         messageView.setTextSize(16);
-        messageView.setTextColor(textSecondary);
-        messageView.setGravity(Gravity.CENTER);
+        messageView.setTextColor(
+                textSecondary
+        );
+
+        messageView.setGravity(
+                Gravity.CENTER
+        );
+
         messageView.setPadding(
                 20,
                 50,

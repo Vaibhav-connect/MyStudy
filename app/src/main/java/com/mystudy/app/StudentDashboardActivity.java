@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -17,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -43,6 +45,8 @@ public class StudentDashboardActivity extends AppCompatActivity {
     private int totalQuizQuestions = 0;
     private int completedLessons = 0;
 
+    private boolean dashboardLoading = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +67,13 @@ public class StudentDashboardActivity extends AppCompatActivity {
         loadDashboardStats();
     }
 
+    private int dp(float value) {
+        return (int) (
+                value * getResources().getDisplayMetrics().density
+                        + 0.5f
+        );
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -70,6 +81,11 @@ public class StudentDashboardActivity extends AppCompatActivity {
         if (db != null && auth != null) {
             loadDashboardStats();
         }
+    }
+
+    private boolean isScreenActive() {
+        return !isFinishing() &&
+                !isDestroyed();
     }
 
     private void createDashboard() {
@@ -87,10 +103,10 @@ public class StudentDashboardActivity extends AppCompatActivity {
         );
 
         root.setPadding(
-                20,
-                24,
-                20,
-                30
+                dp(20),
+                dp(24),
+                dp(20),
+                dp(30)
         );
 
         root.setBackgroundColor(
@@ -135,7 +151,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 greeting,
                 new LinearLayout.LayoutParams(
                         0,
-                        65,
+                        dp(58),
                         1
                 )
         );
@@ -145,6 +161,10 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         settingsButton.setOnClickListener(
                 view -> {
+
+                    if (!isScreenActive()) {
+                        return;
+                    }
 
                     Intent intent =
                             new Intent(
@@ -159,8 +179,8 @@ public class StudentDashboardActivity extends AppCompatActivity {
         topBar.addView(
                 settingsButton,
                 new LinearLayout.LayoutParams(
-                        58,
-                        58
+                        dp(52),
+                        dp(52)
                 )
         );
 
@@ -183,7 +203,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 0,
                 0,
                 0,
-                10
+                dp(10)
         );
 
         root.addView(subtitle);
@@ -207,9 +227,9 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         dashboardStatus.setPadding(
                 0,
-                8,
+                dp(8),
                 0,
-                16
+                dp(16)
         );
 
         root.addView(dashboardStatus);
@@ -233,14 +253,14 @@ public class StudentDashboardActivity extends AppCompatActivity {
         LinearLayout.LayoutParams statParams =
                 new LinearLayout.LayoutParams(
                         0,
-                        125,
+                        dp(125),
                         1
                 );
 
         statParams.setMargins(
                 0,
                 0,
-                5,
+                dp(4),
                 0
         );
 
@@ -257,14 +277,14 @@ public class StudentDashboardActivity extends AppCompatActivity {
         LinearLayout.LayoutParams streakParams =
                 new LinearLayout.LayoutParams(
                         0,
-                        125,
+                        dp(125),
                         1
                 );
 
         streakParams.setMargins(
-                5,
+                dp(4),
                 0,
-                5,
+                dp(4),
                 0
         );
 
@@ -281,12 +301,12 @@ public class StudentDashboardActivity extends AppCompatActivity {
         LinearLayout.LayoutParams accuracyParams =
                 new LinearLayout.LayoutParams(
                         0,
-                        125,
+                        dp(125),
                         1
                 );
 
         accuracyParams.setMargins(
-                5,
+                dp(4),
                 0,
                 0,
                 0
@@ -304,20 +324,21 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         root.addView(stats);
 
-        TextView learningTitle =
-                createSectionTitle(
-                        "📚 Start Learning"
-                );
+        root.addView(
+                createSectionTitle("📚 Start Learning")
+        );
 
-        root.addView(learningTitle);
-
-        LinearLayout learningCard =
+        root.addView(
                 createActionCard(
                         "📖",
                         "Learn Subjects",
                         "Choose your class, subject and chapter",
                         view -> {
 
+                            if (!isScreenActive()) {
+                                return;
+                            }
+
                             Intent intent =
                                     new Intent(
                                             StudentDashboardActivity.this,
@@ -331,24 +352,24 @@ public class StudentDashboardActivity extends AppCompatActivity {
                                     android.R.anim.fade_out
                             );
                         }
-                );
+                )
+        );
 
-        root.addView(learningCard);
+        root.addView(
+                createSectionTitle("🎯 Practice")
+        );
 
-        TextView practiceTitle =
-                createSectionTitle(
-                        "🎯 Practice"
-                );
-
-        root.addView(practiceTitle);
-
-        LinearLayout practiceCard =
+        root.addView(
                 createActionCard(
                         "🧠",
                         "Practice Questions",
                         "Test your knowledge and improve your score",
                         view -> {
 
+                            if (!isScreenActive()) {
+                                return;
+                            }
+
                             Intent intent =
                                     new Intent(
                                             StudentDashboardActivity.this,
@@ -362,23 +383,23 @@ public class StudentDashboardActivity extends AppCompatActivity {
                                     android.R.anim.fade_out
                             );
                         }
-                );
+                )
+        );
 
-        root.addView(practiceCard);
+        root.addView(
+                createSectionTitle("📝 Exams")
+        );
 
-        TextView examTitle =
-                createSectionTitle(
-                        "📝 Exams"
-                );
-
-        root.addView(examTitle);
-
-        LinearLayout examCard =
+        root.addView(
                 createActionCard(
                         "📝",
                         "Take Exams",
                         "Attempt published exams and check your knowledge",
                         view -> {
+
+                            if (!isScreenActive()) {
+                                return;
+                            }
 
                             Intent intent =
                                     new Intent(
@@ -398,16 +419,19 @@ public class StudentDashboardActivity extends AppCompatActivity {
                                     android.R.anim.fade_out
                             );
                         }
-                );
+                )
+        );
 
-        root.addView(examCard);
-
-        LinearLayout historyCard =
+        root.addView(
                 createActionCard(
                         "📜",
                         "Exam History",
                         "View your previous exam results and performance",
                         view -> {
+
+                            if (!isScreenActive()) {
+                                return;
+                            }
 
                             Intent intent =
                                     new Intent(
@@ -422,23 +446,23 @@ public class StudentDashboardActivity extends AppCompatActivity {
                                     android.R.anim.fade_out
                             );
                         }
-                );
+                )
+        );
 
-        root.addView(historyCard);
+        root.addView(
+                createSectionTitle("👨‍👩‍👧 Family")
+        );
 
-        TextView familyTitle =
-                createSectionTitle(
-                        "👨‍👩‍👧 Family"
-                );
-
-        root.addView(familyTitle);
-
-        LinearLayout parentCard =
+        root.addView(
                 createActionCard(
                         "🔐",
                         "Parent Area",
                         "View learning progress and student activity",
                         view -> {
+
+                            if (!isScreenActive()) {
+                                return;
+                            }
 
                             Intent intent =
                                     new Intent(
@@ -453,28 +477,18 @@ public class StudentDashboardActivity extends AppCompatActivity {
                                     android.R.anim.fade_out
                             );
                         }
-                );
+                )
+        );
 
-        root.addView(parentCard);
+        root.addView(
+                createSectionTitle("📊 Your Progress")
+        );
 
-        TextView progressTitle =
-                createSectionTitle(
-                        "📊 Your Progress"
-                );
+        root.addView(createProgressCard());
 
-        root.addView(progressTitle);
-
-        LinearLayout progressCard =
-                createProgressCard();
-
-        root.addView(progressCard);
-
-        TextView weakTitle =
-                createSectionTitle(
-                        "⚠️ Topics to Practice"
-                );
-
-        root.addView(weakTitle);
+        root.addView(
+                createSectionTitle("⚠️ Topics to Practice")
+        );
 
         weakTopicsContainer =
                 createWeakTopicsCard();
@@ -504,9 +518,9 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         about.setPadding(
                 0,
-                35,
+                dp(35),
                 0,
-                10
+                dp(10)
         );
 
         root.addView(about);
@@ -533,10 +547,10 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 new GradientDrawable();
 
         background.setColor(Color.WHITE);
-        background.setCornerRadius(22);
+        background.setCornerRadius(dp(22));
 
         button.setBackground(background);
-        button.setElevation(4);
+        button.setElevation(dp(4));
 
         addPressAnimation(button);
 
@@ -564,9 +578,9 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         title.setPadding(
                 0,
-                28,
+                dp(28),
                 0,
-                14
+                dp(14)
         );
 
         return title;
@@ -591,20 +605,20 @@ public class StudentDashboardActivity extends AppCompatActivity {
         );
 
         card.setPadding(
-                6,
-                8,
-                6,
-                8
+                dp(6),
+                dp(8),
+                dp(6),
+                dp(8)
         );
 
         GradientDrawable background =
                 new GradientDrawable();
 
         background.setColor(Color.WHITE);
-        background.setCornerRadius(24);
+        background.setCornerRadius(dp(24));
 
         card.setBackground(background);
-        card.setElevation(4);
+        card.setElevation(dp(4));
 
         TextView iconView =
                 new TextView(this);
@@ -675,20 +689,20 @@ public class StudentDashboardActivity extends AppCompatActivity {
         );
 
         card.setPadding(
-                18,
-                16,
-                18,
-                16
+                dp(18),
+                dp(16),
+                dp(18),
+                dp(16)
         );
 
         GradientDrawable background =
                 new GradientDrawable();
 
         background.setColor(Color.WHITE);
-        background.setCornerRadius(28);
+        background.setCornerRadius(dp(28));
 
         card.setBackground(background);
-        card.setElevation(4);
+        card.setElevation(dp(4));
 
         TextView iconView =
                 new TextView(this);
@@ -702,8 +716,8 @@ public class StudentDashboardActivity extends AppCompatActivity {
         card.addView(
                 iconView,
                 new LinearLayout.LayoutParams(
-                        60,
-                        70
+                        dp(60),
+                        dp(70)
                 )
         );
 
@@ -715,9 +729,9 @@ public class StudentDashboardActivity extends AppCompatActivity {
         );
 
         textContainer.setPadding(
-                14,
+                dp(14),
                 0,
-                8,
+                dp(8),
                 0
         );
 
@@ -750,7 +764,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         descriptionView.setPadding(
                 0,
-                5,
+                dp(5),
                 0,
                 0
         );
@@ -763,7 +777,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 textContainer,
                 new LinearLayout.LayoutParams(
                         0,
-                        -2,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
                         1
                 )
         );
@@ -785,22 +799,22 @@ public class StudentDashboardActivity extends AppCompatActivity {
         card.addView(
                 arrow,
                 new LinearLayout.LayoutParams(
-                        40,
-                        60
+                        dp(40),
+                        dp(60)
                 )
         );
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(
-                        -1,
-                        105
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        dp(105)
                 );
 
         params.setMargins(
                 0,
                 0,
                 0,
-                12
+                dp(12)
         );
 
         card.setLayoutParams(params);
@@ -822,20 +836,20 @@ public class StudentDashboardActivity extends AppCompatActivity {
         );
 
         card.setPadding(
-                20,
-                18,
-                20,
-                18
+                dp(20),
+                dp(18),
+                dp(20),
+                dp(18)
         );
 
         GradientDrawable background =
                 new GradientDrawable();
 
         background.setColor(Color.WHITE);
-        background.setCornerRadius(28);
+        background.setCornerRadius(dp(28));
 
         card.setBackground(background);
-        card.setElevation(4);
+        card.setElevation(dp(4));
 
         TextView title =
                 new TextView(this);
@@ -872,7 +886,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         lessonProgressValue.setPadding(
                 0,
-                8,
+                dp(8),
                 0,
                 0
         );
@@ -896,7 +910,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         badge.setPadding(
                 0,
-                14,
+                dp(14),
                 0,
                 0
         );
@@ -918,20 +932,20 @@ public class StudentDashboardActivity extends AppCompatActivity {
         );
 
         card.setPadding(
-                20,
-                18,
-                20,
-                18
+                dp(20),
+                dp(18),
+                dp(20),
+                dp(18)
         );
 
         GradientDrawable background =
                 new GradientDrawable();
 
         background.setColor(Color.WHITE);
-        background.setCornerRadius(28);
+        background.setCornerRadius(dp(28));
 
         card.setBackground(background);
-        card.setElevation(4);
+        card.setElevation(dp(4));
 
         TextView loading =
                 new TextView(this);
@@ -959,6 +973,11 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
     private void loadDashboardStats() {
 
+        if (!isScreenActive() ||
+                dashboardLoading) {
+            return;
+        }
+
         FirebaseUser user =
                 auth.getCurrentUser();
 
@@ -971,6 +990,8 @@ public class StudentDashboardActivity extends AppCompatActivity {
             return;
         }
 
+        dashboardLoading = true;
+
         showDashboardLoading();
 
         String userId =
@@ -982,7 +1003,14 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 .addOnSuccessListener(
                         document -> {
 
+                            if (!isScreenActive()) {
+                                dashboardLoading = false;
+                                return;
+                            }
+
                             if (!document.exists()) {
+
+                                dashboardLoading = false;
 
                                 showDashboardError(
                                         "Your profile data was not found."
@@ -1006,68 +1034,52 @@ public class StudentDashboardActivity extends AppCompatActivity {
                                             "overallAccuracy"
                                     );
 
-                            if (points != null) {
+                            pointsValue.setText(
+                                    points != null
+                                            ? String.valueOf(points)
+                                            : "0"
+                            );
 
-                                pointsValue.setText(
-                                        String.valueOf(
-                                                points
-                                        )
-                                );
+                            streakValue.setText(
+                                    streak != null
+                                            ? String.valueOf(streak)
+                                            : "0"
+                            );
 
-                            } else {
-
-                                pointsValue.setText("0");
-                            }
-
-                            if (streak != null) {
-
-                                streakValue.setText(
-                                        String.valueOf(
-                                                streak
-                                        )
-                                );
-
-                            } else {
-
-                                streakValue.setText("0");
-                            }
-
-                            if (overallAccuracy != null) {
-
-                                accuracyValue.setText(
-                                        String.format(
-                                                Locale.US,
-                                                "%.0f%%",
-                                                overallAccuracy
-                                        )
-                                );
-
-                            } else {
-
-                                accuracyValue.setText(
-                                        "0%"
-                                );
-                            }
+                            accuracyValue.setText(
+                                    overallAccuracy != null
+                                            ? String.format(
+                                                    Locale.US,
+                                                    "%.0f%%",
+                                                    overallAccuracy
+                                            )
+                                            : "0%"
+                            );
 
                             dashboardStatus.setText(
                                     "✅ Dashboard updated"
                             );
 
-                            loadWeakTopics(
-                                    document
-                            );
+                            dashboardLoading = false;
+
+                            loadWeakTopics(document);
                         }
                 )
                 .addOnFailureListener(
                         e -> {
 
+                            if (!isScreenActive()) {
+                                dashboardLoading = false;
+                                return;
+                            }
+
+                            dashboardLoading = false;
+
                             showDashboardError(
                                     "Unable to load profile data. Please try again."
                             );
 
-                            accuracyValue.setText(
-                                    "0%"
-                            );
+                            accuracyValue.setText("0%");
                         }
                 );
 
@@ -1111,11 +1123,14 @@ public class StudentDashboardActivity extends AppCompatActivity {
             );
         }
 
-        Toast.makeText(
-                StudentDashboardActivity.this,
-                message,
-                Toast.LENGTH_SHORT
-        ).show();
+        if (isScreenActive()) {
+
+            Toast.makeText(
+                    StudentDashboardActivity.this,
+                    message,
+                    Toast.LENGTH_SHORT
+            ).show();
+        }
     }
 
     private void loadQuizAccuracy(
@@ -1134,6 +1149,10 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 .addOnSuccessListener(
                         querySnapshot -> {
 
+                            if (!isScreenActive()) {
+                                return;
+                            }
+
                             for (
                                     QueryDocumentSnapshot document :
                                     querySnapshot
@@ -1150,13 +1169,11 @@ public class StudentDashboardActivity extends AppCompatActivity {
                                         );
 
                                 if (score != null) {
-
                                     totalQuizScore +=
                                             score.intValue();
                                 }
 
                                 if (total != null) {
-
                                     totalQuizQuestions +=
                                             total.intValue();
                                 }
@@ -1191,9 +1208,11 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 .addOnFailureListener(
                         e -> {
 
-                            accuracyValue.setText(
-                                    "0%"
-                            );
+                            if (!isScreenActive()) {
+                                return;
+                            }
+
+                            accuracyValue.setText("0%");
 
                             if (dashboardStatus != null) {
 
@@ -1226,6 +1245,10 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 .addOnSuccessListener(
                         querySnapshot -> {
 
+                            if (!isScreenActive()) {
+                                return;
+                            }
+
                             completedLessons =
                                     querySnapshot.size();
 
@@ -1247,6 +1270,10 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 .addOnFailureListener(
                         e -> {
 
+                            if (!isScreenActive()) {
+                                return;
+                            }
+
                             lessonProgressValue.setText(
                                     "Unable to load lesson progress"
                             );
@@ -1266,10 +1293,11 @@ public class StudentDashboardActivity extends AppCompatActivity {
     }
 
     private void loadWeakTopics(
-            com.google.firebase.firestore.DocumentSnapshot document
+            DocumentSnapshot document
     ) {
 
-        if (weakTopicsContainer == null) {
+        if (!isScreenActive() ||
+                weakTopicsContainer == null) {
             return;
         }
 
@@ -1326,9 +1354,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 chapterIds) {
 
             Object topicObject =
-                    weakTopics.get(
-                            chapterId
-                    );
+                    weakTopics.get(chapterId);
 
             double topicAccuracy = 0;
             String status = "needs_practice";
@@ -1339,14 +1365,10 @@ public class StudentDashboardActivity extends AppCompatActivity {
                         (Map<?, ?>) topicObject;
 
                 Object accuracyObject =
-                        topicData.get(
-                                "accuracy"
-                        );
+                        topicData.get("accuracy");
 
                 Object statusObject =
-                        topicData.get(
-                                "status"
-                        );
+                        topicData.get("status");
 
                 if (accuracyObject instanceof Number) {
 
@@ -1385,10 +1407,12 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 .addOnSuccessListener(
                         document -> {
 
+                            if (!isScreenActive()) {
+                                return;
+                            }
+
                             String chapterName =
-                                    document.getString(
-                                            "name"
-                                    );
+                                    document.getString("name");
 
                             if (chapterName == null ||
                                     chapterName.trim().isEmpty()) {
@@ -1402,8 +1426,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
                             if (chapterName == null ||
                                     chapterName.trim().isEmpty()) {
 
-                                chapterName =
-                                        "Chapter";
+                                chapterName = "Chapter";
                             }
 
                             addWeakTopicRow(
@@ -1414,12 +1437,18 @@ public class StudentDashboardActivity extends AppCompatActivity {
                         }
                 )
                 .addOnFailureListener(
-                        e ->
-                                addWeakTopicRow(
-                                        "Chapter",
-                                        accuracy,
-                                        status
-                                )
+                        e -> {
+
+                            if (!isScreenActive()) {
+                                return;
+                            }
+
+                            addWeakTopicRow(
+                                    "Chapter",
+                                    accuracy,
+                                    status
+                            );
+                        }
                 );
     }
 
@@ -1429,7 +1458,8 @@ public class StudentDashboardActivity extends AppCompatActivity {
             String status
     ) {
 
-        if (weakTopicsContainer == null) {
+        if (!isScreenActive() ||
+                weakTopicsContainer == null) {
             return;
         }
 
@@ -1441,10 +1471,10 @@ public class StudentDashboardActivity extends AppCompatActivity {
         );
 
         row.setPadding(
-                14,
-                12,
-                14,
-                12
+                dp(14),
+                dp(12),
+                dp(14),
+                dp(12)
         );
 
         GradientDrawable background =
@@ -1454,7 +1484,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 Color.rgb(248, 250, 252)
         );
 
-        background.setCornerRadius(18);
+        background.setCornerRadius(dp(18));
 
         row.setBackground(background);
 
@@ -1497,7 +1527,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         accuracyText.setPadding(
                 0,
-                5,
+                dp(5),
                 0,
                 0
         );
@@ -1537,7 +1567,7 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         statusText.setPadding(
                 0,
-                4,
+                dp(4),
                 0,
                 0
         );
@@ -1546,15 +1576,15 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(
-                        -1,
-                        -2
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
                 );
 
         params.setMargins(
                 0,
                 0,
                 0,
-                10
+                dp(10)
         );
 
         weakTopicsContainer.addView(
@@ -1565,7 +1595,8 @@ public class StudentDashboardActivity extends AppCompatActivity {
 
     private void showNoWeakTopics() {
 
-        if (weakTopicsContainer == null) {
+        if (!isScreenActive() ||
+                weakTopicsContainer == null) {
             return;
         }
 
@@ -1590,10 +1621,10 @@ public class StudentDashboardActivity extends AppCompatActivity {
         );
 
         message.setPadding(
-                10,
-                15,
-                10,
-                15
+                dp(10),
+                dp(15),
+                dp(10),
+                dp(15)
         );
 
         weakTopicsContainer.addView(
@@ -1635,4 +1666,25 @@ public class StudentDashboardActivity extends AppCompatActivity {
                 }
         );
     }
+
+    @Override
+    protected void onDestroy() {
+
+        dashboardLoading = false;
+
+        if (pointsValue != null) {
+            pointsValue.animate().cancel();
+        }
+
+        if (streakValue != null) {
+            streakValue.animate().cancel();
+        }
+
+        if (accuracyValue != null) {
+            accuracyValue.animate().cancel();
+        }
+
+        super.onDestroy();
+    }
 }
+

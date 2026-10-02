@@ -398,6 +398,15 @@ public class AdminDashboardActivity extends AppCompatActivity {
                             ).show();
                         }
 
+                    } else if ("Settings".equals(description)) {
+
+                        startActivity(
+                                new Intent(
+                                        this,
+                                        AdminSettingsActivity.class
+                                )
+                        );
+
                     } else {
 
                         Toast.makeText(

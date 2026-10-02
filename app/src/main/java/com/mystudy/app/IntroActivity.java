@@ -1,3 +1,4 @@
+```java
 package com.mystudy.app;
 
 import android.animation.Animator;
@@ -10,6 +11,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -22,6 +24,11 @@ public class IntroActivity extends AppCompatActivity {
     private TextView book;
     private TextView title;
 
+    private AnimatorSet walkingAnimation;
+    private AnimatorSet bookAnimation;
+
+    private boolean screenOpening = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,13 +37,17 @@ public class IntroActivity extends AppCompatActivity {
         startAnimation();
     }
 
+    private int dp(float value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
     private void createIntroScreen() {
 
         LinearLayout root = new LinearLayout(this);
 
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER);
-        root.setPadding(30, 30, 30, 30);
+        root.setPadding(dp(24), dp(24), dp(24), dp(24));
 
         GradientDrawable background = new GradientDrawable(
                 GradientDrawable.Orientation.TL_BR,
@@ -55,7 +66,13 @@ public class IntroActivity extends AppCompatActivity {
         title.setTextColor(Color.WHITE);
         title.setGravity(Gravity.CENTER);
 
-        root.addView(title);
+        root.addView(
+                title,
+                new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+        );
 
         TextView tagline = new TextView(this);
         tagline.setText("Learn • Practice • Grow");
@@ -65,45 +82,54 @@ public class IntroActivity extends AppCompatActivity {
 
         LinearLayout.LayoutParams taglineParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
                 );
 
-        taglineParams.topMargin = 8;
+        taglineParams.topMargin = dp(8);
+
         root.addView(tagline, taglineParams);
 
         LinearLayout scene = new LinearLayout(this);
-        scene.setGravity(Gravity.CENTER_VERTICAL);
+
+        scene.setGravity(Gravity.CENTER);
         scene.setOrientation(LinearLayout.HORIZONTAL);
 
         LinearLayout.LayoutParams sceneParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        300
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        dp(220)
                 );
 
-        sceneParams.topMargin = 60;
+        sceneParams.topMargin = dp(35);
+
         root.addView(scene, sceneParams);
 
         boy = new TextView(this);
         boy.setText("👦");
-        boy.setTextSize(72);
+        boy.setTextSize(64);
         boy.setGravity(Gravity.CENTER);
 
-        scene.addView(
-                boy,
-                new LinearLayout.LayoutParams(130, 150)
-        );
+        LinearLayout.LayoutParams boyParams =
+                new LinearLayout.LayoutParams(
+                        dp(100),
+                        dp(130)
+                );
+
+        scene.addView(boy, boyParams);
 
         book = new TextView(this);
         book.setText("📕");
-        book.setTextSize(80);
+        book.setTextSize(72);
         book.setGravity(Gravity.CENTER);
 
         LinearLayout.LayoutParams bookParams =
-                new LinearLayout.LayoutParams(150, 150);
+                new LinearLayout.LayoutParams(
+                        dp(110),
+                        dp(130)
+                );
 
-        bookParams.leftMargin = 100;
+        bookParams.leftMargin = dp(35);
 
         scene.addView(book, bookParams);
 
@@ -115,11 +141,12 @@ public class IntroActivity extends AppCompatActivity {
 
         LinearLayout.LayoutParams welcomeParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
                 );
 
-        welcomeParams.topMargin = 35;
+        welcomeParams.topMargin = dp(20);
+
         root.addView(welcome, welcomeParams);
 
         setContentView(root);
@@ -129,7 +156,11 @@ public class IntroActivity extends AppCompatActivity {
 
         boy.post(() -> {
 
-            float startX = -700f;
+            if (isFinishing() || isDestroyed()) {
+                return;
+            }
+
+            float startX = -dp(180);
             float endX = 0f;
 
             boy.setTranslationX(startX);
@@ -143,6 +174,7 @@ public class IntroActivity extends AppCompatActivity {
                     );
 
             walk.setDuration(1600);
+
             walk.setInterpolator(
                     new AccelerateDecelerateInterpolator()
             );
@@ -152,7 +184,7 @@ public class IntroActivity extends AppCompatActivity {
                             boy,
                             View.TRANSLATION_Y,
                             0f,
-                            -12f,
+                            -dp(5),
                             0f
                     );
 
@@ -196,10 +228,13 @@ public class IntroActivity extends AppCompatActivity {
                         @Override
                         public void onAnimationEnd(Animator animation) {
 
+                            if (isFinishing() || isDestroyed()) {
+                                return;
+                            }
+
                             book.setText("📖");
 
-                            AnimatorSet bookAnimation =
-                                    new AnimatorSet();
+                            bookAnimation = new AnimatorSet();
 
                             bookAnimation.playTogether(
                                     bookScaleX,
@@ -215,6 +250,12 @@ public class IntroActivity extends AppCompatActivity {
                                                 Animator animation
                                         ) {
 
+                                            if (isFinishing()
+                                                    || isDestroyed()
+                                                    || screenOpening) {
+                                                return;
+                                            }
+
                                             openLoginScreen();
                                         }
                                     }
@@ -225,8 +266,7 @@ public class IntroActivity extends AppCompatActivity {
                     }
             );
 
-            AnimatorSet walkingAnimation =
-                    new AnimatorSet();
+            walkingAnimation = new AnimatorSet();
 
             walkingAnimation.playTogether(
                     walk,
@@ -238,6 +278,12 @@ public class IntroActivity extends AppCompatActivity {
     }
 
     private void openLoginScreen() {
+
+        if (screenOpening || isFinishing() || isDestroyed()) {
+            return;
+        }
+
+        screenOpening = true;
 
         Intent intent =
                 new Intent(
@@ -254,4 +300,29 @@ public class IntroActivity extends AppCompatActivity {
 
         finish();
     }
+
+    @Override
+    protected void onDestroy() {
+
+        if (walkingAnimation != null) {
+            walkingAnimation.cancel();
+            walkingAnimation = null;
+        }
+
+        if (bookAnimation != null) {
+            bookAnimation.cancel();
+            bookAnimation = null;
+        }
+
+        if (boy != null) {
+            boy.animate().cancel();
+        }
+
+        if (book != null) {
+            book.animate().cancel();
+        }
+
+        super.onDestroy();
+    }
 }
+```

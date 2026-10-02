@@ -94,6 +94,18 @@
             android:name=".StudentPracticeActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".StudentDashboardActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ParentPinActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ParentDashboardActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

@@ -38,6 +38,7 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        applySavedTheme();
         applySavedLanguage();
 
         auth = FirebaseAuth.getInstance();
@@ -45,6 +46,31 @@ public class SettingsActivity extends AppCompatActivity {
 
         buildUI();
         loadUserData();
+    }
+
+    private void applySavedTheme() {
+
+        SharedPreferences preferences =
+                getSharedPreferences(
+                        PREF_NAME,
+                        MODE_PRIVATE
+                );
+
+        boolean darkMode =
+                preferences.getBoolean(
+                        DARK_MODE_KEY,
+                        false
+                );
+
+        if (darkMode) {
+            AppCompatDelegate.setDefaultNightMode(
+                    AppCompatDelegate.MODE_NIGHT_YES
+            );
+        } else {
+            AppCompatDelegate.setDefaultNightMode(
+                    AppCompatDelegate.MODE_NIGHT_NO
+            );
+        }
     }
 
     private void applySavedLanguage() {
@@ -111,7 +137,11 @@ public class SettingsActivity extends AppCompatActivity {
 
         ScrollView scrollView = new ScrollView(this);
         scrollView.setFillViewport(true);
-        scrollView.setBackgroundColor(0xFFF8FAFC);
+        scrollView.setBackgroundColor(
+                isDarkMode()
+                        ? 0xFF111827
+                        : 0xFFF8FAFC
+        );
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -120,7 +150,11 @@ public class SettingsActivity extends AppCompatActivity {
         TextView title = new TextView(this);
         title.setText("Settings");
         title.setTextSize(30);
-        title.setTextColor(0xFF111827);
+        title.setTextColor(
+                isDarkMode()
+                        ? 0xFFFFFFFF
+                        : 0xFF111827
+        );
         title.setTypeface(null, 1);
 
         root.addView(
@@ -131,7 +165,11 @@ public class SettingsActivity extends AppCompatActivity {
         TextView subtitle = new TextView(this);
         subtitle.setText("Manage your MyStudy preferences");
         subtitle.setTextSize(15);
-        subtitle.setTextColor(0xFF64748B);
+        subtitle.setTextColor(
+                isDarkMode()
+                        ? 0xFFCBD5E1
+                        : 0xFF64748B
+        );
 
         root.addView(
                 subtitle,
@@ -275,16 +313,9 @@ public class SettingsActivity extends AppCompatActivity {
         Switch darkSwitch =
                 new Switch(this);
 
-        boolean darkMode =
-                getSharedPreferences(
-                        PREF_NAME,
-                        MODE_PRIVATE
-                ).getBoolean(
-                        DARK_MODE_KEY,
-                        false
-                );
-
-        darkSwitch.setChecked(darkMode);
+        darkSwitch.setChecked(
+                isDarkMode()
+        );
 
         darkRow.addView(
                 darkText,
@@ -322,11 +353,24 @@ public class SettingsActivity extends AppCompatActivity {
                             )
                             .apply();
 
+                    if (isChecked) {
+
+                        AppCompatDelegate.setDefaultNightMode(
+                                AppCompatDelegate.MODE_NIGHT_YES
+                        );
+
+                    } else {
+
+                        AppCompatDelegate.setDefaultNightMode(
+                                AppCompatDelegate.MODE_NIGHT_NO
+                        );
+                    }
+
                     Toast.makeText(
                             SettingsActivity.this,
                             isChecked
-                                    ? "Dark theme saved"
-                                    : "Light theme saved",
+                                    ? "Dark theme enabled"
+                                    : "Light theme enabled",
                             Toast.LENGTH_SHORT
                     ).show();
                 }
@@ -370,7 +414,11 @@ public class SettingsActivity extends AppCompatActivity {
         );
 
         developer.setTextSize(13);
-        developer.setTextColor(0xFF94A3B8);
+        developer.setTextColor(
+                isDarkMode()
+                        ? 0xFF94A3B8
+                        : 0xFF94A3B8
+        );
         developer.setGravity(Gravity.CENTER);
         developer.setPadding(0, 30, 0, 0);
 
@@ -382,6 +430,17 @@ public class SettingsActivity extends AppCompatActivity {
         scrollView.addView(root);
 
         setContentView(scrollView);
+    }
+
+    private boolean isDarkMode() {
+
+        return getSharedPreferences(
+                PREF_NAME,
+                MODE_PRIVATE
+        ).getBoolean(
+                DARK_MODE_KEY,
+                false
+        );
     }
 
     private void loadUserData() {
@@ -516,7 +575,9 @@ public class SettingsActivity extends AppCompatActivity {
         );
 
         card.setBackgroundColor(
-                0xFFFFFFFF
+                isDarkMode()
+                        ? 0xFF1F2937
+                        : 0xFFFFFFFF
         );
 
         card.setElevation(6);
@@ -533,7 +594,11 @@ public class SettingsActivity extends AppCompatActivity {
 
         view.setText(text);
         view.setTextSize(18);
-        view.setTextColor(0xFF111827);
+        view.setTextColor(
+                isDarkMode()
+                        ? 0xFFFFFFFF
+                        : 0xFF111827
+        );
         view.setTypeface(null, 1);
 
         return view;
@@ -548,7 +613,11 @@ public class SettingsActivity extends AppCompatActivity {
 
         view.setText(text);
         view.setTextSize(15);
-        view.setTextColor(0xFF64748B);
+        view.setTextColor(
+                isDarkMode()
+                        ? 0xFFCBD5E1
+                        : 0xFF64748B
+        );
 
         return view;
     }
@@ -562,9 +631,17 @@ public class SettingsActivity extends AppCompatActivity {
 
         view.setText(text);
         view.setTextSize(14);
-        view.setTextColor(0xFF4F46E5);
+        view.setTextColor(
+                isDarkMode()
+                        ? 0xFF818CF8
+                        : 0xFF4F46E5
+        );
         view.setGravity(Gravity.CENTER);
-        view.setBackgroundColor(0xFFF1F5F9);
+        view.setBackgroundColor(
+                isDarkMode()
+                        ? 0xFF374151
+                        : 0xFFF1F5F9
+        );
         view.setPadding(8, 8, 8, 8);
 
         return view;
@@ -612,4 +689,3 @@ public class SettingsActivity extends AppCompatActivity {
         return params;
     }
 }
-

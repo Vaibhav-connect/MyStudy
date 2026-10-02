@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -533,7 +534,6 @@ public class QuizManagementActivity extends AppCompatActivity {
     }
 
     private void showCreateQuizDialog() {
-
         loadClassesForCreate();
     }
 
@@ -684,7 +684,7 @@ public class QuizManagementActivity extends AppCompatActivity {
 
                     data.questionCount =
                             questionCount != null
-                                    ? questionCount
+                                    ? questionCount.intValue()
                                     : 10;
 
                     Boolean published =
@@ -908,6 +908,7 @@ public class QuizManagementActivity extends AppCompatActivity {
         info.setTextColor(
                 Color.rgb(100, 116, 139)
         );
+
         info.setPadding(
                 0,
                 15,
@@ -915,62 +916,41 @@ public class QuizManagementActivity extends AppCompatActivity {
                 15
         );
 
-        form.addView(
-                label("Title")
-        );
+        form.addView(label("Title"));
         form.addView(titleInput);
 
-        form.addView(
-                label("Quiz Type")
-        );
+        form.addView(label("Quiz Type"));
         form.addView(typeSpinner);
 
-        form.addView(
-                label("Class")
-        );
+        form.addView(label("Class"));
         form.addView(classSpinner);
 
-        form.addView(
-                label("Medium")
-        );
+        form.addView(label("Medium"));
         form.addView(mediumSpinner);
 
-        form.addView(
-                label("Subject")
-        );
+        form.addView(label("Subject"));
         form.addView(subjectSpinner);
 
-        form.addView(
-                label("Chapter")
-        );
+        form.addView(label("Chapter"));
         form.addView(chapterSpinner);
 
-        form.addView(
-                label("Number of Questions")
-        );
+        form.addView(label("Number of Questions"));
         form.addView(questionCountInput);
 
-        form.addView(
-                label("Total Marks")
-        );
+        form.addView(label("Total Marks"));
         form.addView(totalMarksInput);
 
-        form.addView(
-                label("Time Limit")
-        );
+        form.addView(label("Time Limit"));
         form.addView(durationInput);
 
-        form.addView(
-                label("Difficulty")
-        );
+        form.addView(label("Difficulty"));
         form.addView(difficultySpinner);
 
         form.addView(info);
 
         scrollView.addView(form);
 
-        if (editMode &&
-                editData != null) {
+        if (editMode && editData != null) {
 
             titleInput.setText(
                     editData.title
@@ -1040,8 +1020,7 @@ public class QuizManagementActivity extends AppCompatActivity {
                     ) {
 
                         if (position >= 0 &&
-                                position <
-                                        classIds.size()) {
+                                position < classIds.size()) {
 
                             loadSubjects(
                                     classIds.get(position),
@@ -1073,9 +1052,7 @@ public class QuizManagementActivity extends AppCompatActivity {
                                         classIds.size()) {
 
                             loadSubjects(
-                                    classIds.get(
-                                            classPosition
-                                    ),
+                                    classIds.get(classPosition),
                                     mediumSpinner,
                                     subjectSpinner,
                                     chapterSpinner,
@@ -1522,8 +1499,7 @@ public class QuizManagementActivity extends AppCompatActivity {
                         .getSelectedItemPosition();
 
         if (mediumPosition < 0 ||
-                mediumPosition >=
-                        mediums.length) {
+                mediumPosition >= mediums.length) {
             return;
         }
 
@@ -1644,8 +1620,7 @@ public class QuizManagementActivity extends AppCompatActivity {
                         .getSelectedItemPosition();
 
         if (mediumPosition < 0 ||
-                mediumPosition >=
-                        mediums.length) {
+                mediumPosition >= mediums.length) {
             return;
         }
 
@@ -1855,7 +1830,6 @@ public class QuizManagementActivity extends AppCompatActivity {
                 int position,
                 long id
         ) {
-
             selected(position);
         }
 

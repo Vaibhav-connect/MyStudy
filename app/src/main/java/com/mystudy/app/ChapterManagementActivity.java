@@ -36,6 +36,14 @@ public class ChapterManagementActivity extends AppCompatActivity {
 
     private final List<String> subjectIds = new ArrayList<>();
     private final List<String> subjectNames = new ArrayList<>();
+    private final List<String> subjectMediums = new ArrayList<>();
+
+    private final String[] mediums = {
+            "English",
+            "Semi-English",
+            "Marathi",
+            "Hindi"
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,6 +156,9 @@ public class ChapterManagementActivity extends AppCompatActivity {
                         String subjectId =
                                 document.getString("subjectId");
 
+                        String medium =
+                                document.getString("medium");
+
                         Long order =
                                 document.getLong("order");
 
@@ -163,6 +174,11 @@ public class ChapterManagementActivity extends AppCompatActivity {
                             subjectName = "Unknown Subject";
                         }
 
+                        if (medium == null ||
+                                medium.trim().isEmpty()) {
+                            medium = "English";
+                        }
+
                         long chapterOrder =
                                 order != null ? order : 0;
 
@@ -173,13 +189,15 @@ public class ChapterManagementActivity extends AppCompatActivity {
                                 className,
                                 subjectId,
                                 subjectName,
+                                medium,
                                 chapterOrder
                         );
                     }
                 })
                 .addOnFailureListener(e -> Toast.makeText(
                         this,
-                        "Failed to load chapters: " + e.getMessage(),
+                        "Failed to load chapters: " +
+                                e.getMessage(),
                         Toast.LENGTH_LONG
                 ).show());
     }
@@ -191,6 +209,7 @@ public class ChapterManagementActivity extends AppCompatActivity {
             String className,
             String subjectId,
             String subjectName,
+            String medium,
             long order
     ) {
 
@@ -209,6 +228,11 @@ public class ChapterManagementActivity extends AppCompatActivity {
         classText.setTextSize(14);
         classText.setTextColor(Color.rgb(79, 70, 229));
 
+        TextView mediumText = new TextView(this);
+        mediumText.setText("Medium: " + medium);
+        mediumText.setTextSize(14);
+        mediumText.setTextColor(Color.rgb(22, 163, 74));
+
         TextView subjectText = new TextView(this);
         subjectText.setText("Subject: " + subjectName);
         subjectText.setTextSize(15);
@@ -221,6 +245,7 @@ public class ChapterManagementActivity extends AppCompatActivity {
 
         card.addView(nameText);
         card.addView(classText);
+        card.addView(mediumText);
         card.addView(subjectText);
         card.addView(orderText);
 
@@ -231,15 +256,24 @@ public class ChapterManagementActivity extends AppCompatActivity {
         editButton.setText("Edit");
         editButton.setAllCaps(false);
 
+        final String finalName = name;
+        final String finalClassId = classId;
+        final String finalClassName = className;
+        final String finalSubjectId = subjectId;
+        final String finalSubjectName = subjectName;
+        final String finalMedium = medium;
+        final long finalOrder = order;
+
         editButton.setOnClickListener(v ->
                 showEditChapterDialog(
                         documentId,
-                        name,
-                        classId,
-                        className,
-                        subjectId,
-                        subjectName,
-                        order
+                        finalName,
+                        finalClassId,
+                        finalClassName,
+                        finalSubjectId,
+                        finalSubjectName,
+                        finalMedium,
+                        finalOrder
                 )
         );
 
@@ -248,7 +282,10 @@ public class ChapterManagementActivity extends AppCompatActivity {
         deleteButton.setAllCaps(false);
 
         deleteButton.setOnClickListener(v ->
-                confirmDelete(documentId, name)
+                confirmDelete(
+                        documentId,
+                        finalName
+                )
         );
 
         buttonRow.addView(
@@ -294,6 +331,7 @@ public class ChapterManagementActivity extends AppCompatActivity {
             String oldClassName,
             String oldSubjectId,
             String oldSubjectName,
+            String oldMedium,
             long oldOrder
     ) {
 
@@ -305,6 +343,7 @@ public class ChapterManagementActivity extends AppCompatActivity {
         data.className = oldClassName;
         data.subjectId = oldSubjectId;
         data.subjectName = oldSubjectName;
+        data.medium = oldMedium;
         data.order = oldOrder;
 
         loadClassesForDialog(true, data);
@@ -316,6 +355,7 @@ public class ChapterManagementActivity extends AppCompatActivity {
     ) {
 
         db.collection("classes")
+                .orderBy("order")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
 
@@ -355,7 +395,8 @@ public class ChapterManagementActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> Toast.makeText(
                         this,
-                        "Failed to load classes: " + e.getMessage(),
+                        "Failed to load classes: " +
+                                e.getMessage(),
                         Toast.LENGTH_LONG
                 ).show());
     }
@@ -388,21 +429,40 @@ public class ChapterManagementActivity extends AppCompatActivity {
 
         classSpinner.setAdapter(classAdapter);
 
+        Spinner mediumSpinner = new Spinner(this);
+
+        ArrayAdapter<String> mediumAdapter =
+                new ArrayAdapter<>(
+                        this,
+                        android.R.layout.simple_spinner_item,
+                        mediums
+                );
+
+        mediumAdapter.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item
+        );
+
+        mediumSpinner.setAdapter(mediumAdapter);
+
         Spinner subjectSpinner = new Spinner(this);
 
         EditText orderInput = new EditText(this);
         orderInput.setHint("Order e.g. 1");
-        orderInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        orderInput.setInputType(
+                InputType.TYPE_CLASS_NUMBER
+        );
         orderInput.setSingleLine(true);
 
         layout.addView(nameInput);
         layout.addView(classSpinner);
+        layout.addView(mediumSpinner);
         layout.addView(subjectSpinner);
         layout.addView(orderInput);
 
         if (editMode && editData != null) {
 
             nameInput.setText(editData.name);
+
             orderInput.setText(
                     String.valueOf(editData.order)
             );
@@ -411,7 +471,20 @@ public class ChapterManagementActivity extends AppCompatActivity {
                     classIds.indexOf(editData.classId);
 
             if (classPosition >= 0) {
-                classSpinner.setSelection(classPosition);
+                classSpinner.setSelection(
+                        classPosition
+                );
+            }
+
+            int mediumPosition =
+                    findMediumIndex(
+                            editData.medium
+                    );
+
+            if (mediumPosition >= 0) {
+                mediumSpinner.setSelection(
+                        mediumPosition
+                );
             }
         }
 
@@ -432,8 +505,57 @@ public class ChapterManagementActivity extends AppCompatActivity {
                             String selectedClassId =
                                     classIds.get(position);
 
-                            loadSubjectsForClass(
+                            String selectedMedium =
+                                    mediumSpinner
+                                            .getSelectedItem()
+                                            .toString();
+
+                            loadSubjectsForClassAndMedium(
                                     selectedClassId,
+                                    selectedMedium,
+                                    subjectSpinner,
+                                    editMode,
+                                    editData
+                            );
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(
+                            AdapterView<?> parent
+                    ) {
+                    }
+                }
+        );
+
+        mediumSpinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+
+                    @Override
+                    public void onItemSelected(
+                            AdapterView<?> parent,
+                            View view,
+                            int position,
+                            long id
+                    ) {
+
+                        if (position >= 0 &&
+                                position < mediums.length &&
+                                classSpinner
+                                        .getSelectedItemPosition() >= 0) {
+
+                            String selectedClassId =
+                                    classIds.get(
+                                            classSpinner
+                                                    .getSelectedItemPosition()
+                                    );
+
+                            String selectedMedium =
+                                    mediums[position];
+
+                            loadSubjectsForClassAndMedium(
+                                    selectedClassId,
+                                    selectedMedium,
                                     subjectSpinner,
                                     editMode,
                                     editData
@@ -490,6 +612,7 @@ public class ChapterManagementActivity extends AppCompatActivity {
                     nameInput.setError(
                             "Enter chapter name"
                     );
+
                     return;
                 }
 
@@ -498,6 +621,7 @@ public class ChapterManagementActivity extends AppCompatActivity {
                     orderInput.setError(
                             "Enter order"
                     );
+
                     return;
                 }
 
@@ -510,11 +634,15 @@ public class ChapterManagementActivity extends AppCompatActivity {
                     orderInput.setError(
                             "Enter valid number"
                     );
+
                     return;
                 }
 
                 int classPosition =
                         classSpinner.getSelectedItemPosition();
+
+                int mediumPosition =
+                        mediumSpinner.getSelectedItemPosition();
 
                 int subjectPosition =
                         subjectSpinner.getSelectedItemPosition();
@@ -531,12 +659,24 @@ public class ChapterManagementActivity extends AppCompatActivity {
                     return;
                 }
 
+                if (mediumPosition < 0 ||
+                        mediumPosition >= mediums.length) {
+
+                    Toast.makeText(
+                            this,
+                            "Select a medium.",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    return;
+                }
+
                 if (subjectPosition < 0 ||
                         subjectPosition >= subjectIds.size()) {
 
                     Toast.makeText(
                             this,
-                            "Select a subject.",
+                            "Select a subject for selected medium.",
                             Toast.LENGTH_SHORT
                     ).show();
 
@@ -549,6 +689,9 @@ public class ChapterManagementActivity extends AppCompatActivity {
                 String selectedClassName =
                         classNames.get(classPosition);
 
+                String selectedMedium =
+                        mediums[mediumPosition];
+
                 String selectedSubjectId =
                         subjectIds.get(subjectPosition);
 
@@ -558,12 +701,40 @@ public class ChapterManagementActivity extends AppCompatActivity {
                 Map<String, Object> data =
                         new HashMap<>();
 
-                data.put("name", name);
-                data.put("classId", selectedClassId);
-                data.put("className", selectedClassName);
-                data.put("subjectId", selectedSubjectId);
-                data.put("subjectName", selectedSubjectName);
-                data.put("order", order);
+                data.put(
+                        "name",
+                        name
+                );
+
+                data.put(
+                        "classId",
+                        selectedClassId
+                );
+
+                data.put(
+                        "className",
+                        selectedClassName
+                );
+
+                data.put(
+                        "medium",
+                        selectedMedium
+                );
+
+                data.put(
+                        "subjectId",
+                        selectedSubjectId
+                );
+
+                data.put(
+                        "subjectName",
+                        selectedSubjectName
+                );
+
+                data.put(
+                        "order",
+                        order
+                );
 
                 if (!editMode) {
 
@@ -603,7 +774,9 @@ public class ChapterManagementActivity extends AppCompatActivity {
                     }
 
                     db.collection("chapters")
-                            .document(editData.documentId)
+                            .document(
+                                    editData.documentId
+                            )
                             .update(data)
                             .addOnSuccessListener(
                                     unused -> {
@@ -633,34 +806,54 @@ public class ChapterManagementActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void loadSubjectsForClass(
+    private void loadSubjectsForClassAndMedium(
             String classId,
+            String medium,
             Spinner subjectSpinner,
             boolean editMode,
             ChapterEditData editData
     ) {
 
         db.collection("subjects")
-                .whereEqualTo("classId", classId)
+                .whereEqualTo(
+                        "classId",
+                        classId
+                )
+                .whereEqualTo(
+                        "medium",
+                        medium
+                )
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
 
                     subjectIds.clear();
                     subjectNames.clear();
+                    subjectMediums.clear();
 
                     for (DocumentSnapshot document :
                             querySnapshot.getDocuments()) {
 
-                        subjectIds.add(document.getId());
+                        subjectIds.add(
+                                document.getId()
+                        );
 
                         String name =
                                 document.getString("name");
+
+                        String savedMedium =
+                                document.getString("medium");
 
                         if (name == null) {
                             name = "Unnamed Subject";
                         }
 
+                        if (savedMedium == null ||
+                                savedMedium.trim().isEmpty()) {
+                            savedMedium = medium;
+                        }
+
                         subjectNames.add(name);
+                        subjectMediums.add(savedMedium);
                     }
 
                     ArrayAdapter<String> adapter =
@@ -685,6 +878,7 @@ public class ChapterManagementActivity extends AppCompatActivity {
                                 );
 
                         if (position >= 0) {
+
                             subjectSpinner.setSelection(
                                     position
                             );
@@ -697,6 +891,25 @@ public class ChapterManagementActivity extends AppCompatActivity {
                                 e.getMessage(),
                         Toast.LENGTH_LONG
                 ).show());
+    }
+
+    private int findMediumIndex(String medium) {
+
+        if (medium == null) {
+            return 0;
+        }
+
+        for (int i = 0; i < mediums.length; i++) {
+
+            if (mediums[i].equalsIgnoreCase(
+                    medium.trim()
+            )) {
+
+                return i;
+            }
+        }
+
+        return 0;
     }
 
     private void confirmDelete(
@@ -754,6 +967,7 @@ public class ChapterManagementActivity extends AppCompatActivity {
         String className;
         String subjectId;
         String subjectName;
+        String medium;
         long order;
     }
 }

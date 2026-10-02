@@ -75,13 +75,13 @@ public class StudentSubjectActivity extends AppCompatActivity {
                     className + " • Choose a subject"
             );
         } else {
-            subtitle.setText(
-                    "Choose a subject"
-            );
+            subtitle.setText("Choose a subject");
         }
 
         subtitle.setTextSize(16);
-        subtitle.setTextColor(Color.rgb(100, 116, 139));
+        subtitle.setTextColor(
+                Color.rgb(100, 116, 139)
+        );
         subtitle.setPadding(0, 0, 0, 24);
 
         root.addView(subtitle);
@@ -113,17 +113,17 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 .addOnSuccessListener(querySnapshot -> {
 
                     if (querySnapshot.isEmpty()) {
-
                         showMessage(
                                 "No subjects available for this class."
                         );
-
                         return;
                     }
 
-                    for (QueryDocumentSnapshot document : querySnapshot) {
+                    for (QueryDocumentSnapshot document :
+                            querySnapshot) {
 
-                        String subjectId = document.getId();
+                        String subjectId =
+                                document.getId();
 
                         String subjectName =
                                 document.getString("name");
@@ -155,10 +155,14 @@ public class StudentSubjectActivity extends AppCompatActivity {
             String subjectName
     ) {
 
-        final String selectedSubjectId = subjectId;
-        final String selectedSubjectName = subjectName;
+        final String selectedSubjectId =
+                subjectId;
 
-        LinearLayout card = new LinearLayout(this);
+        final String selectedSubjectName =
+                subjectName;
+
+        LinearLayout card =
+                new LinearLayout(this);
 
         card.setOrientation(
                 LinearLayout.HORIZONTAL
@@ -178,24 +182,16 @@ public class StudentSubjectActivity extends AppCompatActivity {
         GradientDrawable background =
                 new GradientDrawable();
 
-        background.setColor(
-                Color.WHITE
-        );
+        background.setColor(Color.WHITE);
+        background.setCornerRadius(28);
 
-        background.setCornerRadius(
-                28
-        );
+        card.setBackground(background);
 
-        card.setBackground(
-                background
-        );
-
-        TextView icon = new TextView(this);
+        TextView icon =
+                new TextView(this);
 
         icon.setText(
-                getSubjectIcon(
-                        selectedSubjectName
-                )
+                getSubjectIcon(selectedSubjectName)
         );
 
         icon.setTextSize(30);
@@ -223,21 +219,15 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 0
         );
 
-        TextView name = new TextView(this);
+        TextView name =
+                new TextView(this);
 
-        name.setText(
-                selectedSubjectName
-        );
-
+        name.setText(selectedSubjectName);
         name.setTextSize(20);
         name.setTextColor(
                 Color.rgb(17, 24, 39)
         );
-
-        name.setTypeface(
-                null,
-                1
-        );
+        name.setTypeface(null, 1);
 
         TextView description =
                 new TextView(this);
@@ -247,7 +237,6 @@ public class StudentSubjectActivity extends AppCompatActivity {
         );
 
         description.setTextSize(14);
-
         description.setTextColor(
                 Color.rgb(100, 116, 139)
         );
@@ -271,17 +260,15 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 )
         );
 
-        TextView arrow = new TextView(this);
+        TextView arrow =
+                new TextView(this);
 
         arrow.setText("›");
         arrow.setTextSize(32);
         arrow.setTextColor(
                 Color.rgb(79, 70, 229)
         );
-
-        arrow.setGravity(
-                Gravity.CENTER
-        );
+        arrow.setGravity(Gravity.CENTER);
 
         card.addView(
                 arrow,
@@ -311,9 +298,12 @@ public class StudentSubjectActivity extends AppCompatActivity {
 
         card.setOnClickListener(view -> {
 
-            Intent intent = new Intent(
+            Intent intent =
+                    new Intent();
+
+            intent.setClassName(
                     StudentSubjectActivity.this,
-                    StudentChapterActivity.class
+                    "com.mystudy.app.StudentChapterActivity"
             );
 
             intent.putExtra(
@@ -373,16 +363,11 @@ public class StudentSubjectActivity extends AppCompatActivity {
         TextView messageView =
                 new TextView(this);
 
-        messageView.setText(
-                message
-        );
-
+        messageView.setText(message);
         messageView.setTextSize(16);
-
         messageView.setTextColor(
                 Color.rgb(100, 116, 139)
         );
-
         messageView.setGravity(
                 Gravity.CENTER
         );

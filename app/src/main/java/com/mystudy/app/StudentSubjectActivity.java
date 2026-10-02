@@ -2,10 +2,13 @@ package com.mystudy.app;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,45 +51,61 @@ public class StudentSubjectActivity extends AppCompatActivity {
 
     private void createUI() {
 
+        ScrollView scrollView = new ScrollView(this);
+
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(24, 24, 24, 24);
+        root.setPadding(20, 24, 20, 30);
         root.setBackgroundColor(Color.rgb(248, 250, 252));
 
         TextView title = new TextView(this);
         title.setText("📚 Subjects");
         title.setTextSize(26);
         title.setTextColor(Color.rgb(17, 24, 39));
-        title.setTypeface(null, 1);
+        title.setTypeface(null, Typeface.BOLD);
         title.setGravity(Gravity.CENTER_VERTICAL);
 
         root.addView(
                 title,
                 new LinearLayout.LayoutParams(
                         -1,
-                        70
+                        65
                 )
         );
 
         TextView subtitle = new TextView(this);
 
-        if (className != null && !className.trim().isEmpty()) {
+        if (className != null &&
+                !className.trim().isEmpty()) {
+
             subtitle.setText(
                     className + " • Choose a subject"
             );
+
         } else {
-            subtitle.setText("Choose a subject");
+
+            subtitle.setText(
+                    "Choose a subject"
+            );
         }
 
         subtitle.setTextSize(16);
         subtitle.setTextColor(
                 Color.rgb(100, 116, 139)
         );
-        subtitle.setPadding(0, 0, 0, 24);
+
+        subtitle.setPadding(
+                0,
+                0,
+                0,
+                22
+        );
 
         root.addView(subtitle);
 
-        subjectContainer = new LinearLayout(this);
+        subjectContainer =
+                new LinearLayout(this);
+
         subjectContainer.setOrientation(
                 LinearLayout.VERTICAL
         );
@@ -95,12 +114,13 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 subjectContainer,
                 new LinearLayout.LayoutParams(
                         -1,
-                        0,
-                        1
+                        -2
                 )
         );
 
-        setContentView(root);
+        scrollView.addView(root);
+
+        setContentView(scrollView);
     }
 
     private void loadSubjects() {
@@ -108,46 +128,66 @@ public class StudentSubjectActivity extends AppCompatActivity {
         subjectContainer.removeAllViews();
 
         db.collection("subjects")
-                .whereEqualTo("classId", classId)
+                .whereEqualTo(
+                        "classId",
+                        classId
+                )
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addOnSuccessListener(
+                        querySnapshot -> {
 
-                    if (querySnapshot.isEmpty()) {
-                        showMessage(
-                                "No subjects available for this class."
-                        );
-                        return;
-                    }
+                            if (querySnapshot.isEmpty()) {
 
-                    for (QueryDocumentSnapshot document :
-                            querySnapshot) {
+                                showMessage(
+                                        "No subjects available for this class."
+                                );
 
-                        String subjectId =
-                                document.getId();
+                                return;
+                            }
 
-                        String subjectName =
-                                document.getString("name");
+                            for (
+                                    QueryDocumentSnapshot document :
+                                    querySnapshot
+                            ) {
 
-                        if (subjectName == null ||
-                                subjectName.trim().isEmpty()) {
+                                String subjectId =
+                                        document.getId();
 
-                            subjectName = "Subject";
+                                String subjectName =
+                                        document.getString(
+                                                "name"
+                                        );
+
+                                if (
+                                        subjectName == null ||
+                                        subjectName.trim().isEmpty()
+                                ) {
+
+                                    subjectName =
+                                            "Subject";
+                                }
+
+                                addSubjectCard(
+                                        subjectId,
+                                        subjectName
+                                );
+                            }
                         }
+                )
+                .addOnFailureListener(
+                        error -> {
 
-                        addSubjectCard(
-                                subjectId,
-                                subjectName
-                        );
-                    }
-                })
-                .addOnFailureListener(error -> {
+                            showMessage(
+                                    "Unable to load subjects."
+                            );
 
-                    Toast.makeText(
-                            StudentSubjectActivity.this,
-                            "Unable to load subjects",
-                            Toast.LENGTH_SHORT
-                    ).show();
-                });
+                            Toast.makeText(
+                                    StudentSubjectActivity.this,
+                                    "Unable to load subjects",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+                        }
+                );
     }
 
     private void addSubjectCard(
@@ -182,20 +222,33 @@ public class StudentSubjectActivity extends AppCompatActivity {
         GradientDrawable background =
                 new GradientDrawable();
 
-        background.setColor(Color.WHITE);
-        background.setCornerRadius(28);
+        background.setColor(
+                Color.WHITE
+        );
 
-        card.setBackground(background);
+        background.setCornerRadius(
+                28
+        );
+
+        card.setBackground(
+                background
+        );
+
+        card.setElevation(4);
 
         TextView icon =
                 new TextView(this);
 
         icon.setText(
-                getSubjectIcon(selectedSubjectName)
+                getSubjectIcon(
+                        selectedSubjectName
+                )
         );
 
         icon.setTextSize(30);
-        icon.setGravity(Gravity.CENTER);
+        icon.setGravity(
+                Gravity.CENTER
+        );
 
         card.addView(
                 icon,
@@ -222,12 +275,20 @@ public class StudentSubjectActivity extends AppCompatActivity {
         TextView name =
                 new TextView(this);
 
-        name.setText(selectedSubjectName);
+        name.setText(
+                selectedSubjectName
+        );
+
         name.setTextSize(20);
+
         name.setTextColor(
                 Color.rgb(17, 24, 39)
         );
-        name.setTypeface(null, 1);
+
+        name.setTypeface(
+                null,
+                Typeface.BOLD
+        );
 
         TextView description =
                 new TextView(this);
@@ -237,6 +298,7 @@ public class StudentSubjectActivity extends AppCompatActivity {
         );
 
         description.setTextSize(14);
+
         description.setTextColor(
                 Color.rgb(100, 116, 139)
         );
@@ -265,10 +327,14 @@ public class StudentSubjectActivity extends AppCompatActivity {
 
         arrow.setText("›");
         arrow.setTextSize(32);
+
         arrow.setTextColor(
                 Color.rgb(79, 70, 229)
         );
-        arrow.setGravity(Gravity.CENTER);
+
+        arrow.setGravity(
+                Gravity.CENTER
+        );
 
         card.addView(
                 arrow,
@@ -296,43 +362,81 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 cardParams
         );
 
-        card.setOnClickListener(view -> {
+        card.setOnTouchListener(
+                (view, event) -> {
 
-            Intent intent =
-                    new Intent();
+                    if (
+                            event.getAction() ==
+                                    MotionEvent.ACTION_DOWN
+                    ) {
 
-            intent.setClassName(
-                    StudentSubjectActivity.this,
-                    "com.mystudy.app.StudentChapterActivity"
-            );
+                        view.animate()
+                                .scaleX(0.97f)
+                                .scaleY(0.97f)
+                                .setDuration(100)
+                                .start();
 
-            intent.putExtra(
-                    "classId",
-                    classId
-            );
+                    } else if (
+                            event.getAction() ==
+                                    MotionEvent.ACTION_UP ||
+                            event.getAction() ==
+                                    MotionEvent.ACTION_CANCEL
+                    ) {
 
-            intent.putExtra(
-                    "className",
-                    className
-            );
+                        view.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(100)
+                                .start();
+                    }
 
-            intent.putExtra(
-                    "subjectId",
-                    selectedSubjectId
-            );
+                    return false;
+                }
+        );
 
-            intent.putExtra(
-                    "subjectName",
-                    selectedSubjectName
-            );
+        card.setOnClickListener(
+                view -> {
 
-            startActivity(intent);
-        });
+                    Intent intent =
+                            new Intent();
+
+                    intent.setClassName(
+                            StudentSubjectActivity.this,
+                            "com.mystudy.app.StudentChapterActivity"
+                    );
+
+                    intent.putExtra(
+                            "classId",
+                            classId
+                    );
+
+                    intent.putExtra(
+                            "className",
+                            className
+                    );
+
+                    intent.putExtra(
+                            "subjectId",
+                            selectedSubjectId
+                    );
+
+                    intent.putExtra(
+                            "subjectName",
+                            selectedSubjectName
+                    );
+
+                    startActivity(intent);
+                }
+        );
     }
 
     private String getSubjectIcon(
             String subjectName
     ) {
+
+        if (subjectName == null) {
+            return "📚";
+        }
 
         String value =
                 subjectName.toLowerCase();
@@ -364,10 +468,13 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 new TextView(this);
 
         messageView.setText(message);
+
         messageView.setTextSize(16);
+
         messageView.setTextColor(
                 Color.rgb(100, 116, 139)
         );
+
         messageView.setGravity(
                 Gravity.CENTER
         );

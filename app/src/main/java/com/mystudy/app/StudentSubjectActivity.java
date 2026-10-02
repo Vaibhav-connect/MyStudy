@@ -25,6 +25,11 @@ public class StudentSubjectActivity extends AppCompatActivity {
     private String classId;
     private String className;
 
+    private final int backgroundColor = Color.rgb(248, 250, 252);
+    private final int textPrimary = Color.rgb(17, 24, 39);
+    private final int textSecondary = Color.rgb(100, 116, 139);
+    private final int primaryColor = Color.rgb(79, 70, 229);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +38,7 @@ public class StudentSubjectActivity extends AppCompatActivity {
         className = getIntent().getStringExtra("className");
 
         if (classId == null || classId.trim().isEmpty()) {
+
             Toast.makeText(
                     this,
                     "Class information missing",
@@ -52,24 +58,25 @@ public class StudentSubjectActivity extends AppCompatActivity {
     private void createUI() {
 
         ScrollView scrollView = new ScrollView(this);
+        scrollView.setFillViewport(true);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(20, 24, 20, 30);
-        root.setBackgroundColor(Color.rgb(248, 250, 252));
+        root.setBackgroundColor(backgroundColor);
 
         TextView title = new TextView(this);
+
         title.setText("📚 Subjects");
-        title.setTextSize(26);
-        title.setTextColor(Color.rgb(17, 24, 39));
+        title.setTextSize(28);
+        title.setTextColor(textPrimary);
         title.setTypeface(null, Typeface.BOLD);
-        title.setGravity(Gravity.CENTER_VERTICAL);
 
         root.addView(
                 title,
                 new LinearLayout.LayoutParams(
                         -1,
-                        65
+                        -2
                 )
         );
 
@@ -90,18 +97,32 @@ public class StudentSubjectActivity extends AppCompatActivity {
         }
 
         subtitle.setTextSize(16);
-        subtitle.setTextColor(
-                Color.rgb(100, 116, 139)
+        subtitle.setTextColor(textSecondary);
+        subtitle.setPadding(0, 8, 0, 24);
+
+        root.addView(
+                subtitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
         );
 
-        subtitle.setPadding(
-                0,
-                0,
-                0,
-                22
-        );
+        TextView sectionTitle = new TextView(this);
 
-        root.addView(subtitle);
+        sectionTitle.setText("Start Learning");
+        sectionTitle.setTextSize(18);
+        sectionTitle.setTextColor(textPrimary);
+        sectionTitle.setTypeface(null, Typeface.BOLD);
+        sectionTitle.setPadding(0, 0, 0, 14);
+
+        root.addView(
+                sectionTitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
 
         subjectContainer =
                 new LinearLayout(this);
@@ -154,17 +175,14 @@ public class StudentSubjectActivity extends AppCompatActivity {
                                         document.getId();
 
                                 String subjectName =
-                                        document.getString(
-                                                "name"
-                                        );
+                                        document.getString("name");
 
                                 if (
                                         subjectName == null ||
                                         subjectName.trim().isEmpty()
                                 ) {
 
-                                    subjectName =
-                                            "Subject";
+                                    subjectName = "Subject";
                                 }
 
                                 addSubjectCard(
@@ -213,28 +231,20 @@ public class StudentSubjectActivity extends AppCompatActivity {
         );
 
         card.setPadding(
-                20,
-                16,
-                16,
-                16
+                18,
+                18,
+                14,
+                18
         );
 
         GradientDrawable background =
                 new GradientDrawable();
 
-        background.setColor(
-                Color.WHITE
-        );
+        background.setColor(Color.WHITE);
+        background.setCornerRadius(30);
 
-        background.setCornerRadius(
-                28
-        );
-
-        card.setBackground(
-                background
-        );
-
-        card.setElevation(4);
+        card.setBackground(background);
+        card.setElevation(6);
 
         TextView icon =
                 new TextView(this);
@@ -246,15 +256,26 @@ public class StudentSubjectActivity extends AppCompatActivity {
         );
 
         icon.setTextSize(30);
-        icon.setGravity(
-                Gravity.CENTER
+        icon.setGravity(Gravity.CENTER);
+
+        GradientDrawable iconBackground =
+                new GradientDrawable();
+
+        iconBackground.setColor(
+                getSubjectIconBackground(
+                        selectedSubjectName
+                )
         );
+
+        iconBackground.setCornerRadius(22);
+
+        icon.setBackground(iconBackground);
 
         card.addView(
                 icon,
                 new LinearLayout.LayoutParams(
-                        60,
-                        70
+                        68,
+                        68
                 )
         );
 
@@ -266,7 +287,7 @@ public class StudentSubjectActivity extends AppCompatActivity {
         );
 
         textContainer.setPadding(
-                18,
+                16,
                 0,
                 8,
                 0
@@ -280,11 +301,7 @@ public class StudentSubjectActivity extends AppCompatActivity {
         );
 
         name.setTextSize(20);
-
-        name.setTextColor(
-                Color.rgb(17, 24, 39)
-        );
-
+        name.setTextColor(textPrimary);
         name.setTypeface(
                 null,
                 Typeface.BOLD
@@ -298,11 +315,7 @@ public class StudentSubjectActivity extends AppCompatActivity {
         );
 
         description.setTextSize(14);
-
-        description.setTextColor(
-                Color.rgb(100, 116, 139)
-        );
-
+        description.setTextColor(textSecondary);
         description.setPadding(
                 0,
                 5,
@@ -326,35 +339,33 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 new TextView(this);
 
         arrow.setText("›");
-        arrow.setTextSize(32);
-
-        arrow.setTextColor(
-                Color.rgb(79, 70, 229)
-        );
-
-        arrow.setGravity(
-                Gravity.CENTER
+        arrow.setTextSize(34);
+        arrow.setTextColor(primaryColor);
+        arrow.setGravity(Gravity.CENTER);
+        arrow.setTypeface(
+                null,
+                Typeface.BOLD
         );
 
         card.addView(
                 arrow,
                 new LinearLayout.LayoutParams(
-                        45,
-                        70
+                        42,
+                        68
                 )
         );
 
         LinearLayout.LayoutParams cardParams =
                 new LinearLayout.LayoutParams(
                         -1,
-                        100
+                        -2
                 );
 
         cardParams.setMargins(
                 0,
                 0,
                 0,
-                18
+                16
         );
 
         subjectContainer.addView(
@@ -460,6 +471,36 @@ public class StudentSubjectActivity extends AppCompatActivity {
         return "📚";
     }
 
+    private int getSubjectIconBackground(
+            String subjectName
+    ) {
+
+        if (subjectName == null) {
+            return Color.rgb(238, 242, 255);
+        }
+
+        String value =
+                subjectName.toLowerCase();
+
+        if (value.contains("math")) {
+            return Color.rgb(254, 249, 195);
+        }
+
+        if (value.contains("english")) {
+            return Color.rgb(219, 234, 254);
+        }
+
+        if (value.contains("marathi")) {
+            return Color.rgb(254, 226, 226);
+        }
+
+        if (value.contains("evs")) {
+            return Color.rgb(220, 252, 231);
+        }
+
+        return Color.rgb(238, 242, 255);
+    }
+
     private void showMessage(
             String message
     ) {
@@ -468,22 +509,15 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 new TextView(this);
 
         messageView.setText(message);
-
         messageView.setTextSize(16);
-
-        messageView.setTextColor(
-                Color.rgb(100, 116, 139)
-        );
-
-        messageView.setGravity(
-                Gravity.CENTER
-        );
+        messageView.setTextColor(textSecondary);
+        messageView.setGravity(Gravity.CENTER);
 
         messageView.setPadding(
                 20,
-                40,
+                50,
                 20,
-                40
+                50
         );
 
         subjectContainer.addView(

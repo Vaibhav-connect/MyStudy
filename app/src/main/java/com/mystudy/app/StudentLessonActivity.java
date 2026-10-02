@@ -4,11 +4,13 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -31,6 +33,8 @@ public class StudentLessonActivity extends AppCompatActivity {
 
     private String classId;
     private String className;
+    private String studentMedium;
+    private String studentName;
     private String subjectId;
     private String subjectName;
     private String chapterId;
@@ -42,10 +46,16 @@ public class StudentLessonActivity extends AppCompatActivity {
 
         classId = getIntent().getStringExtra("classId");
         className = getIntent().getStringExtra("className");
+        studentMedium = getIntent().getStringExtra("studentMedium");
+        studentName = getIntent().getStringExtra("studentName");
         subjectId = getIntent().getStringExtra("subjectId");
         subjectName = getIntent().getStringExtra("subjectName");
         chapterId = getIntent().getStringExtra("chapterId");
         chapterName = getIntent().getStringExtra("chapterName");
+
+        if (studentMedium == null || studentMedium.trim().isEmpty()) {
+            studentMedium = "English";
+        }
 
         if (classId == null ||
                 classId.trim().isEmpty() ||
@@ -75,7 +85,6 @@ public class StudentLessonActivity extends AppCompatActivity {
     private void createUI() {
 
         ScrollView scrollView = new ScrollView(this);
-
         scrollView.setFillViewport(true);
 
         LinearLayout root = new LinearLayout(this);
@@ -119,20 +128,24 @@ public class StudentLessonActivity extends AppCompatActivity {
 
         TextView subtitle = new TextView(this);
 
+        StringBuilder subtitleText = new StringBuilder();
+
         if (chapterName != null &&
                 !chapterName.trim().isEmpty()) {
 
-            subtitle.setText(
-                    chapterName +
-                            " • Choose a lesson"
-            );
+            subtitleText.append(chapterName);
 
         } else {
 
-            subtitle.setText(
-                    "Choose a lesson"
-            );
+            subtitleText.append("Choose a lesson");
         }
+
+        subtitleText.append(" • ");
+        subtitleText.append(studentMedium);
+
+        subtitle.setText(
+                subtitleText.toString()
+        );
 
         subtitle.setTextSize(16);
         subtitle.setTextColor(
@@ -185,6 +198,10 @@ public class StudentLessonActivity extends AppCompatActivity {
                         "chapterId",
                         chapterId
                 )
+                .whereEqualTo(
+                        "medium",
+                        studentMedium
+                )
                 .get()
                 .addOnSuccessListener(
                         querySnapshot -> {
@@ -192,7 +209,9 @@ public class StudentLessonActivity extends AppCompatActivity {
                             if (querySnapshot.isEmpty()) {
 
                                 showMessage(
-                                        "No lessons available yet."
+                                        "No lessons available for " +
+                                                studentMedium +
+                                                " medium yet."
                                 );
 
                                 return;
@@ -221,6 +240,16 @@ public class StudentLessonActivity extends AppCompatActivity {
                                                 "content"
                                         );
 
+                                String contentType =
+                                        document.getString(
+                                                "contentType"
+                                        );
+
+                                String contentUrl =
+                                        document.getString(
+                                                "contentUrl"
+                                        );
+
                                 if (title == null ||
                                         title.trim().isEmpty()) {
 
@@ -231,7 +260,9 @@ public class StudentLessonActivity extends AppCompatActivity {
                                         lessonId,
                                         title,
                                         description,
-                                        content
+                                        content,
+                                        contentType,
+                                        contentUrl
                                 );
                             }
                         }
@@ -256,7 +287,9 @@ public class StudentLessonActivity extends AppCompatActivity {
             String lessonId,
             String title,
             String description,
-            String content
+            String content,
+            String contentType,
+            String contentUrl
     ) {
 
         final String selectedLessonId =
@@ -317,6 +350,34 @@ public class StudentLessonActivity extends AppCompatActivity {
                 lessonTitle
         );
 
+        TextView mediumText =
+                new TextView(this);
+
+        mediumText.setText(
+                "Medium: " + studentMedium
+        );
+
+        mediumText.setTextSize(13);
+        mediumText.setTextColor(
+                Color.rgb(79, 70, 229)
+        );
+
+        mediumText.setTypeface(
+                null,
+                Typeface.BOLD
+        );
+
+        mediumText.setPadding(
+                0,
+                8,
+                0,
+                0
+        );
+
+        card.addView(
+                mediumText
+        );
+
         if (description != null &&
                 !description.trim().isEmpty()) {
 
@@ -375,6 +436,12 @@ public class StudentLessonActivity extends AppCompatActivity {
                     lessonContent
             );
         }
+
+        addMediaContent(
+                card,
+                contentType,
+                contentUrl
+        );
 
         Button completeButton =
                 new Button(this);
@@ -552,6 +619,16 @@ public class StudentLessonActivity extends AppCompatActivity {
                     );
 
                     intent.putExtra(
+                            "studentMedium",
+                            studentMedium
+                    );
+
+                    intent.putExtra(
+                            "studentName",
+                            studentName
+                    );
+
+                    intent.putExtra(
                             "subjectId",
                             subjectId
                     );
@@ -591,7 +668,177 @@ public class StudentLessonActivity extends AppCompatActivity {
         );
     }
 
-    private void addPressAnimation(View view) {
+    private void addMediaContent(
+            LinearLayout card,
+            String contentType,
+            String contentUrl
+    ) {
+
+        if (contentType == null ||
+                contentType.trim().isEmpty() ||
+                contentUrl == null ||
+                contentUrl.trim().isEmpty()) {
+
+            return;
+        }
+
+        String type =
+                contentType.trim().toUpperCase();
+
+        if (type.equals("IMAGE")) {
+
+            ImageView imageView =
+                    new ImageView(this);
+
+            imageView.setImageResource(
+                    android.R.drawable.ic_menu_gallery
+            );
+
+            imageView.setAdjustViewBounds(true);
+
+            imageView.setScaleType(
+                    ImageView.ScaleType.CENTER_INSIDE
+            );
+
+            LinearLayout.LayoutParams imageParams =
+                    new LinearLayout.LayoutParams(
+                            -1,
+                            220
+                    );
+
+            imageParams.topMargin = 10;
+            imageParams.bottomMargin = 10;
+
+            card.addView(
+                    imageView,
+                    imageParams
+            );
+
+            addOpenMediaButton(
+                    card,
+                    "🖼 Open Image",
+                    contentUrl
+            );
+
+        } else if (type.equals("PDF")) {
+
+            addOpenMediaButton(
+                    card,
+                    "📄 Open PDF",
+                    contentUrl
+            );
+
+        } else if (type.equals("VIDEO")) {
+
+            addOpenMediaButton(
+                    card,
+                    "▶ Open Video",
+                    contentUrl
+            );
+
+        } else if (type.equals("AUDIO")) {
+
+            addOpenMediaButton(
+                    card,
+                    "🔊 Open Audio",
+                    contentUrl
+            );
+
+        } else if (type.equals("LINK")) {
+
+            addOpenMediaButton(
+                    card,
+                    "🔗 Open Learning Link",
+                    contentUrl
+            );
+        }
+    }
+
+    private void addOpenMediaButton(
+            LinearLayout card,
+            String buttonText,
+            String url
+    ) {
+
+        Button mediaButton =
+                new Button(this);
+
+        mediaButton.setText(
+                buttonText
+        );
+
+        mediaButton.setAllCaps(false);
+        mediaButton.setTextSize(14);
+        mediaButton.setTextColor(
+                Color.WHITE
+        );
+
+        GradientDrawable mediaBackground =
+                new GradientDrawable();
+
+        mediaBackground.setColor(
+                Color.rgb(14, 165, 233)
+        );
+
+        mediaBackground.setCornerRadius(
+                30
+        );
+
+        mediaButton.setBackground(
+                mediaBackground
+        );
+
+        LinearLayout.LayoutParams mediaParams =
+                new LinearLayout.LayoutParams(
+                        -1,
+                        55
+                );
+
+        mediaParams.topMargin = 8;
+        mediaParams.bottomMargin = 8;
+
+        card.addView(
+                mediaButton,
+                mediaParams
+        );
+
+        addPressAnimation(mediaButton);
+
+        mediaButton.setOnClickListener(
+                view -> openMedia(url)
+        );
+    }
+
+    private void openMedia(
+            String url
+    ) {
+
+        try {
+
+            Uri uri =
+                    Uri.parse(url);
+
+            Intent intent =
+                    new Intent(
+                            Intent.ACTION_VIEW,
+                            uri
+                    );
+
+            startActivity(intent);
+
+        } catch (Exception error) {
+
+            Toast.makeText(
+                    StudentLessonActivity.this,
+                    "Unable to open this content.",
+                    Toast.LENGTH_SHORT
+            ).show();
+        }
+    }
+
+    private void addPressAnimation(
+            View view
+    ) {
 
         view.setOnTouchListener(
                 (v, event) -> {

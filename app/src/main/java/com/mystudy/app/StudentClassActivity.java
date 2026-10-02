@@ -23,6 +23,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 public class StudentClassActivity extends AppCompatActivity {
 
     private LinearLayout classContainer;
+    private TextView statusView;
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
@@ -31,10 +32,20 @@ public class StudentClassActivity extends AppCompatActivity {
     private String studentMedium = "";
     private String studentName = "";
 
-    private final int backgroundColor = Color.rgb(248, 250, 252);
-    private final int textPrimary = Color.rgb(17, 24, 39);
-    private final int textSecondary = Color.rgb(100, 116, 139);
-    private final int primaryColor = Color.rgb(79, 70, 229);
+    private final int backgroundColor =
+            Color.rgb(248, 250, 252);
+
+    private final int textPrimary =
+            Color.rgb(17, 24, 39);
+
+    private final int textSecondary =
+            Color.rgb(100, 116, 139);
+
+    private final int primaryColor =
+            Color.rgb(79, 70, 229);
+
+    private final int errorColor =
+            Color.rgb(220, 38, 38);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,16 +76,19 @@ public class StudentClassActivity extends AppCompatActivity {
         }
 
         createUI();
-
+        showLoading();
         loadStudentProfile();
     }
 
     private void createUI() {
 
-        ScrollView scrollView = new ScrollView(this);
+        ScrollView scrollView =
+                new ScrollView(this);
+
         scrollView.setFillViewport(true);
 
-        LinearLayout root = new LinearLayout(this);
+        LinearLayout root =
+                new LinearLayout(this);
 
         root.setOrientation(
                 LinearLayout.VERTICAL
@@ -91,7 +105,8 @@ public class StudentClassActivity extends AppCompatActivity {
                 backgroundColor
         );
 
-        TextView title = new TextView(this);
+        TextView title =
+                new TextView(this);
 
         title.setText(
                 "📚 My Class"
@@ -99,6 +114,7 @@ public class StudentClassActivity extends AppCompatActivity {
 
         title.setTextSize(28);
         title.setTextColor(textPrimary);
+
         title.setTypeface(
                 null,
                 Typeface.BOLD
@@ -112,7 +128,8 @@ public class StudentClassActivity extends AppCompatActivity {
                 )
         );
 
-        TextView subtitle = new TextView(this);
+        TextView subtitle =
+                new TextView(this);
 
         subtitle.setText(
                 "Your learning content is based on your selected class and medium."
@@ -120,15 +137,39 @@ public class StudentClassActivity extends AppCompatActivity {
 
         subtitle.setTextSize(16);
         subtitle.setTextColor(textSecondary);
+
         subtitle.setPadding(
                 0,
                 8,
                 0,
-                24
+                12
         );
 
         root.addView(
                 subtitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
+
+        statusView =
+                new TextView(this);
+
+        statusView.setTextSize(14);
+        statusView.setGravity(
+                Gravity.CENTER
+        );
+
+        statusView.setPadding(
+                0,
+                8,
+                0,
+                16
+        );
+
+        root.addView(
+                statusView,
                 new LinearLayout.LayoutParams(
                         -1,
                         -2
@@ -162,12 +203,14 @@ public class StudentClassActivity extends AppCompatActivity {
 
         if (user == null) {
 
-            showMessage(
+            showError(
                     "Please login again."
             );
 
             return;
         }
+
+        showLoading();
 
         db.collection("users")
                 .document(user.getUid())
@@ -176,7 +219,7 @@ public class StudentClassActivity extends AppCompatActivity {
 
                     if (!document.exists()) {
 
-                        showMessage(
+                        showError(
                                 "Student profile not found."
                         );
 
@@ -215,7 +258,7 @@ public class StudentClassActivity extends AppCompatActivity {
 
                     if (studentClass.isEmpty()) {
 
-                        showMessage(
+                        showEmpty(
                                 "Your class is not selected in your profile."
                         );
 
@@ -226,7 +269,7 @@ public class StudentClassActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(error -> {
 
-                    showMessage(
+                    showError(
                             "Unable to load your profile."
                     );
 
@@ -240,7 +283,7 @@ public class StudentClassActivity extends AppCompatActivity {
 
     private void loadSelectedClass() {
 
-        classContainer.removeAllViews();
+        showLoading();
 
         db.collection("classes")
                 .whereEqualTo(
@@ -251,9 +294,11 @@ public class StudentClassActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
 
+                    classContainer.removeAllViews();
+
                     if (querySnapshot.isEmpty()) {
 
-                        showMessage(
+                        showEmpty(
                                 studentClass +
                                         " is not available yet."
                         );
@@ -273,7 +318,8 @@ public class StudentClassActivity extends AppCompatActivity {
                         if (className == null ||
                                 className.trim().isEmpty()) {
 
-                            className = studentClass;
+                            className =
+                                    studentClass;
                         }
 
                         addClassCard(
@@ -282,12 +328,16 @@ public class StudentClassActivity extends AppCompatActivity {
                                 studentMedium
                         );
 
+                        showSuccess(
+                                "✅ Class loaded successfully"
+                        );
+
                         break;
                     }
                 })
                 .addOnFailureListener(error -> {
 
-                    showMessage(
+                    showError(
                             "Unable to load your class."
                     );
 
@@ -346,7 +396,9 @@ public class StudentClassActivity extends AppCompatActivity {
 
         icon.setText("🎓");
         icon.setTextSize(30);
-        icon.setGravity(Gravity.CENTER);
+        icon.setGravity(
+                Gravity.CENTER
+        );
 
         GradientDrawable iconBackground =
                 new GradientDrawable();
@@ -392,6 +444,7 @@ public class StudentClassActivity extends AppCompatActivity {
 
         name.setTextSize(20);
         name.setTextColor(textPrimary);
+
         name.setTypeface(
                 null,
                 Typeface.BOLD
@@ -416,6 +469,7 @@ public class StudentClassActivity extends AppCompatActivity {
 
         mediumText.setTextSize(14);
         mediumText.setTextColor(textSecondary);
+
         mediumText.setPadding(
                 0,
                 5,
@@ -432,6 +486,7 @@ public class StudentClassActivity extends AppCompatActivity {
 
         description.setTextSize(14);
         description.setTextColor(textSecondary);
+
         description.setPadding(
                 0,
                 3,
@@ -458,7 +513,10 @@ public class StudentClassActivity extends AppCompatActivity {
         arrow.setText("›");
         arrow.setTextSize(34);
         arrow.setTextColor(primaryColor);
-        arrow.setGravity(Gravity.CENTER);
+        arrow.setGravity(
+                Gravity.CENTER
+        );
+
         arrow.setTypeface(
                 null,
                 Typeface.BOLD
@@ -541,8 +599,8 @@ public class StudentClassActivity extends AppCompatActivity {
                     } else if (
                             event.getAction() ==
                                     MotionEvent.ACTION_UP ||
-                            event.getAction() ==
-                                    MotionEvent.ACTION_CANCEL
+                                    event.getAction() ==
+                                            MotionEvent.ACTION_CANCEL
                     ) {
 
                         view.animate()
@@ -557,17 +615,69 @@ public class StudentClassActivity extends AppCompatActivity {
         );
     }
 
-    private void showMessage(
+    private void showLoading() {
+
+        if (statusView != null) {
+
+            statusView.setText(
+                    "⏳ Loading your class..."
+            );
+
+            statusView.setTextColor(
+                    primaryColor
+            );
+        }
+
+        if (classContainer != null) {
+
+            classContainer.removeAllViews();
+        }
+    }
+
+    private void showSuccess(
             String message
     ) {
 
+        if (statusView != null) {
+
+            statusView.setText(message);
+
+            statusView.setTextColor(
+                    primaryColor
+            );
+        }
+    }
+
+    private void showEmpty(
+            String message
+    ) {
+
+        if (classContainer == null) {
+            return;
+        }
+
         classContainer.removeAllViews();
+
+        if (statusView != null) {
+
+            statusView.setText(
+                    "📚 No class content available"
+            );
+
+            statusView.setTextColor(
+                    textSecondary
+            );
+        }
 
         TextView messageView =
                 new TextView(this);
 
-        messageView.setText(message);
+        messageView.setText(
+                message
+        );
+
         messageView.setTextSize(16);
+
         messageView.setTextColor(
                 textSecondary
         );
@@ -590,5 +700,58 @@ public class StudentClassActivity extends AppCompatActivity {
                         -2
                 )
         );
+    }
+
+    private void showError(
+            String message
+    ) {
+
+        if (classContainer != null) {
+
+            classContainer.removeAllViews();
+
+            TextView errorView =
+                    new TextView(this);
+
+            errorView.setText(
+                    "⚠️ " + message
+            );
+
+            errorView.setTextSize(16);
+
+            errorView.setTextColor(
+                    errorColor
+            );
+
+            errorView.setGravity(
+                    Gravity.CENTER
+            );
+
+            errorView.setPadding(
+                    20,
+                    50,
+                    20,
+                    50
+            );
+
+            classContainer.addView(
+                    errorView,
+                    new LinearLayout.LayoutParams(
+                            -1,
+                            -2
+                    )
+            );
+        }
+
+        if (statusView != null) {
+
+            statusView.setText(
+                    "Something went wrong"
+            );
+
+            statusView.setTextColor(
+                    errorColor
+            );
+        }
     }
 }

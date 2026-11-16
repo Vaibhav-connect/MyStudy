@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,7 +19,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -30,7 +28,6 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -49,16 +46,15 @@ public class StudentPracticeActivity extends AppCompatActivity {
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
+    private ProgressManager progressManager;
 
     private LinearLayout root;
     private LinearLayout content;
     private LinearLayout questionCard;
     private LinearLayout optionsContainer;
 
-    private TextView titleText;
     private TextView progressText;
     private TextView scoreText;
-    private TextView questionText;
     private TextView feedbackText;
     private TextView explanationText;
 
@@ -67,14 +63,22 @@ public class StudentPracticeActivity extends AppCompatActivity {
     private Button submitButton;
     private Button nextButton;
 
-    private String classId, className;
-    private String studentMedium, studentName;
-    private String subjectId, subjectName;
-    private String chapterId, chapterName;
-    private String lessonId, lessonTitle;
+    private String classId;
+    private String className;
+    private String studentMedium;
+    private String studentName;
+    private String subjectId;
+    private String subjectName;
+    private String chapterId;
+    private String chapterName;
+    private String lessonId;
+    private String lessonTitle;
 
-    private final List<Map<String, Object>> questions = new ArrayList<>();
-    private final List<String> questionIds = new ArrayList<>();
+    private final List<Map<String, Object>> questions =
+            new ArrayList<>();
+
+    private final List<String> questionIds =
+            new ArrayList<>();
 
     private int currentIndex = 0;
     private int score = 0;
@@ -95,6 +99,7 @@ public class StudentPracticeActivity extends AppCompatActivity {
 
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        progressManager = new ProgressManager();
 
         readIntentData();
         createScreen();
@@ -107,6 +112,7 @@ public class StudentPracticeActivity extends AppCompatActivity {
     }
 
     private void readIntentData() {
+
         classId = getIntent().getStringExtra("classId");
         className = getIntent().getStringExtra("className");
         studentMedium = getIntent().getStringExtra("studentMedium");
@@ -134,6 +140,7 @@ public class StudentPracticeActivity extends AppCompatActivity {
     }
 
     private void createScreen() {
+
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(BG);
@@ -141,23 +148,28 @@ public class StudentPracticeActivity extends AppCompatActivity {
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.VERTICAL);
         header.setPadding(dp(20), dp(18), dp(20), dp(18));
-        header.setBackground(rounded(BLUE, 0, 0, 22, 22));
+        header.setBackground(rounded(BLUE, 22));
 
-        TextView brand = text("📘 MyStudy", 23, Color.WHITE, true);
+        TextView brand = text(
+                "📘 MyStudy", 23, Color.WHITE, true);
         header.addView(brand);
 
-        TextView subtitle = text("Practice • Improve • Grow", 13,
-                Color.WHITE, false);
+        TextView subtitle = text(
+                "Practice • Improve • Grow",
+                13, Color.WHITE, false);
         header.addView(subtitle);
 
         TextView chapter = text(
-                chapterName.isEmpty() ? "Practice Questions" : chapterName,
+                chapterName.isEmpty()
+                        ? "Practice Questions" : chapterName,
                 19, Color.WHITE, true);
+
         chapter.setPadding(0, dp(14), 0, dp(2));
         header.addView(chapter);
 
         if (!subjectName.isEmpty()) {
-            TextView subject = text(subjectName, 13, Color.WHITE, false);
+            TextView subject = text(
+                    subjectName, 13, Color.WHITE, false);
             header.addView(subject);
         }
 
@@ -171,8 +183,9 @@ public class StudentPracticeActivity extends AppCompatActivity {
         content.setPadding(dp(18), dp(18), dp(18), dp(24));
 
         scroll.addView(content);
-        root.addView(scroll, new LinearLayout.LayoutParams(
-                -1, 0, 1));
+
+        root.addView(scroll,
+                new LinearLayout.LayoutParams(-1, 0, 1));
 
         setContentView(root);
 
@@ -180,6 +193,7 @@ public class StudentPracticeActivity extends AppCompatActivity {
     }
 
     private void loadQuestions() {
+
         showLoading();
 
         db.collection("questions")
@@ -188,14 +202,17 @@ public class StudentPracticeActivity extends AppCompatActivity {
                 .whereEqualTo("medium", studentMedium)
                 .get()
                 .addOnSuccessListener(snapshot -> {
+
                     questions.clear();
                     questionIds.clear();
 
                     for (QueryDocumentSnapshot document : snapshot) {
-                        Map<String, Object> data = document.getData();
 
-                        String question = getStringValue(
-                                data, "question");
+                        Map<String, Object> data =
+                                document.getData();
+
+                        String question =
+                                getStringValue(data, "question");
 
                         if (question.trim().isEmpty()) {
                             continue;
@@ -215,27 +232,36 @@ public class StudentPracticeActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e ->
-                        showError("Unable to load questions. Please try again."));
+                        showError(
+                                "Unable to load questions. Please try again."));
     }
 
     private void showLoading() {
+
         content.removeAllViews();
 
         ProgressBar loader = new ProgressBar(this);
-        LinearLayout.LayoutParams loaderParams =
-                new LinearLayout.LayoutParams(dp(48), dp(48));
-        loaderParams.gravity = Gravity.CENTER;
-        loaderParams.topMargin = dp(70);
-        content.addView(loader, loaderParams);
 
-        TextView message = text("Loading practice questions...",
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(dp(48), dp(48));
+
+        params.gravity = Gravity.CENTER;
+        params.topMargin = dp(70);
+
+        content.addView(loader, params);
+
+        TextView message = text(
+                "Loading practice questions...",
                 15, TEXT, true);
+
         message.setGravity(Gravity.CENTER);
         message.setPadding(0, dp(18), 0, dp(20));
+
         content.addView(message);
     }
 
     private void showEmpty() {
+
         content.removeAllViews();
 
         addMessageCard(
@@ -248,18 +274,29 @@ public class StudentPracticeActivity extends AppCompatActivity {
     }
 
     private void showError(String message) {
+
         content.removeAllViews();
 
-        addMessageCard("⚠️", "Something went wrong", message);
+        addMessageCard(
+                "⚠️",
+                "Something went wrong",
+                message
+        );
 
-        addButton(content, "Try Again", BLUE, v -> loadQuestions());
-        addButton(content, "Go Back", DARK_BLUE, v -> finish());
+        addButton(content, "Try Again", BLUE,
+                v -> loadQuestions());
+
+        addButton(content, "Go Back", DARK_BLUE,
+                v -> finish());
     }
 
     private void addMessageCard(
-            String icon, String heading, String message) {
+            String icon,
+            String heading,
+            String message) {
 
         LinearLayout card = createCard();
+
         card.setGravity(Gravity.CENTER);
         card.setPadding(dp(20), dp(35), dp(20), dp(35));
 
@@ -272,14 +309,16 @@ public class StudentPracticeActivity extends AppCompatActivity {
         title.setPadding(0, dp(12), 0, dp(8));
         card.addView(title);
 
-        TextView description = text(message, 14, Color.GRAY, false);
+        TextView description = text(
+                message, 14, Color.GRAY, false);
         description.setGravity(Gravity.CENTER);
-        card.addView(description);
 
+        card.addView(description);
         content.addView(card);
     }
 
     private void showQuestion() {
+
         if (currentIndex >= questions.size()) {
             showResult();
             return;
@@ -290,62 +329,78 @@ public class StudentPracticeActivity extends AppCompatActivity {
 
         content.removeAllViews();
 
-        Map<String, Object> data = questions.get(currentIndex);
+        Map<String, Object> data =
+                questions.get(currentIndex);
 
         LinearLayout stats = new LinearLayout(this);
         stats.setOrientation(LinearLayout.HORIZONTAL);
         stats.setGravity(Gravity.CENTER_VERTICAL);
 
         progressText = text(
-                "Question " + (currentIndex + 1) + " / " + questions.size(),
+                "Question " + (currentIndex + 1)
+                        + " / " + questions.size(),
                 14, DARK_BLUE, true);
 
-        scoreText = text("⭐ " + score + " Points", 14, BLUE, true);
+        scoreText = text(
+                "⭐ " + score + " Points",
+                14, BLUE, true);
+
         scoreText.setGravity(Gravity.END);
 
         stats.addView(progressText,
                 new LinearLayout.LayoutParams(0, -2, 1));
+
         stats.addView(scoreText,
                 new LinearLayout.LayoutParams(0, -2, 1));
 
         content.addView(stats);
 
         progressBar = new ProgressBar(
-                this, null, android.R.attr.progressBarStyleHorizontal);
+                this, null,
+                android.R.attr.progressBarStyleHorizontal);
 
         progressBar.setMax(questions.size());
         progressBar.setProgress(currentIndex + 1);
+
         progressBar.setProgressTintList(
                 android.content.res.ColorStateList.valueOf(BLUE));
 
         LinearLayout.LayoutParams progressParams =
                 new LinearLayout.LayoutParams(-1, dp(8));
+
         progressParams.topMargin = dp(12);
         progressParams.bottomMargin = dp(18);
 
         content.addView(progressBar, progressParams);
 
         questionCard = createCard();
-        questionCard.setPadding(dp(18), dp(20), dp(18), dp(20));
+
+        questionCard.setPadding(
+                dp(18), dp(20), dp(18), dp(20));
 
         TextView typeLabel = text(
                 getQuestionType(data).replace("_", " "),
                 12, BLUE, true);
 
         typeLabel.setBackground(rounded(
-                Color.rgb(230, 239, 255), 12, 12, 12, 12));
-        typeLabel.setPadding(dp(12), dp(7), dp(12), dp(7));
+                Color.rgb(230, 239, 255), 12));
+
+        typeLabel.setPadding(
+                dp(12), dp(7), dp(12), dp(7));
 
         questionCard.addView(typeLabel);
 
-        questionText = text(
+        TextView questionText = text(
                 getStringValue(data, "question"),
                 19, TEXT, true);
 
-        questionText.setPadding(0, dp(18), 0, dp(12));
+        questionText.setPadding(
+                0, dp(18), 0, dp(12));
+
         questionCard.addView(questionText);
 
-        String imageUrl = getStringValue(data, "imageUrl");
+        String imageUrl =
+                getStringValue(data, "imageUrl");
 
         if (!imageUrl.isEmpty()) {
             addQuestionImage(imageUrl);
@@ -356,21 +411,27 @@ public class StudentPracticeActivity extends AppCompatActivity {
         optionsContainer.setPadding(0, dp(12), 0, 0);
 
         questionCard.addView(optionsContainer);
-
         content.addView(questionCard);
 
         feedbackText = text("", 15, GREEN, true);
-        feedbackText.setPadding(dp(8), dp(12), dp(8), dp(4));
+        feedbackText.setPadding(
+                dp(8), dp(12), dp(8), dp(4));
+
         content.addView(feedbackText);
 
         explanationText = text("", 14, TEXT, false);
-        explanationText.setPadding(dp(8), dp(4), dp(8), dp(12));
+        explanationText.setPadding(
+                dp(8), dp(4), dp(8), dp(12));
+
         content.addView(explanationText);
 
         showAnswerControls(data);
 
-        nextButton = createButton("Next Question", BLUE);
+        nextButton = createButton(
+                "Next Question", BLUE);
+
         nextButton.setVisibility(View.GONE);
+
         nextButton.setOnClickListener(v -> {
             currentIndex++;
             showQuestion();
@@ -381,15 +442,19 @@ public class StudentPracticeActivity extends AppCompatActivity {
         animateView(questionCard);
     }
 
-    private void showAnswerControls(Map<String, Object> data) {
+    private void showAnswerControls(
+            Map<String, Object> data) {
+
         String type = getQuestionType(data);
 
         answerInput = null;
         submitButton = null;
 
         if (type.equals("TRUE_FALSE")) {
+
             addOption("True");
             addOption("False");
+
         } else if (type.equals("MCQ")
                 || type.equals("PICTURE_BASED")) {
 
@@ -399,8 +464,11 @@ public class StudentPracticeActivity extends AppCompatActivity {
             addOptionFromData(data, "optionD");
 
         } else if (type.equals("MATCH")) {
+
             createTextAnswerInput(false);
+
         } else {
+
             createTextAnswerInput(
                     type.equals("NUMERICAL")
                             || type.equals("WORD_PROBLEM"));
@@ -408,7 +476,8 @@ public class StudentPracticeActivity extends AppCompatActivity {
     }
 
     private void addOptionFromData(
-            Map<String, Object> data, String key) {
+            Map<String, Object> data,
+            String key) {
 
         String option = getStringValue(data, key);
 
@@ -418,12 +487,20 @@ public class StudentPracticeActivity extends AppCompatActivity {
     }
 
     private void addOption(String option) {
+
         Button button = createButton(option, Color.WHITE);
         button.setTextColor(TEXT);
         button.setGravity(Gravity.CENTER_VERTICAL);
-        button.setStrokeColor(BLUE);
+
+        GradientDrawable optionBackground =
+                rounded(Color.WHITE, 12);
+
+        optionBackground.setStroke(dp(1), BLUE);
+
+        button.setBackground(optionBackground);
 
         button.setOnClickListener(v -> {
+
             if (questionAnswered) return;
 
             selectedAnswer = option;
@@ -440,41 +517,51 @@ public class StudentPracticeActivity extends AppCompatActivity {
     }
 
     private void createTextAnswerInput(boolean numeric) {
+
         answerInput = new EditText(this);
+
         answerInput.setSingleLine(false);
         answerInput.setMinLines(1);
         answerInput.setMaxLines(3);
         answerInput.setTextSize(15);
         answerInput.setTextColor(TEXT);
+
         answerInput.setHint("Type your answer here...");
-        answerInput.setPadding(dp(14), dp(12), dp(14), dp(12));
-        answerInput.setBackground(rounded(Color.WHITE,
-                2, 2, 2, 2));
+
+        answerInput.setPadding(
+                dp(14), dp(12), dp(14), dp(12));
+
+        answerInput.setBackground(rounded(Color.WHITE, 12));
+
         answerInput.setInputType(numeric
                 ? InputType.TYPE_CLASS_NUMBER
-                    | InputType.TYPE_NUMBER_FLAG_DECIMAL
+                | InputType.TYPE_NUMBER_FLAG_DECIMAL
                 : InputType.TYPE_CLASS_TEXT
-                    | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+                | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
 
         optionsContainer.addView(answerInput,
                 new LinearLayout.LayoutParams(-1, dp(55)));
 
-        submitButton = createButton("Submit Answer", BLUE);
+        submitButton = createButton(
+                "Submit Answer", BLUE);
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, dp(50));
+
         params.topMargin = dp(14);
 
         optionsContainer.addView(submitButton, params);
 
         submitButton.setOnClickListener(v -> {
+
             if (questionAnswered) return;
 
             String answer = answerInput.getText()
                     .toString().trim();
 
             if (answer.isEmpty()) {
-                answerInput.setError("Please enter your answer");
+                answerInput.setError(
+                        "Please enter your answer");
                 return;
             }
 
@@ -483,35 +570,52 @@ public class StudentPracticeActivity extends AppCompatActivity {
     }
 
     private void checkAnswer(String userAnswer) {
-        if (questionAnswered || currentIndex >= questions.size()) {
+
+        if (questionAnswered
+                || currentIndex >= questions.size()) {
             return;
         }
 
         questionAnswered = true;
         answeredCount++;
 
-        Map<String, Object> data = questions.get(currentIndex);
+        Map<String, Object> data =
+                questions.get(currentIndex);
 
-        String correctAnswer = getStringValue(data, "answer");
+        String correctAnswer =
+                getStringValue(data, "answer");
+
         String type = getQuestionType(data);
 
         boolean correct = isCorrectAnswer(
                 userAnswer, correctAnswer, type);
 
         if (correct) {
+
             score++;
-            feedbackText.setText("🎉 Correct Answer! Well done!");
-            feedbackText.setTextColor(GREEN);
-        } else {
+
             feedbackText.setText(
-                    "❌ Incorrect. Correct answer: " + correctAnswer);
+                    "🎉 Correct Answer! Well done!");
+
+            feedbackText.setTextColor(GREEN);
+
+        } else {
+
+            feedbackText.setText(
+                    "❌ Incorrect. Correct answer: "
+                            + correctAnswer);
+
             feedbackText.setTextColor(RED);
         }
 
-        String explanation = getStringValue(data, "explanation");
+        String explanation =
+                getStringValue(data, "explanation");
 
         if (!explanation.isEmpty()) {
-            explanationText.setText("💡 Explanation: " + explanation);
+
+            explanationText.setText(
+                    "💡 Explanation: " + explanation);
+
         } else {
             explanationText.setText("");
         }
@@ -524,8 +628,11 @@ public class StudentPracticeActivity extends AppCompatActivity {
             submitButton.setEnabled(false);
         }
 
-        for (int i = 0; i < optionsContainer.getChildCount(); i++) {
-            View child = optionsContainer.getChildAt(i);
+        for (int i = 0;
+             i < optionsContainer.getChildCount(); i++) {
+
+            View child =
+                    optionsContainer.getChildAt(i);
 
             if (child instanceof Button) {
                 child.setEnabled(false);
@@ -544,7 +651,9 @@ public class StudentPracticeActivity extends AppCompatActivity {
     }
 
     private boolean isCorrectAnswer(
-            String userAnswer, String correctAnswer, String type) {
+            String userAnswer,
+            String correctAnswer,
+            String type) {
 
         if (userAnswer == null || correctAnswer == null) {
             return false;
@@ -554,6 +663,7 @@ public class StudentPracticeActivity extends AppCompatActivity {
         String correct = correctAnswer.trim();
 
         if (type.equals("MATCH")) {
+
             return normalizeMatch(user).equals(
                     normalizeMatch(correct));
         }
@@ -562,12 +672,18 @@ public class StudentPracticeActivity extends AppCompatActivity {
                 || type.equals("WORD_PROBLEM")) {
 
             try {
-                double userNumber = Double.parseDouble(user);
+
+                double userNumber =
+                        Double.parseDouble(user);
+
                 double correctNumber =
                         Double.parseDouble(correct);
 
-                return Math.abs(userNumber - correctNumber) < 0.0001;
+                return Math.abs(
+                        userNumber - correctNumber) < 0.0001;
+
             } catch (Exception ignored) {
+
                 return user.equalsIgnoreCase(correct);
             }
         }
@@ -576,15 +692,18 @@ public class StudentPracticeActivity extends AppCompatActivity {
     }
 
     private String normalizeMatch(String value) {
+
         return value.toLowerCase(Locale.ROOT)
                 .replaceAll("\\s+", "");
     }
 
     private void addQuestionImage(String imageUrl) {
+
         ImageView image = new ImageView(this);
+
         image.setAdjustViewBounds(true);
         image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        image.setBackground(rounded(BG, 12, 12, 12, 12));
+        image.setBackground(rounded(BG, 12));
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, dp(190));
@@ -595,11 +714,16 @@ public class StudentPracticeActivity extends AppCompatActivity {
         questionCard.addView(image, params);
 
         imageExecutor.execute(() -> {
+
             HttpURLConnection connection = null;
 
             try {
+
                 URL url = new URL(imageUrl);
-                connection = (HttpURLConnection) url.openConnection();
+
+                connection =
+                        (HttpURLConnection) url.openConnection();
+
                 connection.setConnectTimeout(8000);
                 connection.setReadTimeout(8000);
                 connection.setDoInput(true);
@@ -609,13 +733,18 @@ public class StudentPracticeActivity extends AppCompatActivity {
                         connection.getInputStream());
 
                 if (bitmap != null && !isFinishing()) {
-                    runOnUiThread(() -> image.setImageBitmap(bitmap));
+
+                    runOnUiThread(() ->
+                            image.setImageBitmap(bitmap));
                 }
 
             } catch (Exception ignored) {
+
                 runOnUiThread(() ->
                         image.setVisibility(View.GONE));
+
             } finally {
+
                 if (connection != null) {
                     connection.disconnect();
                 }
@@ -624,6 +753,7 @@ public class StudentPracticeActivity extends AppCompatActivity {
     }
 
     private void showResult() {
+
         if (practiceFinished) return;
 
         practiceFinished = true;
@@ -631,23 +761,33 @@ public class StudentPracticeActivity extends AppCompatActivity {
         content.removeAllViews();
 
         LinearLayout resultCard = createCard();
-        resultCard.setGravity(Gravity.CENTER);
-        resultCard.setPadding(dp(22), dp(28), dp(22), dp(28));
 
-        TextView trophy = text("🏆", 55, YELLOW, true);
+        resultCard.setGravity(Gravity.CENTER);
+
+        resultCard.setPadding(
+                dp(22), dp(28), dp(22), dp(28));
+
+        TextView trophy = text(
+                "🏆", 55, YELLOW, true);
+
         trophy.setGravity(Gravity.CENTER);
         resultCard.addView(trophy);
 
         TextView heading = text(
                 "Practice Completed!",
                 23, DARK_BLUE, true);
+
         heading.setGravity(Gravity.CENTER);
-        heading.setPadding(0, dp(12), 0, dp(12));
+
+        heading.setPadding(
+                0, dp(12), 0, dp(12));
+
         resultCard.addView(heading);
 
         TextView scoreResult = text(
                 score + " / " + questions.size(),
                 38, BLUE, true);
+
         scoreResult.setGravity(Gravity.CENTER);
         resultCard.addView(scoreResult);
 
@@ -658,54 +798,72 @@ public class StudentPracticeActivity extends AppCompatActivity {
         TextView percentageText = text(
                 percentage + "% Accuracy",
                 17, GREEN, true);
+
         percentageText.setGravity(Gravity.CENTER);
-        percentageText.setPadding(0, dp(8), 0, dp(18));
+
+        percentageText.setPadding(
+                0, dp(8), 0, dp(18));
+
         resultCard.addView(percentageText);
 
         TextView answered = text(
                 "Questions Answered: " + answeredCount,
                 15, TEXT, false);
+
         answered.setGravity(Gravity.CENTER);
         resultCard.addView(answered);
 
         TextView points = text(
                 "⭐ Points Earned: " + (score * 5),
                 17, DARK_BLUE, true);
+
         points.setGravity(Gravity.CENTER);
-        points.setPadding(0, dp(14), 0, dp(5));
+
+        points.setPadding(
+                0, dp(14), 0, dp(5));
+
         resultCard.addView(points);
 
         content.addView(resultCard);
 
         addButton(content, "Practice Again", BLUE, v -> {
+
             currentIndex = 0;
             score = 0;
             answeredCount = 0;
+
             practiceFinished = false;
             resultSaved = false;
+
             showQuestion();
         });
 
-        addButton(content, "Back to Lesson", DARK_BLUE, v -> finish());
+        addButton(content, "Back to Lesson",
+                DARK_BLUE, v -> finish());
 
         savePracticeResult();
     }
 
     private void savePracticeResult() {
+
         if (resultSaved) return;
 
         resultSaved = true;
 
         if (auth.getCurrentUser() == null) {
-            Toast.makeText(this,
+
+            Toast.makeText(
+                    this,
                     "Please login again to save progress.",
-                    Toast.LENGTH_LONG).show();
+                    Toast.LENGTH_LONG
+            ).show();
+
             return;
         }
 
         String uid = auth.getCurrentUser().getUid();
 
-        ProgressManager.saveQuizResult(
+        progressManager.saveQuizResult(
                 uid,
                 classId,
                 chapterId,
@@ -714,13 +872,19 @@ public class StudentPracticeActivity extends AppCompatActivity {
         );
 
         if (score > 0) {
-            ProgressManager.addPoints(uid, score * 5);
+
+            progressManager.addPoints(
+                    uid,
+                    score * 5
+            );
         }
 
-        ProgressManager.updateStreak(uid);
+        progressManager.updateStreak(uid);
     }
 
-    private String getQuestionType(Map<String, Object> data) {
+    private String getQuestionType(
+            Map<String, Object> data) {
+
         String type = getStringValue(data, "type");
 
         if (type.isEmpty()) {
@@ -731,53 +895,76 @@ public class StudentPracticeActivity extends AppCompatActivity {
     }
 
     private String getStringValue(
-            Map<String, Object> data, String key) {
+            Map<String, Object> data,
+            String key) {
 
         Object value = data.get(key);
 
-        return value == null ? "" : String.valueOf(value);
+        return value == null
+                ? ""
+                : String.valueOf(value);
     }
 
     private LinearLayout createCard() {
+
         LinearLayout card = new LinearLayout(this);
+
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dp(16), dp(16), dp(16), dp(16));
-        card.setBackground(rounded(Color.WHITE,
-                18, 18, 18, 18));
+
+        card.setPadding(
+                dp(16), dp(16), dp(16), dp(16));
+
+        card.setBackground(rounded(Color.WHITE, 18));
 
         LinearLayout.LayoutParams params =
                 new LinearLayout.LayoutParams(-1, -2);
 
         params.bottomMargin = dp(16);
+
         card.setLayoutParams(params);
 
         return card;
     }
 
     private TextView text(
-            String value, int size, int color, boolean bold) {
+            String value,
+            int size,
+            int color,
+            boolean bold) {
 
         TextView view = new TextView(this);
+
         view.setText(value);
         view.setTextSize(size);
         view.setTextColor(color);
 
         if (bold) {
-            view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+            view.setTypeface(
+                    Typeface.DEFAULT,
+                    Typeface.BOLD);
         }
 
         return view;
     }
 
-    private Button createButton(String label, int color) {
+    private Button createButton(
+            String label,
+            int color) {
+
         Button button = new Button(this);
+
         button.setText(label);
         button.setTextSize(14);
         button.setAllCaps(false);
-        button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        button.setTextColor(color == Color.WHITE ? TEXT : Color.WHITE);
 
-        button.setBackground(rounded(color, 12, 12, 12, 12));
+        button.setTypeface(
+                Typeface.DEFAULT,
+                Typeface.BOLD);
+
+        button.setTextColor(
+                color == Color.WHITE ? TEXT : Color.WHITE);
+
+        button.setBackground(rounded(color, 12));
 
         return button;
     }
@@ -797,42 +984,42 @@ public class StudentPracticeActivity extends AppCompatActivity {
         params.bottomMargin = dp(7);
 
         parent.addView(button, params);
+
         button.setOnClickListener(listener);
     }
 
     private GradientDrawable rounded(
-            int color, int radius,
-            int topLeft, int topRight,
-            int bottomLeft) {
+            int color,
+            int radius) {
 
-        GradientDrawable drawable = new GradientDrawable();
+        GradientDrawable drawable =
+                new GradientDrawable();
+
         drawable.setColor(color);
-
-        drawable.setCornerRadii(new float[]{
-                dp(topLeft), dp(topLeft),
-                dp(topRight), dp(topRight),
-                dp(bottomLeft), dp(bottomLeft),
-                dp(radius), dp(radius)
-        });
+        drawable.setCornerRadius(dp(radius));
 
         return drawable;
     }
 
     private void animateView(View view) {
+
         AlphaAnimation animation =
                 new AlphaAnimation(0f, 1f);
 
         animation.setDuration(350);
+
         view.startAnimation(animation);
     }
 
     private int dp(int value) {
+
         return (int) (value * getResources()
                 .getDisplayMetrics().density);
     }
 
     @Override
     protected void onDestroy() {
+
         super.onDestroy();
 
         imageExecutor.shutdownNow();

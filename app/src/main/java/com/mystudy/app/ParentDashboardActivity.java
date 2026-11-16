@@ -39,20 +39,14 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
     private LinearLayout weakTopicsContainer;
 
-    private final int backgroundColor =
-            Color.rgb(248, 250, 252);
-
-    private final int textPrimary =
-            Color.rgb(17, 24, 39);
-
-    private final int textSecondary =
-            Color.rgb(100, 116, 139);
-
-    private final int primaryColor =
-            Color.rgb(79, 70, 229);
-
-    private final int successColor =
-            Color.rgb(22, 163, 74);
+    private final int BLUE = Color.rgb(59, 130, 246);
+    private final int DARK_BLUE = Color.rgb(37, 99, 235);
+    private final int YELLOW = Color.rgb(250, 204, 21);
+    private final int BACKGROUND = Color.rgb(245, 249, 255);
+    private final int DARK = Color.rgb(17, 24, 39);
+    private final int GREY = Color.rgb(100, 116, 139);
+    private final int GREEN = Color.rgb(22, 163, 74);
+    private final int WHITE = Color.WHITE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,347 +61,318 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
     private void createUI() {
 
-        ScrollView scrollView =
-                new ScrollView(this);
-
+        ScrollView scrollView = new ScrollView(this);
         scrollView.setFillViewport(true);
+        scrollView.setBackgroundColor(BACKGROUND);
 
-        LinearLayout root =
-                new LinearLayout(this);
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(18), dp(20), dp(18), dp(30));
+        root.setBackgroundColor(BACKGROUND);
 
-        root.setOrientation(
-                LinearLayout.VERTICAL
+        // Header
+
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView logo = new TextView(this);
+        logo.setText("📘");
+        logo.setTextSize(30);
+        logo.setGravity(Gravity.CENTER);
+
+        header.addView(
+                logo,
+                new LinearLayout.LayoutParams(dp(48), dp(48))
         );
 
-        root.setPadding(
-                20,
-                24,
-                20,
-                30
+        LinearLayout brandInfo = new LinearLayout(this);
+        brandInfo.setOrientation(LinearLayout.VERTICAL);
+        brandInfo.setPadding(dp(8), 0, 0, 0);
+
+        TextView brand = new TextView(this);
+        brand.setText("MyStudy");
+        brand.setTextSize(21);
+        brand.setTextColor(DARK_BLUE);
+        brand.setTypeface(null, Typeface.BOLD);
+
+        brandInfo.addView(brand);
+
+        TextView brandSubtitle = new TextView(this);
+        brandSubtitle.setText("Parent Learning Portal");
+        brandSubtitle.setTextSize(12);
+        brandSubtitle.setTextColor(GREY);
+
+        brandInfo.addView(brandSubtitle);
+
+        header.addView(
+                brandInfo,
+                new LinearLayout.LayoutParams(0, -2, 1)
         );
 
-        root.setBackgroundColor(
-                backgroundColor
+        TextView backButton = new TextView(this);
+        backButton.setText("←");
+        backButton.setTextSize(25);
+        backButton.setTextColor(DARK_BLUE);
+        backButton.setGravity(Gravity.CENTER);
+        backButton.setBackground(createRoundedBackground(WHITE, 16));
+
+        header.addView(
+                backButton,
+                new LinearLayout.LayoutParams(dp(45), dp(45))
         );
 
-        TextView title =
-                new TextView(this);
-
-        title.setText(
-                "👨‍👩‍👧 Parent Dashboard"
-        );
-
-        title.setTextSize(27);
-
-        title.setTextColor(
-                textPrimary
-        );
-
-        title.setTypeface(
-                null,
-                Typeface.BOLD
-        );
+        backButton.setOnClickListener(v -> finish());
+        addPressAnimation(backButton);
 
         root.addView(
-                title,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
+                header,
+                new LinearLayout.LayoutParams(-1, -2)
+        );
+
+        // Main heading
+
+        TextView title = createTitle("Parent Dashboard");
+        title.setPadding(0, dp(25), 0, dp(4));
+        root.addView(title);
+
+        TextView subtitle = createSubtitle(
+                "Track your child's learning journey."
+        );
+
+        root.addView(subtitle);
+
+        // Student profile card
+
+        LinearLayout studentCard = createCard();
+        studentCard.setOrientation(LinearLayout.VERTICAL);
+        studentCard.setBackground(
+                createRoundedBackground(
+                        Color.rgb(232, 242, 255),
+                        24
                 )
         );
 
-        TextView subtitle =
-                new TextView(this);
+        TextView studentLabel = createSmallLabel("STUDENT PROFILE");
+        studentCard.addView(studentLabel);
 
-        subtitle.setText(
-                "Track your child's learning progress"
-        );
+        studentNameText = new TextView(this);
+        studentNameText.setText("Loading student...");
+        studentNameText.setTextSize(23);
+        studentNameText.setTextColor(DARK_BLUE);
+        studentNameText.setTypeface(null, Typeface.BOLD);
+        studentNameText.setPadding(0, dp(8), 0, dp(5));
 
-        subtitle.setTextSize(15);
+        studentCard.addView(studentNameText);
 
-        subtitle.setTextColor(
-                textSecondary
-        );
-
-        subtitle.setPadding(
-                0,
-                7,
-                0,
-                22
-        );
-
-        root.addView(
-                subtitle,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
-        );
-
-        LinearLayout studentCard =
-                createCard();
-
-        studentCard.setOrientation(
-                LinearLayout.VERTICAL
-        );
-
-        TextView studentLabel =
-                createLabel("Student");
-
-        studentCard.addView(
-                studentLabel
-        );
-
-        studentNameText =
-                createValueText("Loading...");
-
-        studentCard.addView(
-                studentNameText
-        );
-
-        classText =
-                createSecondaryText(
-                        "Class: Loading..."
-                );
-
-        studentCard.addView(
-                classText
-        );
+        classText = createSubtitle("Class: Loading...");
+        studentCard.addView(classText);
 
         root.addView(
                 studentCard,
-                createCardParams(14)
+                createMargins(0, 0, 0, 22)
         );
 
-        TextView progressTitle =
-                createSectionTitle(
-                        "Learning Overview"
-                );
+        // Learning overview
 
         root.addView(
-                progressTitle
+                createSectionTitle("Learning Overview")
         );
 
-        LinearLayout statsRow =
-                new LinearLayout(this);
+        LinearLayout firstRow = createStatsRow();
 
-        statsRow.setOrientation(
-                LinearLayout.HORIZONTAL
+        pointsText = createStatCard(
+                firstRow,
+                "⭐",
+                "Points",
+                "0"
         );
 
-        pointsText =
-                createStatCard(
-                        statsRow,
-                        "⭐",
-                        "Points",
-                        "0"
-                );
-
-        streakText =
-                createStatCard(
-                        statsRow,
-                        "🔥",
-                        "Streak",
-                        "0"
-                );
+        streakText = createStatCard(
+                firstRow,
+                "🔥",
+                "Day Streak",
+                "0"
+        );
 
         root.addView(
-                statsRow,
-                createCardParams(14)
+                firstRow,
+                createMargins(0, 0, 0, 12)
         );
 
-        LinearLayout secondStatsRow =
-                new LinearLayout(this);
+        LinearLayout secondRow = createStatsRow();
 
-        secondStatsRow.setOrientation(
-                LinearLayout.HORIZONTAL
+        accuracyText = createStatCard(
+                secondRow,
+                "🎯",
+                "Accuracy",
+                "0%"
         );
 
-        accuracyText =
-                createStatCard(
-                        secondStatsRow,
-                        "🎯",
-                        "Accuracy",
-                        "0%"
-                );
-
-        lessonsText =
-                createStatCard(
-                        secondStatsRow,
-                        "📖",
-                        "Lessons",
-                        "0"
-                );
+        lessonsText = createStatCard(
+                secondRow,
+                "📖",
+                "Lessons Done",
+                "0"
+        );
 
         root.addView(
-                secondStatsRow,
-                createCardParams(14)
+                secondRow,
+                createMargins(0, 0, 0, 22)
         );
 
-        LinearLayout quizCard =
-                createCard();
+        // Quiz activity
 
-        TextView quizIcon =
-                new TextView(this);
+        root.addView(
+                createSectionTitle("Practice Activity")
+        );
 
+        LinearLayout quizCard = createCard();
+        quizCard.setOrientation(LinearLayout.HORIZONTAL);
+        quizCard.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView quizIcon = new TextView(this);
         quizIcon.setText("📝");
-        quizIcon.setTextSize(30);
-        quizIcon.setGravity(
-                Gravity.CENTER
-        );
+        quizIcon.setTextSize(32);
+        quizIcon.setGravity(Gravity.CENTER);
 
         quizCard.addView(
                 quizIcon,
-                new LinearLayout.LayoutParams(
-                        55,
-                        55
-                )
+                new LinearLayout.LayoutParams(dp(55), dp(55))
         );
 
-        LinearLayout quizInfo =
-                new LinearLayout(this);
+        LinearLayout quizInfo = new LinearLayout(this);
+        quizInfo.setOrientation(LinearLayout.VERTICAL);
+        quizInfo.setPadding(dp(12), 0, 0, 0);
 
-        quizInfo.setOrientation(
-                LinearLayout.VERTICAL
-        );
+        TextView quizHeading = createCardHeading("Quiz Activity");
+        quizInfo.addView(quizHeading);
 
-        quizInfo.setPadding(
-                14,
-                0,
-                0,
-                0
-        );
-
-        TextView quizTitle =
-                createLabel(
-                        "Quiz Activity"
-                );
-
-        quizInfo.addView(
-                quizTitle
-        );
-
-        quizzesText =
-                createSecondaryText(
-                        "Quiz attempts: 0"
-                );
-
-        quizInfo.addView(
-                quizzesText
-        );
+        quizzesText = createSubtitle("Quiz attempts: 0");
+        quizInfo.addView(quizzesText);
 
         quizCard.addView(
                 quizInfo,
-                new LinearLayout.LayoutParams(
-                        0,
-                        -2,
-                        1
-                )
+                new LinearLayout.LayoutParams(0, -2, 1)
         );
 
         root.addView(
                 quizCard,
-                createCardParams(14)
+                createMargins(0, 0, 0, 22)
         );
 
-        TextView weakTitle =
-                createSectionTitle(
-                        "⚠️ Topics to Practice"
-                );
+        // Weak topics
 
         root.addView(
-                weakTitle
+                createSectionTitle("📌 Topics to Practice")
         );
 
-        weakTopicsContainer =
-                createWeakTopicsContainer();
+        weakTopicsContainer = new LinearLayout(this);
+        weakTopicsContainer.setOrientation(LinearLayout.VERTICAL);
+        weakTopicsContainer.setPadding(
+                dp(16),
+                dp(16),
+                dp(16),
+                dp(8)
+        );
+
+        weakTopicsContainer.setBackground(
+                createRoundedBackground(WHITE, 22)
+        );
+
+        weakTopicsContainer.setElevation(dp(3));
+
+        TextView loadingTopics = createSubtitle(
+                "Checking learning performance..."
+        );
+
+        weakTopicsContainer.addView(loadingTopics);
 
         root.addView(
                 weakTopicsContainer,
-                createCardParams(14)
+                createMargins(0, 0, 0, 22)
         );
 
-        TextView privacy =
-                new TextView(this);
+        // Parent note
 
-        privacy.setText(
-                "🔒 Parent Area • Progress is linked to the logged-in student account."
-        );
-
-        privacy.setTextSize(13);
-
-        privacy.setTextColor(
-                textSecondary
-        );
-
-        privacy.setGravity(
-                Gravity.CENTER
-        );
-
-        privacy.setPadding(
-                10,
-                18,
-                10,
-                10
-        );
-
-        root.addView(
-                privacy,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
+        LinearLayout noteCard = createCard();
+        noteCard.setOrientation(LinearLayout.HORIZONTAL);
+        noteCard.setGravity(Gravity.CENTER_VERTICAL);
+        noteCard.setBackground(
+                createRoundedBackground(
+                        Color.rgb(255, 250, 220),
+                        18
                 )
         );
 
-        TextView logout =
-                new TextView(this);
+        TextView lockIcon = new TextView(this);
+        lockIcon.setText("🔒");
+        lockIcon.setTextSize(23);
 
+        noteCard.addView(
+                lockIcon,
+                new LinearLayout.LayoutParams(dp(42), dp(42))
+        );
+
+        TextView note = createSubtitle(
+                "This dashboard displays learning progress " +
+                        "linked to the logged-in student account."
+        );
+
+        note.setTextColor(DARK);
+        noteCard.addView(
+                note,
+                new LinearLayout.LayoutParams(0, -2, 1)
+        );
+
+        root.addView(
+                noteCard,
+                createMargins(0, 0, 0, 18)
+        );
+
+        // Logout
+
+        TextView logout = new TextView(this);
         logout.setText("Logout");
         logout.setTextSize(15);
-
-        logout.setTextColor(
-                primaryColor
-        );
-
-        logout.setGravity(
-                Gravity.CENTER
-        );
-
-        logout.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        logout.setPadding(
-                10,
-                16,
-                10,
-                16
+        logout.setTextColor(DARK_BLUE);
+        logout.setTypeface(null, Typeface.BOLD);
+        logout.setGravity(Gravity.CENTER);
+        logout.setPadding(dp(12), dp(16), dp(12), dp(16));
+        logout.setBackground(
+                createRoundedBackground(WHITE, 16)
         );
 
         root.addView(
                 logout,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
+                new LinearLayout.LayoutParams(-1, -2)
         );
 
-        scrollView.addView(root);
+        logout.setOnClickListener(v -> {
 
-        setContentView(scrollView);
+            auth.signOut();
+            finish();
 
-        logout.setOnClickListener(
-                view -> {
-
-                    auth.signOut();
-
-                    finish();
-                }
-        );
+        });
 
         addPressAnimation(logout);
+
+        scrollView.addView(root);
+        setContentView(scrollView);
+
+        // Entrance animation
+
+        root.setAlpha(0f);
+        root.setTranslationY(dp(18));
+
+        root.animate()
+                .alpha(1f)
+                .translationY(0)
+                .setDuration(450)
+                .start();
     }
+
+    // Firebase student data
 
     private void loadStudentProgress() {
 
@@ -420,297 +385,194 @@ public class ParentDashboardActivity extends AppCompatActivity {
             ).show();
 
             finish();
-
             return;
         }
 
-        String userId =
-                auth.getCurrentUser().getUid();
+        String userId = auth.getCurrentUser().getUid();
 
         db.collection("users")
                 .document(userId)
                 .get()
-                .addOnSuccessListener(
-                        document -> {
+                .addOnSuccessListener(document -> {
 
-                            if (!document.exists()) {
-                                return;
-                            }
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
 
-                            String name =
-                                    document.getString(
-                                            "name"
-                                    );
+                    if (!document.exists()) {
 
-                            String studentClass =
-                                    document.getString(
-                                            "class"
-                                    );
+                        studentNameText.setText("Student");
+                        classText.setText("Class: Not set");
+                        return;
+                    }
 
-                            Long points =
-                                    document.getLong(
-                                            "points"
-                                    );
+                    String name = document.getString("name");
+                    String studentClass = document.getString("class");
 
-                            Long streak =
-                                    document.getLong(
-                                            "streak"
-                                    );
+                    Long points = document.getLong("points");
+                    Long streak = document.getLong("streak");
 
-                            Double overallAccuracy =
-                                    document.getDouble(
-                                            "overallAccuracy"
-                                    );
+                    Double overallAccuracy =
+                            document.getDouble("overallAccuracy");
 
-                            if (name != null &&
-                                    !name.trim().isEmpty()) {
+                    if (name != null && !name.trim().isEmpty()) {
+                        studentNameText.setText(name);
+                    } else {
+                        studentNameText.setText("Student");
+                    }
 
-                                studentNameText.setText(
-                                        name
-                                );
+                    if (studentClass != null &&
+                            !studentClass.trim().isEmpty()) {
 
-                            } else {
+                        classText.setText("Class: " + studentClass);
 
-                                studentNameText.setText(
-                                        "Student"
-                                );
-                            }
+                    } else {
 
-                            if (studentClass != null &&
-                                    !studentClass.trim().isEmpty()) {
+                        classText.setText("Class: Not set");
+                    }
 
-                                classText.setText(
-                                        "Class: " +
-                                                studentClass
-                                );
+                    pointsText.setText(
+                            String.valueOf(points != null ? points : 0)
+                    );
 
-                            } else {
+                    streakText.setText(
+                            String.valueOf(streak != null ? streak : 0)
+                    );
 
-                                classText.setText(
-                                        "Class: Not set"
-                                );
-                            }
+                    if (overallAccuracy != null) {
 
-                            pointsText.setText(
-                                    String.valueOf(
-                                            points != null
-                                                    ? points
-                                                    : 0
-                                    )
-                            );
+                        accuracyText.setText(
+                                String.format(
+                                        Locale.US,
+                                        "%.0f%%",
+                                        overallAccuracy
+                                )
+                        );
+                    }
 
-                            streakText.setText(
-                                    String.valueOf(
-                                            streak != null
-                                                    ? streak
-                                                    : 0
-                                    )
-                            );
+                    loadWeakTopics(document);
 
-                            if (overallAccuracy != null) {
+                })
+                .addOnFailureListener(error -> {
 
-                                accuracyText.setText(
-                                        String.format(
-                                                Locale.US,
-                                                "%.0f%%",
-                                                overallAccuracy
-                                        )
-                                );
-                            }
+                    if (!isFinishing() && !isDestroyed()) {
 
-                            loadWeakTopics(
-                                    document
-                            );
-                        }
-                )
-                .addOnFailureListener(
-                        error -> Toast.makeText(
-                                ParentDashboardActivity.this,
+                        Toast.makeText(
+                                this,
                                 "Unable to load student profile.",
                                 Toast.LENGTH_SHORT
-                        ).show()
-                );
+                        ).show();
+
+                        studentNameText.setText("Unable to load");
+                    }
+                });
 
         loadLessonProgress(userId);
         loadQuizProgress(userId);
     }
 
-    private void loadLessonProgress(
-            String userId
-    ) {
+    // Completed lessons
+
+    private void loadLessonProgress(String userId) {
 
         db.collection("lessonProgress")
-                .whereEqualTo(
-                        "userId",
-                        userId
-                )
-                .whereEqualTo(
-                        "completed",
-                        true
-                )
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("completed", true)
                 .get()
-                .addOnSuccessListener(
-                        querySnapshot -> {
+                .addOnSuccessListener(querySnapshot -> {
 
-                            lessonsText.setText(
-                                    String.valueOf(
-                                            querySnapshot.size()
-                                    )
-                            );
-                        }
-                )
-                .addOnFailureListener(
-                        error ->
-                                lessonsText.setText(
-                                        "0"
-                                )
-                );
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+
+                    lessonsText.setText(
+                            String.valueOf(querySnapshot.size())
+                    );
+
+                })
+                .addOnFailureListener(error -> {
+
+                    if (!isFinishing() && !isDestroyed()) {
+                        lessonsText.setText("0");
+                    }
+                });
     }
 
-    private void loadQuizProgress(
-            String userId
-    ) {
+    // Quiz attempts and accuracy
+
+    private void loadQuizProgress(String userId) {
 
         db.collection("quizProgress")
-                .whereEqualTo(
-                        "userId",
-                        userId
-                )
+                .whereEqualTo("userId", userId)
                 .get()
-                .addOnSuccessListener(
-                        querySnapshot -> {
+                .addOnSuccessListener(querySnapshot -> {
 
-                            int attempts =
-                                    querySnapshot.size();
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
 
-                            quizzesText.setText(
-                                    "Quiz attempts: " +
-                                            attempts
-                            );
+                    int attempts = querySnapshot.size();
 
-                            if (attempts == 0) {
+                    quizzesText.setText(
+                            "Quiz attempts: " + attempts
+                    );
 
-                                accuracyText.setText(
-                                        "0%"
-                                );
+                    if (attempts == 0) {
 
-                                return;
-                            }
+                        accuracyText.setText("0%");
+                        return;
+                    }
 
-                            double totalScore = 0;
-                            double totalQuestions = 0;
+                    double totalScore = 0;
+                    double totalQuestions = 0;
 
-                            for (
-                                    QueryDocumentSnapshot document :
-                                    querySnapshot
-                            ) {
+                    for (QueryDocumentSnapshot document : querySnapshot) {
 
-                                Long score =
-                                        document.getLong(
-                                                "score"
-                                        );
+                        Long score = document.getLong("score");
+                        Long questions =
+                                document.getLong("totalQuestions");
 
-                                Long questions =
-                                        document.getLong(
-                                                "totalQuestions"
-                                        );
-
-                                if (score != null) {
-
-                                    totalScore += score;
-                                }
-
-                                if (questions != null) {
-
-                                    totalQuestions +=
-                                            questions;
-                                }
-                            }
-
-                            if (totalQuestions > 0) {
-
-                                double accuracy =
-                                        (
-                                                totalScore *
-                                                        100.0
-                                        )
-                                                /
-                                                totalQuestions;
-
-                                accuracyText.setText(
-                                        String.format(
-                                                Locale.US,
-                                                "%.0f%%",
-                                                accuracy
-                                        )
-                                );
-
-                            } else {
-
-                                accuracyText.setText(
-                                        "0%"
-                                );
-                            }
+                        if (score != null) {
+                            totalScore += score;
                         }
-                )
-                .addOnFailureListener(
-                        error ->
-                                accuracyText.setText(
-                                        "0%"
+
+                        if (questions != null) {
+                            totalQuestions += questions;
+                        }
+                    }
+
+                    if (totalQuestions > 0) {
+
+                        double accuracy =
+                                (totalScore * 100.0) / totalQuestions;
+
+                        accuracyText.setText(
+                                String.format(
+                                        Locale.US,
+                                        "%.0f%%",
+                                        accuracy
                                 )
-                );
+                        );
+
+                    } else {
+
+                        accuracyText.setText("0%");
+                    }
+
+                })
+                .addOnFailureListener(error -> {
+
+                    if (!isFinishing() && !isDestroyed()) {
+
+                        quizzesText.setText("Quiz attempts: 0");
+                        accuracyText.setText("0%");
+                    }
+                });
     }
 
-    private LinearLayout createWeakTopicsContainer() {
+    // Weak topics
 
-        LinearLayout card =
-                new LinearLayout(this);
-
-        card.setOrientation(
-                LinearLayout.VERTICAL
-        );
-
-        card.setPadding(
-                18,
-                18,
-                18,
-                18
-        );
-
-        GradientDrawable background =
-                new GradientDrawable();
-
-        background.setColor(
-                Color.WHITE
-        );
-
-        background.setCornerRadius(
-                26
-        );
-
-        card.setBackground(
-                background
-        );
-
-        card.setElevation(5);
-
-        TextView loading =
-                createSecondaryText(
-                        "Checking learning performance..."
-                );
-
-        card.addView(
-                loading
-        );
-
-        addPressAnimation(card);
-
-        return card;
-    }
-
-    private void loadWeakTopics(
-            DocumentSnapshot document
-    ) {
+    private void loadWeakTopics(DocumentSnapshot document) {
 
         if (weakTopicsContainer == null) {
             return;
@@ -718,102 +580,65 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
         weakTopicsContainer.removeAllViews();
 
-        Object weakTopicsObject =
-                document.get("weakTopics");
+        Object weakTopicsObject = document.get("weakTopics");
 
         if (!(weakTopicsObject instanceof Map)) {
 
             showNoWeakTopics();
-
             return;
         }
 
-        Map<?, ?> weakTopics =
-                (Map<?, ?>) weakTopicsObject;
+        Map<?, ?> weakTopics = (Map<?, ?>) weakTopicsObject;
 
         if (weakTopics.isEmpty()) {
 
             showNoWeakTopics();
-
             return;
         }
 
-        List<String> chapterIds =
-                new ArrayList<>();
+        List<String> chapterIds = new ArrayList<>();
 
-        for (
-                Map.Entry<?, ?> entry :
-                weakTopics.entrySet()
-        ) {
+        for (Map.Entry<?, ?> entry : weakTopics.entrySet()) {
 
             if (entry.getKey() == null) {
                 continue;
             }
 
-            String chapterId =
-                    String.valueOf(
-                            entry.getKey()
-                    );
+            String chapterId = String.valueOf(entry.getKey());
 
             if (!chapterId.trim().isEmpty()) {
-
-                chapterIds.add(
-                        chapterId
-                );
+                chapterIds.add(chapterId);
             }
         }
 
         if (chapterIds.isEmpty()) {
 
             showNoWeakTopics();
-
             return;
         }
 
-        for (
-                String chapterId :
-                chapterIds
-        ) {
+        for (String chapterId : chapterIds) {
 
-            Object topicObject =
-                    weakTopics.get(
-                            chapterId
-                    );
+            Object topicObject = weakTopics.get(chapterId);
 
             double accuracy = 0;
-
-            String status =
-                    "needs_practice";
+            String status = "needs_practice";
 
             if (topicObject instanceof Map) {
 
-                Map<?, ?> topicData =
-                        (Map<?, ?>) topicObject;
+                Map<?, ?> topicData = (Map<?, ?>) topicObject;
 
-                Object accuracyObject =
-                        topicData.get(
-                                "accuracy"
-                        );
-
-                Object statusObject =
-                        topicData.get(
-                                "status"
-                        );
+                Object accuracyObject = topicData.get("accuracy");
+                Object statusObject = topicData.get("status");
 
                 if (accuracyObject instanceof Number) {
 
-                    accuracy =
-                            ((Number)
-                                    accuracyObject)
-                                    .doubleValue();
+                    accuracy = ((Number) accuracyObject).doubleValue();
                 }
 
                 if (statusObject != null) {
 
-                    status =
-                            String.valueOf(
-                                    statusObject
-                            );
+                    status = String.valueOf(statusObject);
                 }
             }
 
@@ -834,45 +659,44 @@ public class ParentDashboardActivity extends AppCompatActivity {
         db.collection("chapters")
                 .document(chapterId)
                 .get()
-                .addOnSuccessListener(
-                        document -> {
+                .addOnSuccessListener(document -> {
 
-                            String chapterName =
-                                    document.getString(
-                                            "name"
-                                    );
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
 
-                            if (chapterName == null ||
-                                    chapterName.trim().isEmpty()) {
+                    String chapterName = document.getString("name");
 
-                                chapterName =
-                                        document.getString(
-                                                "chapterName"
-                                        );
-                            }
+                    if (chapterName == null ||
+                            chapterName.trim().isEmpty()) {
 
-                            if (chapterName == null ||
-                                    chapterName.trim().isEmpty()) {
+                        chapterName = document.getString("chapterName");
+                    }
 
-                                chapterName =
-                                        "Chapter";
-                            }
+                    if (chapterName == null ||
+                            chapterName.trim().isEmpty()) {
 
-                            addWeakTopicRow(
-                                    chapterName,
-                                    accuracy,
-                                    status
-                            );
-                        }
-                )
-                .addOnFailureListener(
-                        error ->
-                                addWeakTopicRow(
-                                        "Chapter",
-                                        accuracy,
-                                        status
-                                )
-                );
+                        chapterName = "Chapter";
+                    }
+
+                    addWeakTopicRow(
+                            chapterName,
+                            accuracy,
+                            status
+                    );
+
+                })
+                .addOnFailureListener(error -> {
+
+                    if (!isFinishing() && !isDestroyed()) {
+
+                        addWeakTopicRow(
+                                "Chapter",
+                                accuracy,
+                                status
+                        );
+                    }
+                });
     }
 
     private void addWeakTopicRow(
@@ -885,64 +709,24 @@ public class ParentDashboardActivity extends AppCompatActivity {
             return;
         }
 
-        LinearLayout row =
-                new LinearLayout(this);
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(dp(14), dp(13), dp(14), dp(13));
 
-        row.setOrientation(
-                LinearLayout.VERTICAL
-        );
-
-        row.setPadding(
-                14,
-                12,
-                14,
-                12
-        );
-
-        GradientDrawable background =
-                new GradientDrawable();
-
-        background.setColor(
-                Color.rgb(
-                        248,
-                        250,
-                        252
+        row.setBackground(
+                createRoundedBackground(
+                        Color.rgb(245, 249, 255),
+                        17
                 )
         );
 
-        background.setCornerRadius(
-                18
-        );
-
-        row.setBackground(
-                background
-        );
-
-        TextView title =
-                new TextView(this);
-
-        title.setText(
-                "📌 " +
-                        chapterName
-        );
-
-        title.setTextSize(16);
-
-        title.setTextColor(
-                textPrimary
-        );
-
-        title.setTypeface(
-                null,
-                Typeface.BOLD
+        TextView title = createCardHeading(
+                "📌 " + chapterName
         );
 
         row.addView(title);
 
-        TextView accuracyTextView =
-                new TextView(this);
-
-        accuracyTextView.setText(
+        TextView accuracyView = createSubtitle(
                 String.format(
                         Locale.US,
                         "Accuracy: %.0f%%",
@@ -950,89 +734,38 @@ public class ParentDashboardActivity extends AppCompatActivity {
                 )
         );
 
-        accuracyTextView.setTextSize(14);
+        accuracyView.setPadding(0, dp(5), 0, 0);
+        row.addView(accuracyView);
 
-        accuracyTextView.setTextColor(
-                textSecondary
-        );
+        TextView statusView = new TextView(this);
+        statusView.setTextSize(13);
+        statusView.setTypeface(null, Typeface.BOLD);
+        statusView.setPadding(0, dp(5), 0, 0);
 
-        accuracyTextView.setPadding(
-                0,
-                5,
-                0,
-                0
-        );
+        if ("weak".equalsIgnoreCase(status)) {
 
-        row.addView(
-                accuracyTextView
-        );
+            statusView.setText("⚠️ Needs more practice");
+            statusView.setTextColor(Color.rgb(220, 38, 38));
 
-        TextView statusText =
-                new TextView(this);
+        } else if ("needs_practice".equalsIgnoreCase(status)) {
 
-        String statusLabel;
-
-        if ("weak".equalsIgnoreCase(
-                status
-        )) {
-
-            statusLabel =
-                    "⚠️ Needs more practice";
-
-        } else if (
-                "needs_practice"
-                        .equalsIgnoreCase(
-                                status
-                        )
-        ) {
-
-            statusLabel =
-                    "📚 Practice again";
+            statusView.setText("📚 Practice again");
+            statusView.setTextColor(Color.rgb(217, 119, 6));
 
         } else {
 
-            statusLabel =
-                    "✅ Good progress";
+            statusView.setText("✅ Good progress");
+            statusView.setTextColor(GREEN);
         }
 
-        statusText.setText(
-                statusLabel
-        );
-
-        statusText.setTextSize(13);
-
-        statusText.setTextColor(
-                primaryColor
-        );
-
-        statusText.setPadding(
-                0,
-                4,
-                0,
-                0
-        );
-
-        row.addView(
-                statusText
-        );
-
-        LinearLayout.LayoutParams params =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                );
-
-        params.setMargins(
-                0,
-                0,
-                0,
-                10
-        );
+        row.addView(statusView);
 
         weakTopicsContainer.addView(
                 row,
-                params
+                createMargins(0, 0, 0, 10)
         );
+
+        addPressAnimation(row);
     }
 
     private void showNoWeakTopics() {
@@ -1041,172 +774,48 @@ public class ParentDashboardActivity extends AppCompatActivity {
             return;
         }
 
-        TextView message =
-                new TextView(this);
+        TextView message = new TextView(this);
 
         message.setText(
-                "🌟 No weak topics yet!\n" +
-                        "Complete some practice to see where you can improve."
+                "🌟 No weak topics yet!\n\n" +
+                        "Complete some practice sessions to see " +
+                        "where your child can improve."
         );
 
         message.setTextSize(14);
-
-        message.setTextColor(
-                textSecondary
-        );
-
-        message.setGravity(
-                Gravity.CENTER
-        );
-
-        message.setPadding(
-                10,
-                15,
-                10,
-                15
-        );
+        message.setTextColor(GREY);
+        message.setGravity(Gravity.CENTER);
+        message.setPadding(dp(12), dp(20), dp(12), dp(20));
 
         weakTopicsContainer.addView(
-                message
+                message,
+                new LinearLayout.LayoutParams(-1, -2)
         );
     }
 
+    // UI helpers
+
     private LinearLayout createCard() {
 
-        LinearLayout card =
-                new LinearLayout(this);
-
-        card.setOrientation(
-                LinearLayout.HORIZONTAL
-        );
-
-        card.setGravity(
-                Gravity.CENTER_VERTICAL
-        );
-
-        card.setPadding(
-                18,
-                18,
-                18,
-                18
-        );
-
-        GradientDrawable background =
-                new GradientDrawable();
-
-        background.setColor(
-                Color.WHITE
-        );
-
-        background.setCornerRadius(
-                26
-        );
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(18), dp(18), dp(18), dp(18));
 
         card.setBackground(
-                background
+                createRoundedBackground(WHITE, 22)
         );
 
-        card.setElevation(5);
+        card.setElevation(dp(3));
 
         return card;
     }
 
-    private TextView createLabel(
-            String text
-    ) {
+    private LinearLayout createStatsRow() {
 
-        TextView view =
-                new TextView(this);
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
 
-        view.setText(text);
-        view.setTextSize(14);
-        view.setTextColor(
-                textSecondary
-        );
-
-        return view;
-    }
-
-    private TextView createValueText(
-            String text
-    ) {
-
-        TextView view =
-                new TextView(this);
-
-        view.setText(text);
-        view.setTextSize(22);
-
-        view.setTextColor(
-                textPrimary
-        );
-
-        view.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        view.setPadding(
-                0,
-                5,
-                0,
-                0
-        );
-
-        return view;
-    }
-
-    private TextView createSecondaryText(
-            String text
-    ) {
-
-        TextView view =
-                new TextView(this);
-
-        view.setText(text);
-        view.setTextSize(14);
-
-        view.setTextColor(
-                textSecondary
-        );
-
-        view.setPadding(
-                0,
-                5,
-                0,
-                0
-        );
-
-        return view;
-    }
-
-    private TextView createSectionTitle(
-            String text
-    ) {
-
-        TextView view =
-                new TextView(this);
-
-        view.setText(text);
-        view.setTextSize(18);
-
-        view.setTextColor(
-                textPrimary
-        );
-
-        view.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        view.setPadding(
-                0,
-                8,
-                0,
-                14
-        );
-
-        return view;
+        return row;
     }
 
     private TextView createStatCard(
@@ -1216,185 +825,183 @@ public class ParentDashboardActivity extends AppCompatActivity {
             String value
     ) {
 
-        LinearLayout card =
-                new LinearLayout(this);
-
-        card.setOrientation(
-                LinearLayout.VERTICAL
-        );
-
-        card.setGravity(
-                Gravity.CENTER
-        );
-
-        card.setPadding(
-                10,
-                16,
-                10,
-                16
-        );
-
-        GradientDrawable background =
-                new GradientDrawable();
-
-        background.setColor(
-                Color.WHITE
-        );
-
-        background.setCornerRadius(
-                24
-        );
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER);
+        card.setPadding(dp(8), dp(14), dp(8), dp(14));
 
         card.setBackground(
-                background
+                createRoundedBackground(WHITE, 20)
         );
 
-        card.setElevation(4);
+        card.setElevation(dp(3));
 
-        TextView iconView =
-                new TextView(this);
-
+        TextView iconView = new TextView(this);
         iconView.setText(icon);
         iconView.setTextSize(25);
-        iconView.setGravity(
-                Gravity.CENTER
-        );
+        iconView.setGravity(Gravity.CENTER);
 
         card.addView(
                 iconView,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        38
-                )
+                new LinearLayout.LayoutParams(-1, dp(38))
         );
 
-        TextView valueView =
-                new TextView(this);
-
+        TextView valueView = new TextView(this);
         valueView.setText(value);
-        valueView.setTextSize(22);
-
-        valueView.setTextColor(
-                successColor
-        );
-
-        valueView.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        valueView.setGravity(
-                Gravity.CENTER
-        );
+        valueView.setTextSize(23);
+        valueView.setTextColor(DARK_BLUE);
+        valueView.setTypeface(null, Typeface.BOLD);
+        valueView.setGravity(Gravity.CENTER);
 
         card.addView(
                 valueView,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        38
-                )
+                new LinearLayout.LayoutParams(-1, dp(38))
         );
 
-        TextView labelView =
-                new TextView(this);
-
+        TextView labelView = new TextView(this);
         labelView.setText(label);
-        labelView.setTextSize(13);
-
-        labelView.setTextColor(
-                textSecondary
-        );
-
-        labelView.setGravity(
-                Gravity.CENTER
-        );
+        labelView.setTextSize(12);
+        labelView.setTextColor(GREY);
+        labelView.setGravity(Gravity.CENTER);
 
         card.addView(
                 labelView,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        30
-                )
+                new LinearLayout.LayoutParams(-1, dp(28))
         );
 
         LinearLayout.LayoutParams params =
-                new LinearLayout.LayoutParams(
-                        0,
-                        -2,
-                        1
-                );
+                new LinearLayout.LayoutParams(0, -2, 1);
 
-        params.setMargins(
-                0,
-                0,
-                8,
-                0
-        );
+        params.setMargins(0, 0, dp(7), 0);
 
-        parent.addView(
-                card,
-                params
-        );
+        parent.addView(card, params);
 
         addPressAnimation(card);
 
         return valueView;
     }
 
-    private LinearLayout.LayoutParams createCardParams(
-            int bottomMargin
+    private TextView createTitle(String text) {
+
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextSize(25);
+        view.setTextColor(DARK);
+        view.setTypeface(null, Typeface.BOLD);
+
+        return view;
+    }
+
+    private TextView createSectionTitle(String text) {
+
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextSize(18);
+        view.setTextColor(DARK);
+        view.setTypeface(null, Typeface.BOLD);
+        view.setPadding(0, dp(5), 0, dp(13));
+
+        return view;
+    }
+
+    private TextView createCardHeading(String text) {
+
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextSize(16);
+        view.setTextColor(DARK);
+        view.setTypeface(null, Typeface.BOLD);
+
+        return view;
+    }
+
+    private TextView createSubtitle(String text) {
+
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextSize(14);
+        view.setTextColor(GREY);
+
+        return view;
+    }
+
+    private TextView createSmallLabel(String text) {
+
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextSize(11);
+        view.setTextColor(DARK_BLUE);
+        view.setTypeface(null, Typeface.BOLD);
+
+        return view;
+    }
+
+    private GradientDrawable createRoundedBackground(
+            int color,
+            int radius
+    ) {
+
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radius));
+
+        return drawable;
+    }
+
+    private LinearLayout.LayoutParams createMargins(
+            int left,
+            int top,
+            int right,
+            int bottom
     ) {
 
         LinearLayout.LayoutParams params =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                );
+                new LinearLayout.LayoutParams(-1, -2);
 
         params.setMargins(
-                0,
-                0,
-                0,
-                bottomMargin
+                dp(left),
+                dp(top),
+                dp(right),
+                dp(bottom)
         );
 
         return params;
     }
 
-    private void addPressAnimation(
-            View view
-    ) {
+    private void addPressAnimation(View view) {
 
-        view.setOnTouchListener(
-                (v, event) -> {
+        view.setOnTouchListener((v, event) -> {
 
-                    if (
-                            event.getAction() ==
-                                    MotionEvent.ACTION_DOWN
-                    ) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
 
-                        v.animate()
-                                .scaleX(0.97f)
-                                .scaleY(0.97f)
-                                .setDuration(100)
-                                .start();
+                v.animate()
+                        .scaleX(0.97f)
+                        .scaleY(0.97f)
+                        .setDuration(100)
+                        .start();
 
-                    } else if (
-                            event.getAction() ==
-                                    MotionEvent.ACTION_UP ||
-                            event.getAction() ==
-                                    MotionEvent.ACTION_CANCEL
-                    ) {
+            } else if (
+                    event.getAction() == MotionEvent.ACTION_UP ||
+                            event.getAction() == MotionEvent.ACTION_CANCEL
+            ) {
 
-                        v.animate()
-                                .scaleX(1f)
-                                .scaleY(1f)
-                                .setDuration(100)
-                                .start();
-                    }
+                v.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .start();
+            }
 
-                    return false;
-                }
+            return false;
+        });
+    }
+
+    private int dp(float value) {
+
+        return (int) (
+                value * getResources()
+                        .getDisplayMetrics()
+                        .density
         );
     }
 }

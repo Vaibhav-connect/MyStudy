@@ -1,3 +1,4 @@
+```java
 package com.mystudy.app;
 
 import android.content.Intent;
@@ -10,7 +11,6 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -27,6 +27,7 @@ public class StudentLessonActivity extends AppCompatActivity {
 
     private LinearLayout lessonContainer;
     private TextView statusView;
+    private TextView countView;
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
@@ -42,16 +43,22 @@ public class StudentLessonActivity extends AppCompatActivity {
     private String chapterName = "";
 
     private final int backgroundColor =
-            Color.rgb(248, 250, 252);
+            Color.rgb(245, 249, 255);
+
+    private final int primaryColor =
+            Color.rgb(37, 99, 235);
+
+    private final int darkBlue =
+            Color.rgb(30, 64, 175);
 
     private final int textPrimary =
-            Color.rgb(17, 24, 39);
+            Color.rgb(23, 37, 84);
 
     private final int textSecondary =
             Color.rgb(100, 116, 139);
 
-    private final int primaryColor =
-            Color.rgb(79, 70, 229);
+    private final int yellowColor =
+            Color.rgb(250, 204, 21);
 
     private final int successColor =
             Color.rgb(22, 163, 74);
@@ -63,51 +70,11 @@ public class StudentLessonActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        classId = getIntent().getStringExtra("classId");
-        className = getIntent().getStringExtra("className");
-        studentMedium = getIntent().getStringExtra("studentMedium");
-        studentName = getIntent().getStringExtra("studentName");
-        subjectId = getIntent().getStringExtra("subjectId");
-        subjectName = getIntent().getStringExtra("subjectName");
-        chapterId = getIntent().getStringExtra("chapterId");
-        chapterName = getIntent().getStringExtra("chapterName");
+        readIntentData();
 
-        if (classId == null) {
-            classId = "";
-        }
-
-        if (className == null) {
-            className = "";
-        }
-
-        if (studentMedium == null ||
-                studentMedium.trim().isEmpty()) {
-            studentMedium = "English";
-        }
-
-        if (studentName == null) {
-            studentName = "";
-        }
-
-        if (subjectId == null) {
-            subjectId = "";
-        }
-
-        if (subjectName == null) {
-            subjectName = "";
-        }
-
-        if (chapterId == null) {
-            chapterId = "";
-        }
-
-        if (chapterName == null) {
-            chapterName = "";
-        }
-
-        if (classId.trim().isEmpty() ||
-                subjectId.trim().isEmpty() ||
-                chapterId.trim().isEmpty()) {
+        if (classId.trim().isEmpty()
+                || subjectId.trim().isEmpty()
+                || chapterId.trim().isEmpty()) {
 
             Toast.makeText(
                     this,
@@ -124,116 +91,236 @@ public class StudentLessonActivity extends AppCompatActivity {
         progressManager = new ProgressManager();
 
         createUI();
-        showLoading();
         loadLessons();
+    }
+
+    private void readIntentData() {
+
+        classId = getIntent().getStringExtra("classId");
+        className = getIntent().getStringExtra("className");
+        studentMedium = getIntent().getStringExtra("studentMedium");
+        studentName = getIntent().getStringExtra("studentName");
+        subjectId = getIntent().getStringExtra("subjectId");
+        subjectName = getIntent().getStringExtra("subjectName");
+        chapterId = getIntent().getStringExtra("chapterId");
+        chapterName = getIntent().getStringExtra("chapterName");
+
+        if (classId == null) classId = "";
+        if (className == null) className = "";
+        if (studentName == null) studentName = "";
+        if (subjectId == null) subjectId = "";
+        if (subjectName == null) subjectName = "";
+        if (chapterId == null) chapterId = "";
+        if (chapterName == null) chapterName = "";
+
+        if (studentMedium == null
+                || studentMedium.trim().isEmpty()) {
+            studentMedium = "English";
+        }
     }
 
     private void createUI() {
 
-        ScrollView scrollView =
-                new ScrollView(this);
-
+        ScrollView scrollView = new ScrollView(this);
         scrollView.setFillViewport(true);
 
-        LinearLayout root =
-                new LinearLayout(this);
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(20, 22, 20, 30);
+        root.setBackgroundColor(backgroundColor);
 
-        root.setOrientation(
-                LinearLayout.VERTICAL
-        );
+        // MyStudy Header
 
-        root.setPadding(
-                20,
-                24,
-                20,
-                30
-        );
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
 
-        root.setBackgroundColor(
-                backgroundColor
-        );
+        TextView logo = new TextView(this);
+        logo.setText("📘");
+        logo.setTextSize(30);
 
-        TextView title =
-                new TextView(this);
-
-        title.setText(
-                "📖 Lessons"
-        );
-
-        title.setTextSize(27);
-        title.setTextColor(textPrimary);
-
-        title.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        title.setGravity(
-                Gravity.CENTER_VERTICAL
-        );
-
-        root.addView(
-                title,
+        header.addView(
+                logo,
                 new LinearLayout.LayoutParams(
-                        -1,
-                        65
+                        48,
+                        55
                 )
         );
 
-        TextView subtitle =
-                new TextView(this);
+        LinearLayout brandLayout = new LinearLayout(this);
+        brandLayout.setOrientation(LinearLayout.VERTICAL);
 
-        StringBuilder subtitleText =
-                new StringBuilder();
+        TextView brand = new TextView(this);
+        brand.setText("MyStudy");
+        brand.setTextSize(23);
+        brand.setTextColor(primaryColor);
+        brand.setTypeface(null, Typeface.BOLD);
 
-        if (!chapterName.trim().isEmpty()) {
-            subtitleText.append(chapterName);
-        } else {
-            subtitleText.append("Choose a lesson");
-        }
+        TextView tagline = new TextView(this);
+        tagline.setText("Learn • Practice • Grow");
+        tagline.setTextSize(11);
+        tagline.setTextColor(textSecondary);
 
-        subtitleText.append(" • ");
-        subtitleText.append(studentMedium);
+        brandLayout.addView(brand);
+        brandLayout.addView(tagline);
 
-        subtitle.setText(
-                subtitleText.toString()
+        header.addView(
+                brandLayout,
+                new LinearLayout.LayoutParams(
+                        0,
+                        -2,
+                        1
+                )
         );
 
-        subtitle.setTextSize(16);
-        subtitle.setTextColor(
-                textSecondary
+        TextView mediumBadge = new TextView(this);
+        mediumBadge.setText("🌐 " + studentMedium);
+        mediumBadge.setTextSize(12);
+        mediumBadge.setTextColor(darkBlue);
+        mediumBadge.setTypeface(null, Typeface.BOLD);
+        mediumBadge.setPadding(12, 9, 12, 9);
+        mediumBadge.setBackground(
+                roundedBackground(
+                        Color.rgb(219, 234, 254),
+                        30
+                )
         );
 
-        subtitle.setPadding(
-                0,
-                0,
-                0,
-                12
-        );
+        header.addView(mediumBadge);
 
         root.addView(
-                subtitle,
+                header,
                 new LinearLayout.LayoutParams(
                         -1,
                         -2
                 )
         );
 
-        statusView =
-                new TextView(this);
+        // Chapter Hero Card
 
+        LinearLayout hero = new LinearLayout(this);
+        hero.setOrientation(LinearLayout.VERTICAL);
+        hero.setPadding(20, 20, 20, 20);
+        hero.setBackground(
+                roundedBackground(primaryColor, 26)
+        );
+        hero.setElevation(5);
+
+        TextView heroLabel = new TextView(this);
+        heroLabel.setText("YOUR LEARNING JOURNEY");
+        heroLabel.setTextSize(11);
+        heroLabel.setTextColor(Color.WHITE);
+        heroLabel.setTypeface(null, Typeface.BOLD);
+
+        hero.addView(heroLabel);
+
+        TextView heroTitle = new TextView(this);
+        heroTitle.setText(
+                "📚 " +
+                        (chapterName.trim().isEmpty()
+                                ? "Lessons"
+                                : chapterName)
+        );
+        heroTitle.setTextSize(25);
+        heroTitle.setTextColor(Color.WHITE);
+        heroTitle.setTypeface(null, Typeface.BOLD);
+        heroTitle.setPadding(0, 12, 0, 8);
+
+        hero.addView(heroTitle);
+
+        TextView heroSubtitle = new TextView(this);
+
+        String info = "";
+
+        if (!className.trim().isEmpty()) {
+            info += className;
+        }
+
+        if (!subjectName.trim().isEmpty()) {
+            if (!info.isEmpty()) info += "  •  ";
+            info += subjectName;
+        }
+
+        if (info.isEmpty()) {
+            info = "Choose a lesson and start learning";
+        }
+
+        heroSubtitle.setText(info);
+        heroSubtitle.setTextSize(14);
+        heroSubtitle.setTextColor(
+                Color.rgb(219, 234, 254)
+        );
+
+        hero.addView(heroSubtitle);
+
+        TextView yellowLine = new TextView(this);
+        yellowLine.setBackgroundColor(yellowColor);
+
+        LinearLayout.LayoutParams lineParams =
+                new LinearLayout.LayoutParams(
+                        55,
+                        5
+                );
+
+        lineParams.topMargin = 16;
+
+        hero.addView(yellowLine, lineParams);
+
+        LinearLayout.LayoutParams heroParams =
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                );
+
+        heroParams.topMargin = 22;
+        heroParams.bottomMargin = 18;
+
+        root.addView(hero, heroParams);
+
+        // Section Heading
+
+        TextView sectionTitle = new TextView(this);
+        sectionTitle.setText("Let's Start Learning ✨");
+        sectionTitle.setTextSize(21);
+        sectionTitle.setTextColor(textPrimary);
+        sectionTitle.setTypeface(null, Typeface.BOLD);
+
+        root.addView(
+                sectionTitle,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
+
+        TextView sectionSubtitle = new TextView(this);
+        sectionSubtitle.setText(
+                "Select a lesson to read, explore and practice."
+        );
+        sectionSubtitle.setTextSize(13);
+        sectionSubtitle.setTextColor(textSecondary);
+        sectionSubtitle.setPadding(0, 5, 0, 10);
+
+        root.addView(sectionSubtitle);
+
+        // Lesson Count
+
+        countView = new TextView(this);
+        countView.setText("Preparing your lessons...");
+        countView.setTextSize(13);
+        countView.setTextColor(primaryColor);
+        countView.setTypeface(null, Typeface.BOLD);
+        countView.setPadding(0, 8, 0, 8);
+
+        root.addView(countView);
+
+        // Status
+
+        statusView = new TextView(this);
         statusView.setTextSize(14);
-
-        statusView.setGravity(
-                Gravity.CENTER
-        );
-
-        statusView.setPadding(
-                0,
-                8,
-                0,
-                16
-        );
+        statusView.setTextColor(primaryColor);
+        statusView.setGravity(Gravity.CENTER);
+        statusView.setPadding(12, 12, 12, 12);
 
         root.addView(
                 statusView,
@@ -243,9 +330,9 @@ public class StudentLessonActivity extends AppCompatActivity {
                 )
         );
 
-        lessonContainer =
-                new LinearLayout(this);
+        // Lesson Container
 
+        lessonContainer = new LinearLayout(this);
         lessonContainer.setOrientation(
                 LinearLayout.VERTICAL
         );
@@ -259,7 +346,6 @@ public class StudentLessonActivity extends AppCompatActivity {
         );
 
         scrollView.addView(root);
-
         setContentView(scrollView);
     }
 
@@ -268,131 +354,83 @@ public class StudentLessonActivity extends AppCompatActivity {
         showLoading();
 
         db.collection("lessons")
-                .whereEqualTo(
-                        "classId",
-                        classId
-                )
-                .whereEqualTo(
-                        "subjectId",
-                        subjectId
-                )
-                .whereEqualTo(
-                        "chapterId",
-                        chapterId
-                )
-                .whereEqualTo(
-                        "medium",
-                        studentMedium
-                )
+                .whereEqualTo("classId", classId)
+                .whereEqualTo("subjectId", subjectId)
+                .whereEqualTo("chapterId", chapterId)
+                .whereEqualTo("medium", studentMedium)
                 .get()
-                .addOnSuccessListener(
-                        querySnapshot -> {
+                .addOnSuccessListener(querySnapshot -> {
 
-                            lessonContainer.removeAllViews();
+                    lessonContainer.removeAllViews();
 
-                            if (querySnapshot.isEmpty()) {
+                    if (querySnapshot.isEmpty()) {
+                        showEmpty(
+                                "No lessons available for "
+                                        + studentMedium
+                                        + " medium yet."
+                        );
+                        return;
+                    }
 
-                                showEmpty(
-                                        "No lessons available for " +
-                                                studentMedium +
-                                                " medium yet."
-                                );
+                    int lessonCount = querySnapshot.size();
 
-                                return;
-                            }
+                    countView.setText(
+                            "📖 " + lessonCount
+                                    + " LESSON"
+                                    + (lessonCount == 1 ? "" : "S")
+                                    + " AVAILABLE"
+                    );
 
-                            int lessonCount =
-                                    querySnapshot.size();
+                    statusView.setText(
+                            "Choose any lesson below and enjoy learning!"
+                    );
 
-                            statusView.setText(
-                                    "✅ " +
-                                            lessonCount +
-                                            " lesson" +
-                                            (
-                                                    lessonCount == 1
-                                                            ? ""
-                                                            : "s"
-                                            ) +
-                                            " available"
-                            );
+                    statusView.setTextColor(successColor);
 
-                            statusView.setTextColor(
-                                    successColor
-                            );
+                    for (QueryDocumentSnapshot document :
+                            querySnapshot) {
 
-                            for (
-                                    QueryDocumentSnapshot document :
-                                    querySnapshot
-                            ) {
+                        String lessonId = document.getId();
 
-                                String lessonId =
-                                        document.getId();
+                        String title = document.getString("title");
+                        String description =
+                                document.getString("description");
+                        String content =
+                                document.getString("content");
+                        String contentType =
+                                document.getString("contentType");
+                        String contentUrl =
+                                document.getString("contentUrl");
 
-                                String title =
-                                        document.getString(
-                                                "title"
-                                        );
-
-                                String description =
-                                        document.getString(
-                                                "description"
-                                        );
-
-                                String content =
-                                        document.getString(
-                                                "content"
-                                        );
-
-                                String contentType =
-                                        document.getString(
-                                                "contentType"
-                                        );
-
-                                String contentUrl =
-                                        document.getString(
-                                                "contentUrl"
-                                        );
-
-                                if (title == null ||
-                                        title.trim().isEmpty()) {
-
-                                    title =
-                                            document.getString(
-                                                    "lessonName"
-                                            );
-                                }
-
-                                if (title == null ||
-                                        title.trim().isEmpty()) {
-
-                                    title = "Lesson";
-                                }
-
-                                addLessonCard(
-                                        lessonId,
-                                        title,
-                                        description,
-                                        content,
-                                        contentType,
-                                        contentUrl
-                                );
-                            }
+                        if (title == null || title.trim().isEmpty()) {
+                            title = document.getString("lessonName");
                         }
-                )
-                .addOnFailureListener(
-                        error -> {
 
-                            showError(
-                                    "Unable to load lessons."
-                            );
-
-                            Toast.makeText(
-                                    StudentLessonActivity.this,
-                                    "Unable to load lessons",
-                                    Toast.LENGTH_SHORT
-                            ).show();
+                        if (title == null || title.trim().isEmpty()) {
+                            title = "Lesson";
                         }
-                );
+
+                        addLessonCard(
+                                lessonId,
+                                title,
+                                description,
+                                content,
+                                contentType,
+                                contentUrl
+                        );
+                    }
+
+                })
+                .addOnFailureListener(error -> {
+
+                    showError("Unable to load lessons.");
+
+                    Toast.makeText(
+                            StudentLessonActivity.this,
+                            "Unable to load lessons",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                });
     }
 
     private void addLessonCard(
@@ -404,150 +442,137 @@ public class StudentLessonActivity extends AppCompatActivity {
             String contentUrl
     ) {
 
-        final String selectedLessonId =
-                lessonId;
+        final String selectedLessonId = lessonId;
+        final String selectedLessonTitle = title;
 
-        final String selectedLessonTitle =
-                title;
-
-        LinearLayout card =
-                new LinearLayout(this);
-
-        card.setOrientation(
-                LinearLayout.VERTICAL
-        );
-
-        card.setPadding(
-                20,
-                20,
-                20,
-                20
-        );
-
-        GradientDrawable background =
-                new GradientDrawable();
-
-        background.setColor(
-                Color.WHITE
-        );
-
-        background.setCornerRadius(
-                28
-        );
-
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(18, 18, 18, 18);
         card.setBackground(
-                background
+                roundedBackground(Color.WHITE, 24)
+        );
+        card.setElevation(4);
+
+        // Lesson Number / Icon
+
+        LinearLayout heading = new LinearLayout(this);
+        heading.setOrientation(LinearLayout.HORIZONTAL);
+        heading.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView icon = new TextView(this);
+        icon.setText("📘");
+        icon.setTextSize(27);
+        icon.setGravity(Gravity.CENTER);
+        icon.setBackground(
+                roundedBackground(
+                        Color.rgb(219, 234, 254),
+                        16
+                )
         );
 
-        card.setElevation(5);
-
-        TextView lessonTitle =
-                new TextView(this);
-
-        lessonTitle.setText(
-                "📘 " + selectedLessonTitle
+        heading.addView(
+                icon,
+                new LinearLayout.LayoutParams(
+                        55,
+                        55
+                )
         );
 
-        lessonTitle.setTextSize(20);
-        lessonTitle.setTextColor(
-                textPrimary
+        TextView lessonTitle = new TextView(this);
+        lessonTitle.setText(selectedLessonTitle);
+        lessonTitle.setTextSize(19);
+        lessonTitle.setTextColor(textPrimary);
+        lessonTitle.setTypeface(null, Typeface.BOLD);
+        lessonTitle.setPadding(12, 0, 0, 0);
+
+        heading.addView(
+                lessonTitle,
+                new LinearLayout.LayoutParams(
+                        0,
+                        -2,
+                        1
+                )
         );
 
-        lessonTitle.setTypeface(
-                null,
-                Typeface.BOLD
-        );
+        card.addView(heading);
 
-        card.addView(
-                lessonTitle
-        );
+        // Medium Information
 
-        TextView mediumText =
-                new TextView(this);
+        TextView mediumText = new TextView(this);
+        mediumText.setText("🌐 Medium: " + studentMedium);
+        mediumText.setTextSize(12);
+        mediumText.setTextColor(primaryColor);
+        mediumText.setTypeface(null, Typeface.BOLD);
+        mediumText.setPadding(0, 13, 0, 0);
 
-        mediumText.setText(
-                "Medium: " + studentMedium
-        );
+        card.addView(mediumText);
 
-        mediumText.setTextSize(13);
-        mediumText.setTextColor(
-                primaryColor
-        );
+        // Description
 
-        mediumText.setTypeface(
-                null,
-                Typeface.BOLD
-        );
+        if (description != null
+                && !description.trim().isEmpty()) {
 
-        mediumText.setPadding(
-                0,
-                8,
-                0,
-                0
-        );
+            TextView descriptionView = new TextView(this);
+            descriptionView.setText(description);
+            descriptionView.setTextSize(14);
+            descriptionView.setTextColor(textSecondary);
+            descriptionView.setLineSpacing(2, 1.05f);
+            descriptionView.setPadding(0, 10, 0, 0);
 
-        card.addView(
-                mediumText
-        );
-
-        if (description != null &&
-                !description.trim().isEmpty()) {
-
-            TextView lessonDescription =
-                    new TextView(this);
-
-            lessonDescription.setText(
-                    description
-            );
-
-            lessonDescription.setTextSize(14);
-            lessonDescription.setTextColor(
-                    textSecondary
-            );
-
-            lessonDescription.setPadding(
-                    0,
-                    9,
-                    0,
-                    0
-            );
-
-            card.addView(
-                    lessonDescription
-            );
+            card.addView(descriptionView);
         }
 
-        if (content != null &&
-                !content.trim().isEmpty()) {
+        // Lesson Content
 
-            TextView lessonContent =
-                    new TextView(this);
+        if (content != null
+                && !content.trim().isEmpty()) {
 
-            lessonContent.setText(
-                    content
+            LinearLayout contentBox =
+                    new LinearLayout(this);
+
+            contentBox.setOrientation(
+                    LinearLayout.VERTICAL
             );
 
+            contentBox.setPadding(14, 14, 14, 14);
+            contentBox.setBackground(
+                    roundedBackground(
+                            Color.rgb(239, 246, 255),
+                            16
+                    )
+            );
+
+            TextView contentHeading = new TextView(this);
+            contentHeading.setText("📖 Lesson Notes");
+            contentHeading.setTextSize(14);
+            contentHeading.setTextColor(darkBlue);
+            contentHeading.setTypeface(null, Typeface.BOLD);
+
+            contentBox.addView(contentHeading);
+
+            TextView lessonContent = new TextView(this);
+            lessonContent.setText(content);
             lessonContent.setTextSize(15);
             lessonContent.setTextColor(
                     Color.rgb(55, 65, 81)
             );
+            lessonContent.setLineSpacing(4, 1.08f);
+            lessonContent.setPadding(0, 10, 0, 0);
 
-            lessonContent.setLineSpacing(
-                    3,
-                    1.05f
-            );
+            contentBox.addView(lessonContent);
 
-            lessonContent.setPadding(
-                    0,
-                    14,
-                    0,
-                    12
-            );
+            LinearLayout.LayoutParams contentParams =
+                    new LinearLayout.LayoutParams(
+                            -1,
+                            -2
+                    );
 
-            card.addView(
-                    lessonContent
-            );
+            contentParams.topMargin = 14;
+
+            card.addView(contentBox, contentParams);
         }
+
+        // Media Content
 
         addMediaContent(
                 card,
@@ -555,87 +580,39 @@ public class StudentLessonActivity extends AppCompatActivity {
                 contentUrl
         );
 
-        Button completeButton =
-                new Button(this);
+        // Complete Button
 
-        completeButton.setText(
-                "✓ Mark Lesson Complete"
-        );
-
-        completeButton.setAllCaps(false);
-        completeButton.setTextSize(15);
-        completeButton.setTextColor(
-                Color.WHITE
-        );
-
-        GradientDrawable completeBackground =
-                new GradientDrawable();
-
-        completeBackground.setColor(
-                Color.rgb(34, 197, 94)
-        );
-
-        completeBackground.setCornerRadius(
-                30
-        );
-
-        completeButton.setBackground(
-                completeBackground
+        Button completeButton = createButton(
+                "✓  Mark Lesson Complete",
+                successColor
         );
 
         LinearLayout.LayoutParams completeParams =
                 new LinearLayout.LayoutParams(
                         -1,
-                        58
+                        54
                 );
 
-        completeParams.topMargin = 8;
+        completeParams.topMargin = 16;
 
-        card.addView(
-                completeButton,
-                completeParams
-        );
+        card.addView(completeButton, completeParams);
 
-        Button practiceButton =
-                new Button(this);
+        // Practice Button
 
-        practiceButton.setText(
-                "Start Practice →"
-        );
-
-        practiceButton.setAllCaps(false);
-        practiceButton.setTextSize(15);
-        practiceButton.setTextColor(
-                Color.WHITE
-        );
-
-        GradientDrawable practiceBackground =
-                new GradientDrawable();
-
-        practiceBackground.setColor(
+        Button practiceButton = createButton(
+                "Start Practice  →",
                 primaryColor
-        );
-
-        practiceBackground.setCornerRadius(
-                30
-        );
-
-        practiceButton.setBackground(
-                practiceBackground
         );
 
         LinearLayout.LayoutParams practiceParams =
                 new LinearLayout.LayoutParams(
                         -1,
-                        58
+                        54
                 );
 
         practiceParams.topMargin = 10;
 
-        card.addView(
-                practiceButton,
-                practiceParams
-        );
+        card.addView(practiceButton, practiceParams);
 
         LinearLayout.LayoutParams cardParams =
                 new LinearLayout.LayoutParams(
@@ -643,137 +620,102 @@ public class StudentLessonActivity extends AppCompatActivity {
                         -2
                 );
 
-        cardParams.setMargins(
-                0,
-                0,
-                0,
-                18
-        );
+        cardParams.setMargins(0, 5, 0, 18);
 
-        lessonContainer.addView(
-                card,
-                cardParams
-        );
+        lessonContainer.addView(card, cardParams);
 
         addPressAnimation(card);
         addPressAnimation(completeButton);
         addPressAnimation(practiceButton);
 
-        completeButton.setOnClickListener(
-                view -> {
+        // Complete Lesson
 
-                    FirebaseUser user =
-                            auth.getCurrentUser();
+        completeButton.setOnClickListener(view -> {
 
-                    if (user == null) {
+            FirebaseUser user = auth.getCurrentUser();
 
-                        Toast.makeText(
-                                StudentLessonActivity.this,
-                                "Please login again.",
-                                Toast.LENGTH_SHORT
-                        ).show();
+            if (user == null) {
 
-                        return;
-                    }
+                Toast.makeText(
+                        StudentLessonActivity.this,
+                        "Please login again.",
+                        Toast.LENGTH_SHORT
+                ).show();
 
-                    completeButton.setEnabled(false);
+                return;
+            }
 
-                    progressManager.saveLessonCompleted(
-                            user.getUid(),
-                            classId,
-                            subjectId,
-                            chapterId,
-                            selectedLessonId
-                    );
+            completeButton.setEnabled(false);
+            completeButton.setText("✓ Lesson Completed");
+            completeButton.setBackground(
+                    roundedBackground(
+                            Color.rgb(134, 239, 172),
+                            30
+                    )
+            );
 
-                    progressManager.addPoints(
-                            user.getUid(),
-                            10
-                    );
+            progressManager.saveLessonCompleted(
+                    user.getUid(),
+                    classId,
+                    subjectId,
+                    chapterId,
+                    selectedLessonId
+            );
 
-                    progressManager.updateStreak(
-                            user.getUid()
-                    );
+            progressManager.addPoints(
+                    user.getUid(),
+                    10
+            );
 
-                    completeButton.setText(
-                            "✓ Lesson Completed"
-                    );
+            progressManager.updateStreak(
+                    user.getUid()
+            );
 
-                    Toast.makeText(
-                            StudentLessonActivity.this,
-                            "+10 points 🎉",
-                            Toast.LENGTH_SHORT
-                    ).show();
-                }
-        );
+            Toast.makeText(
+                    StudentLessonActivity.this,
+                    "+10 points 🎉",
+                    Toast.LENGTH_SHORT
+            ).show();
+        });
 
-        practiceButton.setOnClickListener(
-                view -> {
+        // Start Practice
 
-                    Intent intent =
-                            new Intent(
-                                    StudentLessonActivity.this,
-                                    StudentPracticeActivity.class
-                            );
+        practiceButton.setOnClickListener(view -> {
 
-                    intent.putExtra(
-                            "classId",
-                            classId
-                    );
+            Intent intent = new Intent(
+                    StudentLessonActivity.this,
+                    StudentPracticeActivity.class
+            );
 
-                    intent.putExtra(
-                            "className",
-                            className
-                    );
+            intent.putExtra("classId", classId);
+            intent.putExtra("className", className);
+            intent.putExtra("studentMedium", studentMedium);
+            intent.putExtra("studentName", studentName);
+            intent.putExtra("subjectId", subjectId);
+            intent.putExtra("subjectName", subjectName);
+            intent.putExtra("chapterId", chapterId);
+            intent.putExtra("chapterName", chapterName);
+            intent.putExtra("lessonId", selectedLessonId);
+            intent.putExtra("lessonTitle", selectedLessonTitle);
 
-                    intent.putExtra(
-                            "studentMedium",
-                            studentMedium
-                    );
+            startActivity(intent);
 
-                    intent.putExtra(
-                            "studentName",
-                            studentName
-                    );
+            overridePendingTransition(
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out
+            );
+        });
 
-                    intent.putExtra(
-                            "subjectId",
-                            subjectId
-                    );
+        // Entry Animation
 
-                    intent.putExtra(
-                            "subjectName",
-                            subjectName
-                    );
+        card.setAlpha(0f);
+        card.setTranslationY(25f);
 
-                    intent.putExtra(
-                            "chapterId",
-                            chapterId
-                    );
-
-                    intent.putExtra(
-                            "chapterName",
-                            chapterName
-                    );
-
-                    intent.putExtra(
-                            "lessonId",
-                            selectedLessonId
-                    );
-
-                    intent.putExtra(
-                            "lessonTitle",
-                            selectedLessonTitle
-                    );
-
-                    startActivity(intent);
-
-                    overridePendingTransition(
-                            android.R.anim.fade_in,
-                            android.R.anim.fade_out
-                    );
-                }
-        );
+        card.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(350)
+                .start();
     }
 
     private void addMediaContent(
@@ -782,155 +724,105 @@ public class StudentLessonActivity extends AppCompatActivity {
             String contentUrl
     ) {
 
-        if (contentType == null ||
-                contentType.trim().isEmpty() ||
-                contentUrl == null ||
-                contentUrl.trim().isEmpty()) {
-
+        if (contentType == null
+                || contentType.trim().isEmpty()
+                || contentUrl == null
+                || contentUrl.trim().isEmpty()) {
             return;
         }
 
-        String type =
-                contentType.trim().toUpperCase();
+        String type = contentType.trim().toUpperCase();
 
-        if (type.equals("IMAGE")) {
+        String buttonText;
 
-            ImageView imageView =
-                    new ImageView(this);
+        switch (type) {
 
-            imageView.setImageResource(
-                    android.R.drawable.ic_menu_gallery
-            );
+            case "IMAGE":
+                buttonText = "🖼  Open Image";
+                break;
 
-            imageView.setAdjustViewBounds(true);
+            case "PDF":
+                buttonText = "📄  Open PDF";
+                break;
 
-            imageView.setScaleType(
-                    ImageView.ScaleType.CENTER_INSIDE
-            );
+            case "VIDEO":
+                buttonText = "▶  Watch Video";
+                break;
 
-            LinearLayout.LayoutParams imageParams =
-                    new LinearLayout.LayoutParams(
-                            -1,
-                            220
-                    );
+            case "AUDIO":
+                buttonText = "🔊  Listen to Audio";
+                break;
 
-            imageParams.topMargin = 10;
-            imageParams.bottomMargin = 10;
+            case "LINK":
+                buttonText = "🔗  Open Learning Link";
+                break;
 
-            card.addView(
-                    imageView,
-                    imageParams
-            );
-
-            addOpenMediaButton(
-                    card,
-                    "🖼 Open Image",
-                    contentUrl
-            );
-
-        } else if (type.equals("PDF")) {
-
-            addOpenMediaButton(
-                    card,
-                    "📄 Open PDF",
-                    contentUrl
-            );
-
-        } else if (type.equals("VIDEO")) {
-
-            addOpenMediaButton(
-                    card,
-                    "▶ Open Video",
-                    contentUrl
-            );
-
-        } else if (type.equals("AUDIO")) {
-
-            addOpenMediaButton(
-                    card,
-                    "🔊 Open Audio",
-                    contentUrl
-            );
-
-        } else if (type.equals("LINK")) {
-
-            addOpenMediaButton(
-                    card,
-                    "🔗 Open Learning Link",
-                    contentUrl
-            );
+            default:
+                return;
         }
-    }
 
-    private void addOpenMediaButton(
-            LinearLayout card,
-            String buttonText,
-            String url
-    ) {
+        TextView mediaLabel = new TextView(this);
+        mediaLabel.setText("Learning Material");
+        mediaLabel.setTextSize(14);
+        mediaLabel.setTextColor(darkBlue);
+        mediaLabel.setTypeface(null, Typeface.BOLD);
+        mediaLabel.setPadding(0, 16, 0, 5);
 
-        Button mediaButton =
-                new Button(this);
+        card.addView(mediaLabel);
 
-        mediaButton.setText(
-                buttonText
-        );
-
-        mediaButton.setAllCaps(false);
-        mediaButton.setTextSize(14);
-        mediaButton.setTextColor(
-                Color.WHITE
-        );
-
-        GradientDrawable mediaBackground =
-                new GradientDrawable();
-
-        mediaBackground.setColor(
+        Button mediaButton = createButton(
+                buttonText,
                 Color.rgb(14, 165, 233)
-        );
-
-        mediaBackground.setCornerRadius(
-                30
-        );
-
-        mediaButton.setBackground(
-                mediaBackground
         );
 
         LinearLayout.LayoutParams mediaParams =
                 new LinearLayout.LayoutParams(
                         -1,
-                        55
+                        52
                 );
 
-        mediaParams.topMargin = 8;
-        mediaParams.bottomMargin = 8;
+        mediaParams.topMargin = 6;
 
-        card.addView(
-                mediaButton,
-                mediaParams
-        );
-
-        addPressAnimation(mediaButton);
+        card.addView(mediaButton, mediaParams);
 
         mediaButton.setOnClickListener(
-                view -> openMedia(url)
+                view -> openMedia(contentUrl)
         );
     }
 
-    private void openMedia(
-            String url
+    private Button createButton(
+            String text,
+            int color
     ) {
+
+        Button button = new Button(this);
+
+        button.setText(text);
+        button.setAllCaps(false);
+        button.setTextSize(14);
+        button.setTextColor(Color.WHITE);
+        button.setTypeface(null, Typeface.BOLD);
+        button.setGravity(Gravity.CENTER);
+
+        button.setBackground(
+                roundedBackground(color, 30)
+        );
+
+        button.setElevation(2);
+
+        return button;
+    }
+
+    private void openMedia(String url) {
 
         try {
 
-            Uri uri =
-                    Uri.parse(url);
+            Uri uri = Uri.parse(url);
 
-            Intent intent =
-                    new Intent(
-                            Intent.ACTION_VIEW,
-                            uri
-                    );
+            Intent intent = new Intent(
+                    Intent.ACTION_VIEW,
+                    uri
+            );
 
             startActivity(intent);
 
@@ -944,52 +836,58 @@ public class StudentLessonActivity extends AppCompatActivity {
         }
     }
 
-    private void addPressAnimation(
-            View view
+    private GradientDrawable roundedBackground(
+            int color,
+            int radius
     ) {
 
-        view.setOnTouchListener(
-                (v, event) -> {
+        GradientDrawable drawable =
+                new GradientDrawable();
 
-                    if (event.getAction() ==
-                            MotionEvent.ACTION_DOWN) {
+        drawable.setColor(color);
+        drawable.setCornerRadius(radius);
 
-                        v.animate()
-                                .scaleX(0.97f)
-                                .scaleY(0.97f)
-                                .setDuration(100)
-                                .start();
+        return drawable;
+    }
 
-                    } else if (
-                            event.getAction() ==
-                                    MotionEvent.ACTION_UP ||
-                            event.getAction() ==
-                                    MotionEvent.ACTION_CANCEL
-                    ) {
+    private void addPressAnimation(View view) {
 
-                        v.animate()
-                                .scaleX(1f)
-                                .scaleY(1f)
-                                .setDuration(100)
-                                .start();
-                    }
+        view.setOnTouchListener((v, event) -> {
 
-                    return false;
-                }
-        );
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+
+                v.animate()
+                        .scaleX(0.97f)
+                        .scaleY(0.97f)
+                        .setDuration(100)
+                        .start();
+
+            } else if (
+                    event.getAction() == MotionEvent.ACTION_UP
+                            || event.getAction()
+                            == MotionEvent.ACTION_CANCEL
+            ) {
+
+                v.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .start();
+            }
+
+            return false;
+        });
     }
 
     private void showLoading() {
 
         if (statusView != null) {
+            statusView.setText("⏳ Loading your lessons...");
+            statusView.setTextColor(primaryColor);
+        }
 
-            statusView.setText(
-                    "⏳ Loading lessons..."
-            );
-
-            statusView.setTextColor(
-                    primaryColor
-            );
+        if (countView != null) {
+            countView.setText("PLEASE WAIT");
         }
 
         if (lessonContainer != null) {
@@ -997,52 +895,62 @@ public class StudentLessonActivity extends AppCompatActivity {
         }
     }
 
-    private void showEmpty(
-            String message
-    ) {
-
-        if (lessonContainer == null) {
-            return;
-        }
+    private void showEmpty(String message) {
 
         lessonContainer.removeAllViews();
 
-        if (statusView != null) {
+        countView.setText("NO LESSONS FOUND");
 
-            statusView.setText(
-                    "📖 No lessons available"
-            );
-
-            statusView.setTextColor(
-                    textSecondary
-            );
-        }
-
-        TextView messageView =
-                new TextView(this);
-
-        messageView.setText(
-                message
+        statusView.setText(
+                "📖 No lessons available"
         );
 
-        messageView.setTextSize(16);
-        messageView.setTextColor(
-                textSecondary
+        statusView.setTextColor(textSecondary);
+
+        LinearLayout emptyCard = new LinearLayout(this);
+        emptyCard.setOrientation(LinearLayout.VERTICAL);
+        emptyCard.setGravity(Gravity.CENTER);
+        emptyCard.setPadding(20, 30, 20, 30);
+
+        emptyCard.setBackground(
+                roundedBackground(Color.WHITE, 22)
         );
 
-        messageView.setGravity(
-                Gravity.CENTER
+        TextView emptyIcon = new TextView(this);
+        emptyIcon.setText("📚");
+        emptyIcon.setTextSize(45);
+        emptyIcon.setGravity(Gravity.CENTER);
+
+        emptyCard.addView(emptyIcon);
+
+        TextView emptyText = new TextView(this);
+        emptyText.setText(message);
+        emptyText.setTextSize(15);
+        emptyText.setTextColor(textSecondary);
+        emptyText.setGravity(Gravity.CENTER);
+        emptyText.setPadding(10, 15, 10, 15);
+
+        emptyCard.addView(emptyText);
+
+        Button retryButton = createButton(
+                "↻  Try Again",
+                primaryColor
         );
 
-        messageView.setPadding(
-                20,
-                50,
-                20,
-                50
+        emptyCard.addView(
+                retryButton,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        52
+                )
+        );
+
+        retryButton.setOnClickListener(
+                view -> loadLessons()
         );
 
         lessonContainer.addView(
-                messageView,
+                emptyCard,
                 new LinearLayout.LayoutParams(
                         -1,
                         -2
@@ -1050,55 +958,67 @@ public class StudentLessonActivity extends AppCompatActivity {
         );
     }
 
-    private void showError(
-            String message
-    ) {
+    private void showError(String message) {
 
-        if (lessonContainer != null) {
+        lessonContainer.removeAllViews();
 
-            lessonContainer.removeAllViews();
+        countView.setText("LOADING FAILED");
 
-            TextView errorView =
-                    new TextView(this);
+        statusView.setText(
+                "⚠️ Something went wrong"
+        );
 
-            errorView.setText(
-                    "⚠️ " + message
-            );
+        statusView.setTextColor(errorColor);
 
-            errorView.setTextSize(16);
-            errorView.setTextColor(
-                    errorColor
-            );
+        LinearLayout errorCard = new LinearLayout(this);
+        errorCard.setOrientation(LinearLayout.VERTICAL);
+        errorCard.setGravity(Gravity.CENTER);
+        errorCard.setPadding(20, 30, 20, 30);
 
-            errorView.setGravity(
-                    Gravity.CENTER
-            );
+        errorCard.setBackground(
+                roundedBackground(Color.WHITE, 22)
+        );
 
-            errorView.setPadding(
-                    20,
-                    50,
-                    20,
-                    50
-            );
+        TextView errorIcon = new TextView(this);
+        errorIcon.setText("⚠️");
+        errorIcon.setTextSize(42);
+        errorIcon.setGravity(Gravity.CENTER);
 
-            lessonContainer.addView(
-                    errorView,
-                    new LinearLayout.LayoutParams(
-                            -1,
-                            -2
-                    )
-            );
-        }
+        errorCard.addView(errorIcon);
 
-        if (statusView != null) {
+        TextView errorText = new TextView(this);
+        errorText.setText(message);
+        errorText.setTextSize(15);
+        errorText.setTextColor(errorColor);
+        errorText.setGravity(Gravity.CENTER);
+        errorText.setPadding(10, 15, 10, 15);
 
-            statusView.setText(
-                    "Something went wrong"
-            );
+        errorCard.addView(errorText);
 
-            statusView.setTextColor(
-                    errorColor
-            );
-        }
+        Button retryButton = createButton(
+                "↻  Retry",
+                primaryColor
+        );
+
+        errorCard.addView(
+                retryButton,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        52
+                )
+        );
+
+        retryButton.setOnClickListener(
+                view -> loadLessons()
+        );
+
+        lessonContainer.addView(
+                errorCard,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
     }
 }
+```

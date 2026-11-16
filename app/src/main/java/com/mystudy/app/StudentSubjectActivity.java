@@ -7,6 +7,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -19,8 +20,10 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class StudentSubjectActivity extends AppCompatActivity {
 
+    private LinearLayout root;
     private LinearLayout subjectContainer;
     private TextView statusView;
+    private TextView countView;
 
     private FirebaseFirestore db;
 
@@ -29,40 +32,24 @@ public class StudentSubjectActivity extends AppCompatActivity {
     private String studentMedium = "";
     private String studentName = "";
 
-    private final int backgroundColor =
-            Color.rgb(248, 250, 252);
-
-    private final int textPrimary =
-            Color.rgb(17, 24, 39);
-
-    private final int textSecondary =
-            Color.rgb(100, 116, 139);
-
-    private final int primaryColor =
-            Color.rgb(79, 70, 229);
-
-    private final int errorColor =
-            Color.rgb(220, 38, 38);
+    private final int backgroundColor = Color.rgb(247, 249, 255);
+    private final int primaryColor = Color.rgb(59, 91, 219);
+    private final int darkBlue = Color.rgb(35, 55, 120);
+    private final int yellowColor = Color.rgb(255, 207, 64);
+    private final int textPrimary = Color.rgb(25, 35, 65);
+    private final int textSecondary = Color.rgb(105, 116, 145);
+    private final int errorColor = Color.rgb(220, 53, 69);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        classId =
-                getIntent().getStringExtra("classId");
+        classId = getIntent().getStringExtra("classId");
+        className = getIntent().getStringExtra("className");
+        studentMedium = getIntent().getStringExtra("studentMedium");
+        studentName = getIntent().getStringExtra("studentName");
 
-        className =
-                getIntent().getStringExtra("className");
-
-        studentMedium =
-                getIntent().getStringExtra("studentMedium");
-
-        studentName =
-                getIntent().getStringExtra("studentName");
-
-        if (classId == null ||
-                classId.trim().isEmpty()) {
-
+        if (classId == null || classId.trim().isEmpty()) {
             Toast.makeText(
                     this,
                     "Class information missing",
@@ -73,181 +60,329 @@ public class StudentSubjectActivity extends AppCompatActivity {
             return;
         }
 
-        if (studentMedium == null) {
-            studentMedium = "";
-        }
+        if (className == null) className = "";
+        if (studentMedium == null) studentMedium = "";
+        if (studentName == null) studentName = "";
 
-        if (className == null) {
-            className = "";
-        }
-
-        if (studentName == null) {
-            studentName = "";
-        }
-
-        db =
-                FirebaseFirestore.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         createUI();
-        showLoading();
         loadSubjects();
+    }
+
+    private int dp(float value) {
+        return (int) (value * getResources()
+                .getDisplayMetrics().density);
+    }
+
+    private GradientDrawable roundedBackground(
+            int color,
+            int radius
+    ) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radius));
+        return drawable;
+    }
+
+    private TextView createText(
+            String text,
+            int size,
+            int color,
+            boolean bold
+    ) {
+        TextView view = new TextView(this);
+
+        view.setText(text);
+        view.setTextSize(size);
+        view.setTextColor(color);
+
+        if (bold) {
+            view.setTypeface(null, Typeface.BOLD);
+        }
+
+        return view;
     }
 
     private void createUI() {
 
-        ScrollView scrollView =
-                new ScrollView(this);
-
+        ScrollView scrollView = new ScrollView(this);
         scrollView.setFillViewport(true);
+        scrollView.setBackgroundColor(backgroundColor);
 
-        LinearLayout root =
-                new LinearLayout(this);
-
-        root.setOrientation(
-                LinearLayout.VERTICAL
-        );
-
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(
-                20,
+                dp(20),
+                dp(18),
+                dp(20),
+                dp(32)
+        );
+
+        // TOP BAR
+
+        LinearLayout topBar = new LinearLayout(this);
+        topBar.setOrientation(LinearLayout.HORIZONTAL);
+        topBar.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView backButton = createText(
+                "‹",
+                36,
+                darkBlue,
+                true
+        );
+
+        backButton.setGravity(Gravity.CENTER);
+        backButton.setBackground(
+                roundedBackground(Color.WHITE, 16)
+        );
+
+        topBar.addView(
+                backButton,
+                new LinearLayout.LayoutParams(
+                        dp(46),
+                        dp(46)
+                )
+        );
+
+        backButton.setOnClickListener(v -> onBackPressed());
+
+        LinearLayout brandContainer = new LinearLayout(this);
+        brandContainer.setOrientation(LinearLayout.VERTICAL);
+        brandContainer.setPadding(dp(12), 0, 0, 0);
+
+        TextView brand = createText(
+                "📘 MyStudy",
+                21,
+                darkBlue,
+                true
+        );
+
+        TextView brandSubtitle = createText(
+                "Learn • Practice • Grow",
+                11,
+                textSecondary,
+                false
+        );
+
+        brandContainer.addView(brand);
+        brandContainer.addView(brandSubtitle);
+
+        topBar.addView(
+                brandContainer,
+                new LinearLayout.LayoutParams(
+                        0,
+                        -2,
+                        1
+                )
+        );
+
+        TextView profileIcon = createText(
+                "🎓",
                 24,
-                20,
-                30
+                darkBlue,
+                false
         );
 
-        root.setBackgroundColor(
-                backgroundColor
+        profileIcon.setGravity(Gravity.CENTER);
+        profileIcon.setBackground(
+                roundedBackground(Color.WHITE, 16)
         );
 
-        TextView title =
-                new TextView(this);
-
-        title.setText(
-                "📚 Subjects"
-        );
-
-        title.setTextSize(28);
-        title.setTextColor(textPrimary);
-
-        title.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        root.addView(
-                title,
+        topBar.addView(
+                profileIcon,
                 new LinearLayout.LayoutParams(
-                        -1,
-                        -2
+                        dp(46),
+                        dp(46)
                 )
         );
 
-        TextView subtitle =
-                new TextView(this);
+        root.addView(topBar);
 
-        String subtitleText;
+        // HERO SECTION
 
-        if (!className.trim().isEmpty() &&
-                !studentMedium.trim().isEmpty()) {
-
-            subtitleText =
-                    className +
-                            " • " +
-                            studentMedium +
-                            " • Choose a subject";
-
-        } else if (
-                !className.trim().isEmpty()
-        ) {
-
-            subtitleText =
-                    className +
-                            " • Choose a subject";
-
-        } else {
-
-            subtitleText =
-                    "Choose a subject";
-        }
-
-        subtitle.setText(
-                subtitleText
+        LinearLayout hero = new LinearLayout(this);
+        hero.setOrientation(LinearLayout.VERTICAL);
+        hero.setPadding(
+                dp(22),
+                dp(22),
+                dp(22),
+                dp(22)
         );
 
-        subtitle.setTextSize(16);
-        subtitle.setTextColor(textSecondary);
-
-        subtitle.setPadding(
-                0,
-                8,
-                0,
-                12
+        hero.setBackground(
+                roundedBackground(primaryColor, 24)
         );
 
-        root.addView(
-                subtitle,
+        LinearLayout.LayoutParams heroParams =
                 new LinearLayout.LayoutParams(
                         -1,
                         -2
+                );
+
+        heroParams.setMargins(0, dp(24), 0, dp(22));
+
+        root.addView(hero, heroParams);
+
+        TextView welcomeLabel = createText(
+                "YOUR LEARNING JOURNEY",
+                11,
+                Color.rgb(225, 232, 255),
+                true
+        );
+
+        hero.addView(welcomeLabel);
+
+        TextView heading = createText(
+                "Choose Your Subject 📚",
+                25,
+                Color.WHITE,
+                true
+        );
+
+        heading.setPadding(0, dp(12), 0, dp(8));
+        hero.addView(heading);
+
+        TextView heroDescription = createText(
+                "Explore interesting chapters and start learning something new every day!",
+                14,
+                Color.WHITE,
+                false
+        );
+
+        heroDescription.setLineSpacing(dp(3), 1f);
+        hero.addView(heroDescription);
+
+        // CLASS INFORMATION
+
+        LinearLayout infoCard = new LinearLayout(this);
+        infoCard.setOrientation(LinearLayout.VERTICAL);
+        infoCard.setPadding(
+                dp(17),
+                dp(15),
+                dp(17),
+                dp(15)
+        );
+
+        infoCard.setBackground(
+                roundedBackground(Color.WHITE, 18)
+        );
+
+        LinearLayout.LayoutParams infoParams =
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                );
+
+        infoParams.setMargins(0, 0, 0, dp(22));
+
+        root.addView(infoCard, infoParams);
+
+        TextView infoTitle = createText(
+                "YOUR CLASS DETAILS",
+                11,
+                textSecondary,
+                true
+        );
+
+        infoCard.addView(infoTitle);
+
+        TextView classText = createText(
+                "🎒  " + (
+                        className.trim().isEmpty()
+                                ? "Your Class"
+                                : className
+                ),
+                18,
+                textPrimary,
+                true
+        );
+
+        classText.setPadding(0, dp(10), 0, dp(5));
+        infoCard.addView(classText);
+
+        TextView mediumText = createText(
+                "🌐  Medium: " + (
+                        studentMedium.trim().isEmpty()
+                                ? "Not selected"
+                                : studentMedium
+                ),
+                14,
+                textSecondary,
+                false
+        );
+
+        infoCard.addView(mediumText);
+
+        // SUBJECT SECTION TITLE
+
+        LinearLayout sectionHeader = new LinearLayout(this);
+        sectionHeader.setOrientation(LinearLayout.HORIZONTAL);
+        sectionHeader.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView sectionTitle = createText(
+                "Start Learning",
+                21,
+                textPrimary,
+                true
+        );
+
+        sectionHeader.addView(
+                sectionTitle,
+                new LinearLayout.LayoutParams(
+                        0,
+                        -2,
+                        1
                 )
         );
 
-        statusView =
-                new TextView(this);
+        countView = createText(
+                "",
+                12,
+                primaryColor,
+                true
+        );
 
-        statusView.setTextSize(14);
+        countView.setGravity(Gravity.CENTER);
+        countView.setPadding(
+                dp(10),
+                dp(7),
+                dp(10),
+                dp(7)
+        );
 
-        statusView.setGravity(
-                Gravity.CENTER
+        countView.setBackground(
+                roundedBackground(
+                        Color.rgb(229, 236, 255),
+                        20
+                )
+        );
+
+        sectionHeader.addView(countView);
+
+        root.addView(sectionHeader);
+
+        // STATUS
+
+        statusView = createText(
+                "Loading subjects...",
+                13,
+                primaryColor,
+                false
         );
 
         statusView.setPadding(
                 0,
-                8,
+                dp(10),
                 0,
-                16
+                dp(12)
         );
 
-        root.addView(
-                statusView,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
-        );
+        root.addView(statusView);
 
-        TextView sectionTitle =
-                new TextView(this);
+        // SUBJECT CARDS
 
-        sectionTitle.setText(
-                "Start Learning"
-        );
-
-        sectionTitle.setTextSize(18);
-        sectionTitle.setTextColor(textPrimary);
-
-        sectionTitle.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        sectionTitle.setPadding(
-                0,
-                0,
-                0,
-                14
-        );
-
-        root.addView(
-                sectionTitle,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
-        );
-
-        subjectContainer =
-                new LinearLayout(this);
-
+        subjectContainer = new LinearLayout(this);
         subjectContainer.setOrientation(
                 LinearLayout.VERTICAL
         );
@@ -260,126 +395,126 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 )
         );
 
-        scrollView.addView(root);
+        // FOOTER
 
+        TextView footer = createText(
+                "✨ Keep learning, keep growing!",
+                13,
+                textSecondary,
+                false
+        );
+
+        footer.setGravity(Gravity.CENTER);
+        footer.setPadding(0, dp(25), 0, dp(5));
+
+        root.addView(footer);
+
+        scrollView.addView(root);
         setContentView(scrollView);
+
+        // ENTRY ANIMATION
+
+        root.setAlpha(0f);
+        root.setTranslationY(dp(15));
+
+        root.animate()
+                .alpha(1f)
+                .translationY(0)
+                .setDuration(450)
+                .start();
     }
 
     private void loadSubjects() {
 
         if (studentMedium.trim().isEmpty()) {
-
             showEmpty(
                     "Medium information is missing. Please update your profile."
             );
-
             return;
         }
 
         showLoading();
 
         db.collection("subjects")
-                .whereEqualTo(
-                        "classId",
-                        classId
-                )
-                .whereEqualTo(
-                        "medium",
-                        studentMedium
-                )
+                .whereEqualTo("classId", classId)
+                .whereEqualTo("medium", studentMedium)
                 .get()
-                .addOnSuccessListener(
-                        querySnapshot -> {
+                .addOnSuccessListener(querySnapshot -> {
 
-                            subjectContainer
-                                    .removeAllViews();
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
 
-                            if (querySnapshot.isEmpty()) {
+                    subjectContainer.removeAllViews();
 
-                                showEmpty(
-                                        "No subjects available for " +
-                                                className +
-                                                " - " +
-                                                studentMedium +
-                                                " yet."
-                                );
+                    if (querySnapshot.isEmpty()) {
+                        showEmpty(
+                                "No subjects available for "
+                                        + className
+                                        + " - "
+                                        + studentMedium
+                                        + " yet."
+                        );
+                        return;
+                    }
 
-                                return;
-                            }
+                    int subjectCount = querySnapshot.size();
 
-                            int subjectCount =
-                                    querySnapshot.size();
+                    statusView.setText(
+                            "Choose one of your "
+                                    + subjectCount
+                                    + " available subjects."
+                    );
 
-                            statusView.setText(
-                                    "✅ " +
-                                            subjectCount +
-                                            " subject" +
-                                            (
-                                                    subjectCount == 1
-                                                            ? ""
-                                                            : "s"
-                                            ) +
-                                            " available"
-                            );
+                    statusView.setTextColor(textSecondary);
 
-                            statusView.setTextColor(
-                                    primaryColor
-                            );
+                    countView.setText(
+                            subjectCount + " SUBJECTS"
+                    );
 
-                            for (
-                                    QueryDocumentSnapshot document :
-                                    querySnapshot
-                            ) {
+                    for (QueryDocumentSnapshot document :
+                            querySnapshot) {
 
-                                String subjectId =
-                                        document.getId();
+                        String subjectId = document.getId();
 
-                                String subjectName =
-                                        document.getString(
-                                                "name"
-                                        );
+                        String subjectName =
+                                document.getString("name");
 
-                                if (
-                                        subjectName == null ||
-                                        subjectName.trim().isEmpty()
-                                ) {
+                        if (subjectName == null ||
+                                subjectName.trim().isEmpty()) {
 
-                                    subjectName =
-                                            document.getString(
-                                                    "subjectName"
-                                            );
-                                }
-
-                                if (
-                                        subjectName == null ||
-                                        subjectName.trim().isEmpty()
-                                ) {
-
-                                    subjectName =
-                                            "Subject";
-                                }
-
-                                addSubjectCard(
-                                        subjectId,
-                                        subjectName
-                                );
-                            }
+                            subjectName =
+                                    document.getString("subjectName");
                         }
-                )
-                .addOnFailureListener(
-                        error -> {
 
-                            showError(
-                                    "Unable to load subjects."
-                            );
+                        if (subjectName == null ||
+                                subjectName.trim().isEmpty()) {
 
-                            Toast.makeText(
-                                    StudentSubjectActivity.this,
-                                    "Unable to load subjects",
-                                    Toast.LENGTH_SHORT
-                            ).show();
+                            subjectName = "Subject";
                         }
-                );
+
+                        addSubjectCard(
+                                subjectId,
+                                subjectName
+                        );
+                    }
+                })
+                .addOnFailureListener(error -> {
+
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+
+                    showError(
+                            "Unable to load subjects. Please try again."
+                    );
+
+                    Toast.makeText(
+                            StudentSubjectActivity.this,
+                            "Unable to load subjects",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                });
     }
 
     private void addSubjectCard(
@@ -387,140 +522,83 @@ public class StudentSubjectActivity extends AppCompatActivity {
             String subjectName
     ) {
 
-        final String selectedSubjectId =
-                subjectId;
+        LinearLayout card = new LinearLayout(this);
 
-        final String selectedSubjectName =
-                subjectName;
-
-        LinearLayout card =
-                new LinearLayout(this);
-
-        card.setOrientation(
-                LinearLayout.HORIZONTAL
-        );
-
-        card.setGravity(
-                Gravity.CENTER_VERTICAL
-        );
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
 
         card.setPadding(
-                18,
-                18,
-                14,
-                18
-        );
-
-        GradientDrawable background =
-                new GradientDrawable();
-
-        background.setColor(
-                Color.WHITE
-        );
-
-        background.setCornerRadius(
-                30
+                dp(16),
+                dp(16),
+                dp(12),
+                dp(16)
         );
 
         card.setBackground(
-                background
+                roundedBackground(Color.WHITE, 22)
         );
 
-        card.setElevation(6);
+        card.setElevation(dp(3));
 
-        TextView icon =
-                new TextView(this);
+        // SUBJECT ICON
 
-        icon.setText(
-                getSubjectIcon(
-                        selectedSubjectName
-                )
+        TextView icon = createText(
+                getSubjectIcon(subjectName),
+                29,
+                textPrimary,
+                false
         );
 
-        icon.setTextSize(30);
-
-        icon.setGravity(
-                Gravity.CENTER
-        );
-
-        GradientDrawable iconBackground =
-                new GradientDrawable();
-
-        iconBackground.setColor(
-                getSubjectIconBackground(
-                        selectedSubjectName
-                )
-        );
-
-        iconBackground.setCornerRadius(
-                22
-        );
+        icon.setGravity(Gravity.CENTER);
 
         icon.setBackground(
-                iconBackground
+                roundedBackground(
+                        getSubjectIconBackground(subjectName),
+                        18
+                )
         );
 
         card.addView(
                 icon,
                 new LinearLayout.LayoutParams(
-                        68,
-                        68
+                        dp(62),
+                        dp(62)
                 )
         );
 
-        LinearLayout textContainer =
-                new LinearLayout(this);
+        // SUBJECT DETAILS
 
-        textContainer.setOrientation(
-                LinearLayout.VERTICAL
-        );
+        LinearLayout details = new LinearLayout(this);
+        details.setOrientation(LinearLayout.VERTICAL);
 
-        textContainer.setPadding(
-                16,
+        details.setPadding(
+                dp(14),
                 0,
-                8,
+                dp(6),
                 0
         );
 
-        TextView name =
-                new TextView(this);
-
-        name.setText(
-                selectedSubjectName
+        TextView name = createText(
+                subjectName,
+                18,
+                textPrimary,
+                true
         );
 
-        name.setTextSize(20);
-        name.setTextColor(textPrimary);
-
-        name.setTypeface(
-                null,
-                Typeface.BOLD
+        TextView description = createText(
+                "Explore chapters and lessons",
+                12,
+                textSecondary,
+                false
         );
 
-        TextView description =
-                new TextView(this);
+        description.setPadding(0, dp(5), 0, 0);
 
-        description.setText(
-                "Explore chapters and lessons"
-        );
-
-        description.setTextSize(14);
-        description.setTextColor(
-                textSecondary
-        );
-
-        description.setPadding(
-                0,
-                5,
-                0,
-                0
-        );
-
-        textContainer.addView(name);
-        textContainer.addView(description);
+        details.addView(name);
+        details.addView(description);
 
         card.addView(
-                textContainer,
+                details,
                 new LinearLayout.LayoutParams(
                         0,
                         -2,
@@ -528,29 +606,22 @@ public class StudentSubjectActivity extends AppCompatActivity {
                 )
         );
 
-        TextView arrow =
-                new TextView(this);
+        // ARROW
 
-        arrow.setText("›");
-        arrow.setTextSize(34);
-        arrow.setTextColor(
-                primaryColor
+        TextView arrow = createText(
+                "›",
+                32,
+                primaryColor,
+                true
         );
 
-        arrow.setGravity(
-                Gravity.CENTER
-        );
-
-        arrow.setTypeface(
-                null,
-                Typeface.BOLD
-        );
+        arrow.setGravity(Gravity.CENTER);
 
         card.addView(
                 arrow,
                 new LinearLayout.LayoutParams(
-                        42,
-                        68
+                        dp(30),
+                        dp(55)
                 )
         );
 
@@ -562,259 +633,231 @@ public class StudentSubjectActivity extends AppCompatActivity {
 
         cardParams.setMargins(
                 0,
+                dp(7),
                 0,
-                0,
-                16
+                dp(12)
         );
 
-        subjectContainer.addView(
-                card,
-                cardParams
-        );
+        subjectContainer.addView(card, cardParams);
 
-        card.setOnTouchListener(
-                (view, event) -> {
+        // TOUCH ANIMATION
 
-                    if (
-                            event.getAction() ==
-                                    MotionEvent.ACTION_DOWN
-                    ) {
+        card.setOnTouchListener((view, event) -> {
 
-                        view.animate()
-                                .scaleX(0.97f)
-                                .scaleY(0.97f)
-                                .setDuration(100)
-                                .start();
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
 
-                    } else if (
-                            event.getAction() ==
-                                    MotionEvent.ACTION_UP ||
-                            event.getAction() ==
-                                    MotionEvent.ACTION_CANCEL
-                    ) {
+                view.animate()
+                        .scaleX(0.97f)
+                        .scaleY(0.97f)
+                        .setDuration(100)
+                        .start();
 
-                        view.animate()
-                                .scaleX(1f)
-                                .scaleY(1f)
-                                .setDuration(100)
-                                .start();
-                    }
+            } else if (
+                    event.getAction() == MotionEvent.ACTION_UP ||
+                    event.getAction() == MotionEvent.ACTION_CANCEL
+            ) {
 
-                    return false;
-                }
-        );
+                view.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .start();
+            }
 
-        card.setOnClickListener(
-                view -> {
+            return false;
+        });
 
-                    Intent intent =
-                            new Intent(
-                                    StudentSubjectActivity.this,
-                                    StudentChapterActivity.class
-                            );
+        // NAVIGATION
 
-                    intent.putExtra(
-                            "classId",
-                            classId
-                    );
+        card.setOnClickListener(view -> {
 
-                    intent.putExtra(
-                            "className",
-                            className
-                    );
+            Intent intent = new Intent(
+                    StudentSubjectActivity.this,
+                    StudentChapterActivity.class
+            );
 
-                    intent.putExtra(
-                            "studentMedium",
-                            studentMedium
-                    );
+            intent.putExtra("classId", classId);
+            intent.putExtra("className", className);
+            intent.putExtra("studentMedium", studentMedium);
+            intent.putExtra("studentName", studentName);
+            intent.putExtra("subjectId", subjectId);
+            intent.putExtra("subjectName", subjectName);
 
-                    intent.putExtra(
-                            "studentName",
-                            studentName
-                    );
+            startActivity(intent);
 
-                    intent.putExtra(
-                            "subjectId",
-                            selectedSubjectId
-                    );
+            overridePendingTransition(
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out
+            );
+        });
 
-                    intent.putExtra(
-                            "subjectName",
-                            selectedSubjectName
-                    );
+        // CARD ENTRY ANIMATION
 
-                    startActivity(intent);
+        card.setAlpha(0f);
+        card.setTranslationY(dp(12));
 
-                    overridePendingTransition(
-                            android.R.anim.fade_in,
-                            android.R.anim.fade_out
-                    );
-                }
-        );
+        card.animate()
+                .alpha(1f)
+                .translationY(0)
+                .setDuration(350)
+                .start();
     }
 
-    private String getSubjectIcon(
-            String subjectName
-    ) {
+    private String getSubjectIcon(String subjectName) {
 
-        if (subjectName == null) {
-            return "📚";
-        }
+        if (subjectName == null) return "📚";
 
-        String value =
-                subjectName.toLowerCase();
+        String value = subjectName.toLowerCase();
 
-        if (value.contains("math")) {
-            return "🔢";
-        }
-
-        if (value.contains("english")) {
-            return "🔤";
-        }
-
-        if (value.contains("marathi")) {
-            return "📕";
-        }
-
-        if (value.contains("evs")) {
-            return "🌱";
-        }
-
-        if (value.contains("hindi")) {
-            return "📗";
-        }
+        if (value.contains("math")) return "🔢";
+        if (value.contains("english")) return "🔤";
+        if (value.contains("marathi")) return "📕";
+        if (value.contains("evs")) return "🌱";
+        if (value.contains("hindi")) return "📗";
+        if (value.contains("science")) return "🔬";
+        if (value.contains("computer")) return "💻";
+        if (value.contains("history")) return "🏛️";
+        if (value.contains("geography")) return "🌍";
 
         return "📚";
     }
 
-    private int getSubjectIconBackground(
-            String subjectName
-    ) {
+    private int getSubjectIconBackground(String subjectName) {
 
         if (subjectName == null) {
-            return Color.rgb(
-                    238,
-                    242,
-                    255
-            );
+            return Color.rgb(238, 242, 255);
         }
 
-        String value =
-                subjectName.toLowerCase();
+        String value = subjectName.toLowerCase();
 
         if (value.contains("math")) {
-            return Color.rgb(
-                    254,
-                    249,
-                    195
-            );
+            return Color.rgb(255, 247, 204);
         }
 
         if (value.contains("english")) {
-            return Color.rgb(
-                    219,
-                    234,
-                    254
-            );
+            return Color.rgb(219, 234, 254);
         }
 
         if (value.contains("marathi")) {
-            return Color.rgb(
-                    254,
-                    226,
-                    226
-            );
+            return Color.rgb(254, 226, 226);
         }
 
         if (value.contains("evs")) {
-            return Color.rgb(
-                    220,
-                    252,
-                    231
-            );
+            return Color.rgb(220, 252, 231);
         }
 
         if (value.contains("hindi")) {
-            return Color.rgb(
-                    220,
-                    252,
-                    231
-            );
+            return Color.rgb(220, 252, 231);
         }
 
-        return Color.rgb(
-                238,
-                242,
-                255
-        );
+        if (value.contains("science")) {
+            return Color.rgb(224, 231, 255);
+        }
+
+        if (value.contains("computer")) {
+            return Color.rgb(224, 242, 254);
+        }
+
+        return Color.rgb(238, 242, 255);
     }
 
     private void showLoading() {
 
         if (statusView != null) {
+            statusView.setText("⏳ Loading your subjects...");
+            statusView.setTextColor(primaryColor);
+        }
 
-            statusView.setText(
-                    "⏳ Loading subjects..."
-            );
-
-            statusView.setTextColor(
-                    primaryColor
-            );
+        if (countView != null) {
+            countView.setText("LOADING");
         }
 
         if (subjectContainer != null) {
-
             subjectContainer.removeAllViews();
+
+            TextView loading = createText(
+                    "📚  Please wait while we prepare your subjects.",
+                    14,
+                    textSecondary,
+                    false
+            );
+
+            loading.setGravity(Gravity.CENTER);
+            loading.setPadding(
+                    dp(15),
+                    dp(35),
+                    dp(15),
+                    dp(35)
+            );
+
+            subjectContainer.addView(loading);
         }
     }
 
-    private void showEmpty(
-            String message
-    ) {
+    private void showEmpty(String message) {
 
-        if (subjectContainer == null) {
-            return;
-        }
+        if (subjectContainer == null) return;
 
         subjectContainer.removeAllViews();
 
         if (statusView != null) {
-
-            statusView.setText(
-                    "📚 No subjects available"
-            );
-
-            statusView.setTextColor(
-                    textSecondary
-            );
+            statusView.setText("No subjects available");
+            statusView.setTextColor(textSecondary);
         }
 
-        TextView messageView =
-                new TextView(this);
+        if (countView != null) {
+            countView.setText("0 SUBJECTS");
+        }
 
-        messageView.setText(
-                message
+        LinearLayout emptyCard = new LinearLayout(this);
+        emptyCard.setOrientation(LinearLayout.VERTICAL);
+        emptyCard.setGravity(Gravity.CENTER);
+        emptyCard.setPadding(
+                dp(22),
+                dp(30),
+                dp(22),
+                dp(30)
         );
 
-        messageView.setTextSize(16);
-
-        messageView.setTextColor(
-                textSecondary
+        emptyCard.setBackground(
+                roundedBackground(Color.WHITE, 22)
         );
 
-        messageView.setGravity(
-                Gravity.CENTER
+        TextView icon = createText(
+                "📚",
+                42,
+                textPrimary,
+                false
         );
 
-        messageView.setPadding(
-                20,
-                50,
-                20,
-                50
+        icon.setGravity(Gravity.CENTER);
+
+        TextView title = createText(
+                "Nothing here yet!",
+                19,
+                textPrimary,
+                true
         );
+
+        title.setGravity(Gravity.CENTER);
+        title.setPadding(0, dp(12), 0, dp(8));
+
+        TextView description = createText(
+                message,
+                14,
+                textSecondary,
+                false
+        );
+
+        description.setGravity(Gravity.CENTER);
+        description.setLineSpacing(dp(3), 1f);
+
+        emptyCard.addView(icon);
+        emptyCard.addView(title);
+        emptyCard.addView(description);
 
         subjectContainer.addView(
-                messageView,
+                emptyCard,
                 new LinearLayout.LayoutParams(
                         -1,
                         -2
@@ -822,56 +865,94 @@ public class StudentSubjectActivity extends AppCompatActivity {
         );
     }
 
-    private void showError(
-            String message
-    ) {
+    private void showError(String message) {
 
-        if (subjectContainer != null) {
+        if (subjectContainer == null) return;
 
-            subjectContainer.removeAllViews();
-
-            TextView errorView =
-                    new TextView(this);
-
-            errorView.setText(
-                    "⚠️ " + message
-            );
-
-            errorView.setTextSize(16);
-
-            errorView.setTextColor(
-                    errorColor
-            );
-
-            errorView.setGravity(
-                    Gravity.CENTER
-            );
-
-            errorView.setPadding(
-                    20,
-                    50,
-                    20,
-                    50
-            );
-
-            subjectContainer.addView(
-                    errorView,
-                    new LinearLayout.LayoutParams(
-                            -1,
-                            -2
-                    )
-            );
-        }
+        subjectContainer.removeAllViews();
 
         if (statusView != null) {
+            statusView.setText("Something went wrong");
+            statusView.setTextColor(errorColor);
+        }
 
-            statusView.setText(
-                    "Something went wrong"
-            );
+        if (countView != null) {
+            countView.setText("ERROR");
+        }
 
-            statusView.setTextColor(
-                    errorColor
-            );
+        LinearLayout errorCard = new LinearLayout(this);
+        errorCard.setOrientation(LinearLayout.VERTICAL);
+        errorCard.setGravity(Gravity.CENTER);
+        errorCard.setPadding(
+                dp(22),
+                dp(28),
+                dp(22),
+                dp(28)
+        );
+
+        errorCard.setBackground(
+                roundedBackground(Color.WHITE, 22)
+        );
+
+        TextView icon = createText(
+                "⚠️",
+                38,
+                errorColor,
+                false
+        );
+
+        icon.setGravity(Gravity.CENTER);
+
+        TextView errorText = createText(
+                message,
+                14,
+                errorColor,
+                false
+        );
+
+        errorText.setGravity(Gravity.CENTER);
+        errorText.setPadding(0, dp(12), 0, dp(18));
+
+        TextView retry = createText(
+                "Try Again",
+                15,
+                Color.WHITE,
+                true
+        );
+
+        retry.setGravity(Gravity.CENTER);
+        retry.setPadding(
+                dp(24),
+                dp(12),
+                dp(24),
+                dp(12)
+        );
+
+        retry.setBackground(
+                roundedBackground(primaryColor, 25)
+        );
+
+        retry.setOnClickListener(v -> loadSubjects());
+
+        errorCard.addView(icon);
+        errorCard.addView(errorText);
+        errorCard.addView(retry);
+
+        subjectContainer.addView(
+                errorCard,
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                )
+        );
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (root != null) {
+            root.animate().cancel();
         }
     }
 }

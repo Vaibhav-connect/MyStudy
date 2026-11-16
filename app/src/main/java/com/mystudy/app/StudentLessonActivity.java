@@ -1,4 +1,3 @@
-```java
 package com.mystudy.app;
 
 import android.content.Intent;
@@ -1021,4 +1020,3 @@ public class StudentLessonActivity extends AppCompatActivity {
         );
     }
 }
-```

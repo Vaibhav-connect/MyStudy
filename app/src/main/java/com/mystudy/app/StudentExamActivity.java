@@ -2,10 +2,15 @@ package com.mystudy.app;
 
 import android.app.AlertDialog;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.View;
+import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,10 +27,20 @@ import java.util.List;
 
 public class StudentExamActivity extends AppCompatActivity {
 
+    private static final int BLUE = Color.rgb(45, 105, 210);
+    private static final int DARK_BLUE = Color.rgb(28, 65, 130);
+    private static final int YELLOW = Color.rgb(255, 205, 65);
+    private static final int BG = Color.rgb(244, 248, 255);
+    private static final int TEXT = Color.rgb(35, 48, 70);
+    private static final int GREEN = Color.rgb(35, 155, 95);
+    private static final int GRAY = Color.rgb(110, 125, 145);
+
     private FirebaseFirestore db;
     private FirebaseAuth auth;
 
+    private LinearLayout root;
     private LinearLayout container;
+    private ProgressBar loadingBar;
 
     private String studentClass;
     private String studentMedium;
@@ -41,6 +56,7 @@ public class StudentExamActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
 
         studentClass = getIntent().getStringExtra("classId");
+
         if (studentClass == null) {
             studentClass = getIntent().getStringExtra("studentClass");
         }
@@ -48,7 +64,11 @@ public class StudentExamActivity extends AppCompatActivity {
         studentMedium = getIntent().getStringExtra("studentMedium");
         studentName = getIntent().getStringExtra("studentName");
 
-        if (studentMedium == null || studentMedium.trim().isEmpty()) {
+        if (studentClass == null) studentClass = "";
+        if (studentName == null) studentName = "";
+
+        if (studentMedium == null ||
+                studentMedium.trim().isEmpty()) {
             studentMedium = "English";
         }
 
@@ -58,58 +78,131 @@ public class StudentExamActivity extends AppCompatActivity {
 
     private void createUI() {
 
-        LinearLayout root = new LinearLayout(this);
+        root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(24, 30, 24, 24);
-        root.setBackgroundColor(Color.rgb(248, 250, 252));
+        root.setBackgroundColor(BG);
 
-        TextView title = new TextView(this);
-        title.setText("Exams & Quizzes");
-        title.setTextSize(27);
-        title.setTextColor(Color.rgb(17, 24, 39));
-        title.setGravity(Gravity.CENTER);
-        title.setPadding(0, 0, 0, 8);
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.VERTICAL);
+        header.setPadding(dp(20), dp(20), dp(20), dp(22));
+        header.setBackground(rounded(BLUE, 22));
 
-        root.addView(title);
-
-        TextView studentInfo = new TextView(this);
-        studentInfo.setText(
-                "Class: " +
-                        (studentClass == null ? "Not selected" : studentClass) +
-                        " • Medium: " +
-                        studentMedium
+        TextView brand = text(
+                "📘 MyStudy",
+                24,
+                Color.WHITE,
+                true
         );
-        studentInfo.setTextSize(14);
-        studentInfo.setTextColor(Color.rgb(100, 116, 139));
-        studentInfo.setGravity(Gravity.CENTER);
-        studentInfo.setPadding(0, 0, 0, 20);
 
-        root.addView(studentInfo);
+        header.addView(brand);
+
+        TextView tagline = text(
+                "Learn • Practice • Grow",
+                13,
+                Color.WHITE,
+                false
+        );
+
+        header.addView(tagline);
+
+        TextView heading = text(
+                "Exams & Quizzes",
+                25,
+                Color.WHITE,
+                true
+        );
+
+        heading.setPadding(0, dp(20), 0, dp(5));
+        header.addView(heading);
+
+        TextView description = text(
+                "Test your knowledge and improve every day!",
+                13,
+                Color.WHITE,
+                false
+        );
+
+        header.addView(description);
+
+        root.addView(header);
+
+        LinearLayout infoCard = createCard();
+
+        TextView classInfo = text(
+                "🎓 Class: " +
+                        (studentClass.isEmpty()
+                                ? "Not selected" : studentClass),
+                14,
+                DARK_BLUE,
+                true
+        );
+
+        TextView mediumInfo = text(
+                "🌐 Medium: " + studentMedium,
+                14,
+                GRAY,
+                false
+        );
+
+        mediumInfo.setPadding(0, dp(8), 0, 0);
+
+        infoCard.addView(classInfo);
+        infoCard.addView(mediumInfo);
+
+        LinearLayout.LayoutParams infoParams =
+                new LinearLayout.LayoutParams(-1, -2);
+
+        infoParams.setMargins(
+                dp(16), dp(16), dp(16), dp(8)
+        );
+
+        root.addView(infoCard, infoParams);
+
+        TextView sectionTitle = text(
+                "Available Exams",
+                19,
+                DARK_BLUE,
+                true
+        );
+
+        sectionTitle.setPadding(
+                dp(20), dp(12), dp(20), dp(8)
+        );
+
+        root.addView(sectionTitle);
 
         ScrollView scrollView = new ScrollView(this);
+        scrollView.setFillViewport(true);
 
         container = new LinearLayout(this);
         container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(0, 10, 0, 20);
+
+        container.setPadding(
+                dp(16), dp(8), dp(16), dp(20)
+        );
 
         scrollView.addView(container);
 
         root.addView(
                 scrollView,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        0,
-                        1
-                )
+                new LinearLayout.LayoutParams(-1, 0, 1)
         );
 
-        Button backButton = new Button(this);
-        backButton.setText("Back");
-        backButton.setAllCaps(false);
+        Button backButton = createButton(
+                "← Back",
+                DARK_BLUE
+        );
+
+        LinearLayout.LayoutParams backParams =
+                new LinearLayout.LayoutParams(-1, dp(50));
+
+        backParams.setMargins(
+                dp(16), dp(8), dp(16), dp(16)
+        );
+
+        root.addView(backButton, backParams);
 
         backButton.setOnClickListener(v -> finish());
-
-        root.addView(backButton);
 
         setContentView(root);
     }
@@ -119,19 +212,30 @@ public class StudentExamActivity extends AppCompatActivity {
         container.removeAllViews();
         quizzes.clear();
 
-        if (studentClass == null || studentClass.trim().isEmpty()) {
+        if (studentClass == null ||
+                studentClass.trim().isEmpty()) {
 
             showMessage(
-                    "Class information is missing. Please login again."
+                    "⚠️",
+                    "Class Information Missing",
+                    "Please login again and select your class."
             );
 
             return;
         }
 
+        showLoading();
+
         db.collection("quizzes")
                 .whereEqualTo("published", true)
                 .get()
                 .addOnSuccessListener(snapshot -> {
+
+                    if (isFinishing() || isDestroyed()) return;
+
+                    hideLoading();
+
+                    quizzes.clear();
 
                     for (DocumentSnapshot doc :
                             snapshot.getDocuments()) {
@@ -142,11 +246,8 @@ public class StudentExamActivity extends AppCompatActivity {
                         String medium =
                                 doc.getString("medium");
 
-                        if (classId == null) {
-                            continue;
-                        }
-
-                        if (!studentClass.equals(classId)) {
+                        if (classId == null ||
+                                !studentClass.equals(classId)) {
                             continue;
                         }
 
@@ -162,6 +263,7 @@ public class StudentExamActivity extends AppCompatActivity {
                         QuizData quiz = new QuizData();
 
                         quiz.id = doc.getId();
+
                         quiz.title = value(
                                 doc.getString("title"),
                                 "Untitled Quiz"
@@ -234,6 +336,8 @@ public class StudentExamActivity extends AppCompatActivity {
                     if (quizzes.isEmpty()) {
 
                         showMessage(
+                                "📚",
+                                "No Exams Available",
                                 "No published exams or quizzes are available for your class and medium."
                         );
 
@@ -243,154 +347,145 @@ public class StudentExamActivity extends AppCompatActivity {
                     Collections.sort(
                             quizzes,
                             (a, b) ->
-                                    a.title.compareToIgnoreCase(
-                                            b.title
-                                    )
+                                    a.title.compareToIgnoreCase(b.title)
                     );
 
-                    for (QuizData quiz : quizzes) {
-                        addQuizCard(quiz);
-                    }
+                    showQuizCards();
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(
-                                this,
-                                "Failed to load exams: " +
-                                        e.getMessage(),
-                                Toast.LENGTH_LONG
-                        ).show()
-                );
+                .addOnFailureListener(e -> {
+
+                    if (isFinishing() || isDestroyed()) return;
+
+                    hideLoading();
+
+                    showError(
+                            "Unable to load exams. Please check your internet connection."
+                    );
+                });
+    }
+
+    private void showQuizCards() {
+
+        container.removeAllViews();
+
+        for (QuizData quiz : quizzes) {
+            addQuizCard(quiz);
+        }
     }
 
     private void addQuizCard(QuizData quiz) {
 
-        LinearLayout card = new LinearLayout(this);
+        LinearLayout card = createCard();
 
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(24, 22, 24, 22);
-        card.setBackgroundColor(Color.WHITE);
-
-        TextView title = new TextView(this);
-        title.setText(quiz.title);
-        title.setTextSize(20);
-        title.setTextColor(Color.rgb(17, 24, 39));
-
-        TextView type = new TextView(this);
-        type.setText(
-                "Type: " +
-                        quiz.type
+        TextView typeBadge = text(
+                quiz.type.replace("_", " "),
+                12,
+                BLUE,
+                true
         );
-        type.setTextSize(14);
-        type.setTextColor(Color.rgb(79, 70, 229));
-        type.setPadding(0, 8, 0, 0);
 
-        TextView subject = new TextView(this);
-        subject.setText(
-                "Subject: " +
-                        quiz.subjectName
+        typeBadge.setBackground(rounded(
+                Color.rgb(230, 239, 255),
+                12
+        ));
+
+        typeBadge.setPadding(
+                dp(12), dp(7), dp(12), dp(7)
         );
-        subject.setTextSize(14);
-        subject.setTextColor(Color.rgb(14, 116, 144));
-        subject.setPadding(0, 6, 0, 0);
 
-        TextView chapter = new TextView(this);
-        chapter.setText(
-                "Chapter: " +
-                        quiz.chapterName
+        card.addView(typeBadge);
+
+        TextView title = text(
+                quiz.title,
+                20,
+                DARK_BLUE,
+                true
         );
-        chapter.setTextSize(14);
-        chapter.setTextColor(Color.rgb(124, 58, 237));
-        chapter.setPadding(0, 6, 0, 0);
 
-        TextView details = new TextView(this);
-        details.setText(
-                "Questions: " +
-                        quiz.questionCount +
-                        " • Marks: " +
-                        quiz.totalMarks +
-                        " • Time: " +
-                        quiz.durationMinutes +
-                        " min"
+        title.setPadding(0, dp(14), 0, dp(8));
+
+        card.addView(title);
+
+        addDetail(card,
+                "📚 Subject: " + quiz.subjectName);
+
+        addDetail(card,
+                "📖 Chapter: " + quiz.chapterName);
+
+        addDetail(card,
+                "❓ Questions: " + quiz.questionCount);
+
+        addDetail(card,
+                "🏆 Total Marks: " + quiz.totalMarks);
+
+        addDetail(card,
+                "⏱ Time: " + quiz.durationMinutes + " minutes");
+
+        TextView difficulty = text(
+                "⭐ " + quiz.difficulty +
+                        "  •  " + quiz.medium,
+                13,
+                GREEN,
+                true
         );
-        details.setTextSize(14);
-        details.setTextColor(Color.rgb(100, 116, 139));
-        details.setPadding(0, 8, 0, 0);
 
-        TextView difficulty = new TextView(this);
-        difficulty.setText(
-                "Difficulty: " +
-                        quiz.difficulty +
-                        " • " +
-                        quiz.medium
+        difficulty.setPadding(0, dp(12), 0, dp(12));
+
+        card.addView(difficulty);
+
+        Button startButton = createButton(
+                "Start Quiz →",
+                BLUE
         );
-        difficulty.setTextSize(13);
-        difficulty.setTextColor(Color.rgb(22, 163, 74));
-        difficulty.setPadding(0, 6, 0, 14);
 
-        Button startButton = new Button(this);
-        startButton.setText("Start Quiz");
-        startButton.setAllCaps(false);
-        startButton.setTextSize(15);
+        LinearLayout.LayoutParams buttonParams =
+                new LinearLayout.LayoutParams(-1, dp(48));
+
+        card.addView(startButton, buttonParams);
 
         startButton.setOnClickListener(v ->
                 showStartConfirmation(quiz)
         );
 
-        card.addView(title);
-        card.addView(type);
-        card.addView(subject);
-        card.addView(chapter);
-        card.addView(details);
-        card.addView(difficulty);
-        card.addView(startButton);
+        container.addView(card);
 
-        LinearLayout.LayoutParams params =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                );
+        animateView(card);
+    }
 
-        params.setMargins(
-                0,
-                0,
-                0,
-                18
+    private void addDetail(
+            LinearLayout card,
+            String detail) {
+
+        TextView view = text(
+                detail,
+                14,
+                GRAY,
+                false
         );
 
-        container.addView(card, params);
+        view.setPadding(0, dp(5), 0, dp(5));
+
+        card.addView(view);
     }
 
     private void showStartConfirmation(QuizData quiz) {
 
         String message =
-                "Quiz: " +
-                        quiz.title +
-                        "\n\n" +
-                        "Questions: " +
-                        quiz.questionCount +
-                        "\n" +
-                        "Total Marks: " +
-                        quiz.totalMarks +
-                        "\n" +
-                        "Time: " +
-                        quiz.durationMinutes +
-                        " minutes\n" +
-                        "Difficulty: " +
-                        quiz.difficulty +
-                        "\n\n" +
-                        "Do you want to start this quiz?";
+                "Quiz: " + quiz.title +
+                        "\n\nQuestions: " + quiz.questionCount +
+                        "\nTotal Marks: " + quiz.totalMarks +
+                        "\nTime: " + quiz.durationMinutes +
+                        " minutes" +
+                        "\nDifficulty: " + quiz.difficulty +
+                        "\n\nDo you want to start this quiz?";
 
         new AlertDialog.Builder(this)
-                .setTitle("Start Quiz")
+                .setTitle("🎯 Start Quiz")
                 .setMessage(message)
-                .setNegativeButton(
-                        "Cancel",
-                        null
-                )
+                .setNegativeButton("Cancel", null)
                 .setPositiveButton(
                         "Start",
-                        (dialog, which) ->
-                                startQuiz(quiz)
+                        (dialog, which) -> startQuiz(quiz)
                 )
                 .show();
     }
@@ -408,13 +503,18 @@ public class StudentExamActivity extends AppCompatActivity {
             return;
         }
 
+        Toast.makeText(
+                this,
+                "Preparing your quiz...",
+                Toast.LENGTH_SHORT
+        ).show();
+
         db.collection("questions")
-                .whereEqualTo(
-                        "classId",
-                        studentClass
-                )
+                .whereEqualTo("classId", studentClass)
                 .get()
                 .addOnSuccessListener(snapshot -> {
+
+                    if (isFinishing() || isDestroyed()) return;
 
                     List<DocumentSnapshot> matchingQuestions =
                             new ArrayList<>();
@@ -430,9 +530,7 @@ public class StudentExamActivity extends AppCompatActivity {
                             medium = "English";
                         }
 
-                        if (!studentMedium.equalsIgnoreCase(
-                                medium
-                        )) {
+                        if (!studentMedium.equalsIgnoreCase(medium)) {
                             continue;
                         }
 
@@ -442,9 +540,7 @@ public class StudentExamActivity extends AppCompatActivity {
                                     doc.getString("subjectId");
 
                             if (subjectId == null ||
-                                    !quiz.subjectId.equals(
-                                            subjectId
-                                    )) {
+                                    !quiz.subjectId.equals(subjectId)) {
                                 continue;
                             }
                         }
@@ -455,9 +551,7 @@ public class StudentExamActivity extends AppCompatActivity {
                                     doc.getString("chapterId");
 
                             if (chapterId == null ||
-                                    !quiz.chapterId.equals(
-                                            chapterId
-                                    )) {
+                                    !quiz.chapterId.equals(chapterId)) {
                                 continue;
                             }
                         }
@@ -469,8 +563,7 @@ public class StudentExamActivity extends AppCompatActivity {
 
                             if (difficulty != null &&
                                     !quiz.difficulty.equalsIgnoreCase(
-                                            difficulty
-                                    )) {
+                                            difficulty)) {
                                 continue;
                             }
                         }
@@ -480,49 +573,35 @@ public class StudentExamActivity extends AppCompatActivity {
 
                     if (matchingQuestions.isEmpty()) {
 
-                        Toast.makeText(
-                                this,
-                                "No matching questions found for this quiz.",
-                                Toast.LENGTH_LONG
-                        ).show();
+                        new AlertDialog.Builder(this)
+                                .setTitle("No Questions Found")
+                                .setMessage(
+                                        "No matching questions found for this quiz."
+                                )
+                                .setPositiveButton("OK", null)
+                                .show();
 
                         return;
                     }
 
-                    Collections.shuffle(
-                            matchingQuestions
-                    );
+                    Collections.shuffle(matchingQuestions);
 
-                    int required =
-                            Math.min(
-                                    quiz.questionCount,
-                                    matchingQuestions.size()
-                            );
+                    int required = Math.min(
+                            quiz.questionCount,
+                            matchingQuestions.size()
+                    );
 
                     ArrayList<String> questionIds =
                             new ArrayList<>();
 
-                    for (int i = 0;
-                         i < required;
-                         i++) {
+                    for (int i = 0; i < required; i++) {
 
                         questionIds.add(
-                                matchingQuestions
-                                        .get(i)
-                                        .getId()
+                                matchingQuestions.get(i).getId()
                         );
                     }
 
-                    if (required <= 0) {
-
-                        Toast.makeText(
-                                this,
-                                "No questions available.",
-                                Toast.LENGTH_LONG
-                        ).show();
-
-                        return;
-                    }
+                    if (required <= 0) return;
 
                     android.content.Intent intent =
                             new android.content.Intent(
@@ -530,30 +609,12 @@ public class StudentExamActivity extends AppCompatActivity {
                                     StudentExamAttemptActivity.class
                             );
 
-                    intent.putExtra(
-                            "quizId",
-                            quiz.id
-                    );
+                    intent.putExtra("quizId", quiz.id);
+                    intent.putExtra("quizTitle", quiz.title);
+                    intent.putExtra("quizType", quiz.type);
 
-                    intent.putExtra(
-                            "quizTitle",
-                            quiz.title
-                    );
-
-                    intent.putExtra(
-                            "quizType",
-                            quiz.type
-                    );
-
-                    intent.putExtra(
-                            "classId",
-                            studentClass
-                    );
-
-                    intent.putExtra(
-                            "className",
-                            quiz.className
-                    );
+                    intent.putExtra("classId", studentClass);
+                    intent.putExtra("className", quiz.className);
 
                     intent.putExtra(
                             "studentMedium",
@@ -607,43 +668,250 @@ public class StudentExamActivity extends AppCompatActivity {
 
                     startActivity(intent);
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(
-                                this,
-                                "Failed to prepare quiz: " +
-                                        e.getMessage(),
-                                Toast.LENGTH_LONG
-                        ).show()
-                );
+                .addOnFailureListener(e -> {
+
+                    if (isFinishing() || isDestroyed()) return;
+
+                    Toast.makeText(
+                            this,
+                            "Failed to prepare quiz: " +
+                                    e.getMessage(),
+                            Toast.LENGTH_LONG
+                    ).show();
+                });
     }
 
-    private void showMessage(String message) {
+    private void showLoading() {
 
-        TextView text = new TextView(this);
+        container.removeAllViews();
 
-        text.setText(message);
-        text.setTextSize(16);
-        text.setTextColor(Color.rgb(100, 116, 139));
-        text.setGravity(Gravity.CENTER);
-        text.setPadding(30, 80, 30, 80);
+        LinearLayout loadingCard = createCard();
 
-        container.addView(
-                text,
+        loadingCard.setGravity(Gravity.CENTER);
+
+        ProgressBar progressBar = new ProgressBar(this);
+
+        loadingCard.addView(
+                progressBar,
                 new LinearLayout.LayoutParams(
-                        -1,
-                        -2
+                        dp(45), dp(45)
                 )
         );
+
+        TextView message = text(
+                "Loading available exams...",
+                15,
+                TEXT,
+                true
+        );
+
+        message.setPadding(0, dp(15), 0, dp(5));
+
+        loadingCard.addView(message);
+
+        container.addView(loadingCard);
+    }
+
+    private void hideLoading() {
+        // Loading content is replaced by the next screen state.
+    }
+
+    private void showMessage(
+            String icon,
+            String heading,
+            String message) {
+
+        container.removeAllViews();
+
+        LinearLayout card = createCard();
+
+        card.setGravity(Gravity.CENTER);
+        card.setPadding(
+                dp(22), dp(35), dp(22), dp(35)
+        );
+
+        TextView iconView = text(
+                icon, 42, BLUE, true);
+
+        iconView.setGravity(Gravity.CENTER);
+
+        card.addView(iconView);
+
+        TextView title = text(
+                heading, 20, DARK_BLUE, true);
+
+        title.setGravity(Gravity.CENTER);
+        title.setPadding(0, dp(12), 0, dp(8));
+
+        card.addView(title);
+
+        TextView description = text(
+                message, 14, GRAY, false);
+
+        description.setGravity(Gravity.CENTER);
+
+        card.addView(description);
+
+        container.addView(card);
+    }
+
+    private void showError(String message) {
+
+        container.removeAllViews();
+
+        LinearLayout card = createCard();
+
+        card.setGravity(Gravity.CENTER);
+
+        TextView icon = text(
+                "⚠️", 40, BLUE, true);
+
+        icon.setGravity(Gravity.CENTER);
+
+        card.addView(icon);
+
+        TextView title = text(
+                "Unable to Load Exams",
+                19,
+                DARK_BLUE,
+                true
+        );
+
+        title.setGravity(Gravity.CENTER);
+        title.setPadding(0, dp(12), 0, dp(8));
+
+        card.addView(title);
+
+        TextView description = text(
+                message,
+                14,
+                GRAY,
+                false
+        );
+
+        description.setGravity(Gravity.CENTER);
+
+        card.addView(description);
+
+        Button retry = createButton(
+                "Try Again",
+                BLUE
+        );
+
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(-1, dp(48));
+
+        params.topMargin = dp(18);
+
+        card.addView(retry, params);
+
+        retry.setOnClickListener(v ->
+                loadPublishedQuizzes()
+        );
+
+        container.addView(card);
+    }
+
+    private LinearLayout createCard() {
+
+        LinearLayout card = new LinearLayout(this);
+
+        card.setOrientation(LinearLayout.VERTICAL);
+
+        card.setPadding(
+                dp(18), dp(18), dp(18), dp(18)
+        );
+
+        card.setBackground(rounded(Color.WHITE, 18));
+
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(-1, -2);
+
+        params.bottomMargin = dp(16);
+
+        card.setLayoutParams(params);
+
+        return card;
+    }
+
+    private TextView text(
+            String value,
+            int size,
+            int color,
+            boolean bold) {
+
+        TextView view = new TextView(this);
+
+        view.setText(value);
+        view.setTextSize(size);
+        view.setTextColor(color);
+
+        if (bold) {
+            view.setTypeface(
+                    Typeface.DEFAULT,
+                    Typeface.BOLD
+            );
+        }
+
+        return view;
+    }
+
+    private Button createButton(
+            String label,
+            int color) {
+
+        Button button = new Button(this);
+
+        button.setText(label);
+        button.setTextSize(14);
+        button.setAllCaps(false);
+
+        button.setTypeface(
+                Typeface.DEFAULT,
+                Typeface.BOLD
+        );
+
+        button.setTextColor(Color.WHITE);
+        button.setBackground(rounded(color, 12));
+
+        return button;
+    }
+
+    private GradientDrawable rounded(
+            int color,
+            int radius) {
+
+        GradientDrawable drawable =
+                new GradientDrawable();
+
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radius));
+
+        return drawable;
+    }
+
+    private void animateView(View view) {
+
+        AlphaAnimation animation =
+                new AlphaAnimation(0f, 1f);
+
+        animation.setDuration(350);
+
+        view.startAnimation(animation);
+    }
+
+    private int dp(int value) {
+
+        return (int) (value * getResources()
+                .getDisplayMetrics().density);
     }
 
     private String value(
             String value,
-            String fallback
-    ) {
+            String fallback) {
 
         if (value == null ||
                 value.trim().isEmpty()) {
-
             return fallback;
         }
 

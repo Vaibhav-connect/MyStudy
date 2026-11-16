@@ -2,8 +2,13 @@ package com.mystudy.app;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
@@ -34,6 +39,27 @@ public class SettingsActivity extends AppCompatActivity {
     private TextView emailText;
     private TextView languageText;
 
+    private TextView englishButton;
+    private TextView marathiButton;
+    private TextView hindiButton;
+
+    private LinearLayout root;
+
+    private final int BLUE = Color.rgb(59, 130, 246);
+    private final int DARK_BLUE = Color.rgb(37, 99, 235);
+    private final int YELLOW = Color.rgb(250, 204, 21);
+    private final int GREEN = Color.rgb(22, 163, 74);
+
+    private final int LIGHT_BG = Color.rgb(245, 249, 255);
+    private final int LIGHT_CARD = Color.WHITE;
+    private final int LIGHT_TEXT = Color.rgb(17, 24, 39);
+    private final int LIGHT_SECONDARY = Color.rgb(100, 116, 139);
+
+    private final int DARK_BG = Color.rgb(17, 24, 39);
+    private final int DARK_CARD = Color.rgb(31, 41, 55);
+    private final int DARK_TEXT = Color.WHITE;
+    private final int DARK_SECONDARY = Color.rgb(203, 213, 225);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,30 +74,49 @@ public class SettingsActivity extends AppCompatActivity {
         loadUserData();
     }
 
+    // Theme
+
     private void applySavedTheme() {
 
-        SharedPreferences preferences =
-                getSharedPreferences(
-                        PREF_NAME,
-                        MODE_PRIVATE
-                );
+        if (isDarkMode()) {
 
-        boolean darkMode =
-                preferences.getBoolean(
-                        DARK_MODE_KEY,
-                        false
-                );
-
-        if (darkMode) {
             AppCompatDelegate.setDefaultNightMode(
                     AppCompatDelegate.MODE_NIGHT_YES
             );
+
         } else {
+
             AppCompatDelegate.setDefaultNightMode(
                     AppCompatDelegate.MODE_NIGHT_NO
             );
         }
     }
+
+    private boolean isDarkMode() {
+
+        return getSharedPreferences(
+                PREF_NAME,
+                MODE_PRIVATE
+        ).getBoolean(DARK_MODE_KEY, false);
+    }
+
+    private int getBackgroundColor() {
+        return isDarkMode() ? DARK_BG : LIGHT_BG;
+    }
+
+    private int getCardColor() {
+        return isDarkMode() ? DARK_CARD : LIGHT_CARD;
+    }
+
+    private int getTextColor() {
+        return isDarkMode() ? DARK_TEXT : LIGHT_TEXT;
+    }
+
+    private int getSecondaryColor() {
+        return isDarkMode() ? DARK_SECONDARY : LIGHT_SECONDARY;
+    }
+
+    // Language
 
     private void applySavedLanguage() {
 
@@ -81,11 +126,10 @@ public class SettingsActivity extends AppCompatActivity {
                         MODE_PRIVATE
                 );
 
-        String language =
-                preferences.getString(
-                        LANGUAGE_KEY,
-                        "English"
-                );
+        String language = preferences.getString(
+                LANGUAGE_KEY,
+                "English"
+        );
 
         applyLanguage(language);
     }
@@ -108,13 +152,9 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         LocaleListCompat localeList =
-                LocaleListCompat.forLanguageTags(
-                        languageTag
-                );
+                LocaleListCompat.forLanguageTags(languageTag);
 
-        AppCompatDelegate.setApplicationLocales(
-                localeList
-        );
+        AppCompatDelegate.setApplicationLocales(localeList);
     }
 
     private void saveLocalLanguage(String language) {
@@ -124,219 +164,318 @@ public class SettingsActivity extends AppCompatActivity {
                 MODE_PRIVATE
         )
                 .edit()
-                .putString(
-                        LANGUAGE_KEY,
-                        language
-                )
+                .putString(LANGUAGE_KEY, language)
                 .apply();
-
-        applyLanguage(language);
     }
+
+    private void selectLanguage(String language) {
+
+        if (auth.getCurrentUser() == null) {
+
+            Toast.makeText(
+                    this,
+                    "Please login first.",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
+        languageText.setText(language);
+        updateLanguageButtons(language);
+
+        String uid = auth.getCurrentUser().getUid();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("language", language);
+
+        db.collection("users")
+                .document(uid)
+                .set(data, SetOptions.merge())
+                .addOnSuccessListener(unused -> {
+
+                    saveLocalLanguage(language);
+
+                    applyLanguage(language);
+
+                    Toast.makeText(
+                            SettingsActivity.this,
+                            "Language saved successfully",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                })
+                .addOnFailureListener(error -> {
+
+                    Toast.makeText(
+                            SettingsActivity.this,
+                            "Unable to save language",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                });
+    }
+
+    private void updateLanguageButtons(String language) {
+
+        updateLanguageButton(
+                englishButton,
+                "English".equalsIgnoreCase(language)
+        );
+
+        updateLanguageButton(
+                marathiButton,
+                "Marathi".equalsIgnoreCase(language)
+        );
+
+        updateLanguageButton(
+                hindiButton,
+                "Hindi".equalsIgnoreCase(language)
+        );
+    }
+
+    private void updateLanguageButton(
+            TextView button,
+            boolean selected
+    ) {
+
+        if (button == null) {
+            return;
+        }
+
+        button.setTextColor(
+                selected ? Color.WHITE : DARK_BLUE
+        );
+
+        button.setBackground(
+                createBackground(
+                        selected ? DARK_BLUE :
+                                (isDarkMode()
+                                        ? Color.rgb(55, 65, 81)
+                                        : Color.rgb(239, 246, 255)),
+                        14,
+                        selected ? YELLOW : Color.TRANSPARENT
+                )
+        );
+    }
+
+    // Main UI
 
     private void buildUI() {
 
         ScrollView scrollView = new ScrollView(this);
         scrollView.setFillViewport(true);
-        scrollView.setBackgroundColor(
-                isDarkMode()
-                        ? 0xFF111827
-                        : 0xFFF8FAFC
-        );
+        scrollView.setBackgroundColor(getBackgroundColor());
 
-        LinearLayout root = new LinearLayout(this);
+        root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(32, 36, 32, 40);
 
-        TextView title = new TextView(this);
-        title.setText("Settings");
-        title.setTextSize(30);
-        title.setTextColor(
-                isDarkMode()
-                        ? 0xFFFFFFFF
-                        : 0xFF111827
+        root.setPadding(
+                dp(18),
+                dp(22),
+                dp(18),
+                dp(35)
         );
-        title.setTypeface(null, 1);
+
+        root.setBackgroundColor(getBackgroundColor());
+
+        // Header
+
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView logo = new TextView(this);
+        logo.setText("📘");
+        logo.setTextSize(29);
+        logo.setGravity(Gravity.CENTER);
+
+        header.addView(
+                logo,
+                new LinearLayout.LayoutParams(dp(48), dp(48))
+        );
+
+        LinearLayout brandInfo = new LinearLayout(this);
+        brandInfo.setOrientation(LinearLayout.VERTICAL);
+        brandInfo.setPadding(dp(8), 0, 0, 0);
+
+        TextView brand = new TextView(this);
+        brand.setText("MyStudy");
+        brand.setTextSize(22);
+        brand.setTextColor(DARK_BLUE);
+        brand.setTypeface(null, Typeface.BOLD);
+
+        brandInfo.addView(brand);
+
+        TextView tagline = createSubtitle(
+                "Learn • Practice • Grow"
+        );
+
+        brandInfo.addView(tagline);
+
+        header.addView(
+                brandInfo,
+                new LinearLayout.LayoutParams(0, -2, 1)
+        );
+
+        TextView backButton = new TextView(this);
+        backButton.setText("←");
+        backButton.setTextSize(25);
+        backButton.setTextColor(DARK_BLUE);
+        backButton.setGravity(Gravity.CENTER);
+        backButton.setBackground(
+                createBackground(getCardColor(), 15)
+        );
+
+        header.addView(
+                backButton,
+                new LinearLayout.LayoutParams(dp(46), dp(46))
+        );
+
+        backButton.setOnClickListener(v -> finish());
+        addPressAnimation(backButton);
 
         root.addView(
-                title,
-                createParams(0, 0, 0, 20)
+                header,
+                createMargins(0, 0, 0, 22)
         );
 
-        TextView subtitle = new TextView(this);
-        subtitle.setText("Manage your MyStudy preferences");
-        subtitle.setTextSize(15);
-        subtitle.setTextColor(
-                isDarkMode()
-                        ? 0xFFCBD5E1
-                        : 0xFF64748B
+        // Page title
+
+        TextView title = createTitle("Settings");
+        root.addView(title);
+
+        TextView subtitle = createSubtitle(
+                "Manage your MyStudy preferences"
         );
 
         root.addView(
                 subtitle,
-                createParams(0, 0, 0, 24)
+                createMargins(0, dp(5), 0, dp(22))
         );
+
+        // Profile card
 
         LinearLayout profileCard = createCard();
 
-        TextView profileTitle =
-                createSectionTitle("Profile");
+        profileCard.addView(
+                createSectionTitle("👤  Profile")
+        );
 
-        profileCard.addView(profileTitle);
+        nameText = createInfoText("Loading name...");
 
-        nameText =
-                createInfoText("Loading name...");
+        nameText.setTextSize(19);
+        nameText.setTypeface(null, Typeface.BOLD);
+        nameText.setTextColor(DARK_BLUE);
 
         profileCard.addView(
                 nameText,
-                createParams(0, 12, 0, 4)
+                createMargins(0, dp(13), 0, dp(5))
         );
 
-        emailText =
-                createInfoText("Loading email...");
+        emailText = createInfoText("Loading email...");
 
         profileCard.addView(emailText);
 
         root.addView(
                 profileCard,
-                createParams(0, 0, 0, 18)
+                createMargins(0, 0, 0, 17)
         );
+
+        // Language card
 
         LinearLayout languageCard = createCard();
 
-        TextView languageTitle =
-                createSectionTitle("Language");
+        languageCard.addView(
+                createSectionTitle("🌐  Language")
+        );
 
-        languageCard.addView(languageTitle);
-
-        languageText =
-                createInfoText(
-                        getSharedPreferences(
-                                PREF_NAME,
-                                MODE_PRIVATE
-                        ).getString(
-                                LANGUAGE_KEY,
-                                "English"
-                        )
-                );
+        languageText = createInfoText(
+                getSavedLanguage()
+        );
 
         languageCard.addView(
                 languageText,
-                createParams(0, 12, 0, 12)
+                createMargins(0, dp(10), 0, dp(14))
         );
 
-        LinearLayout languageButtons =
-                new LinearLayout(this);
+        LinearLayout languageRow = new LinearLayout(this);
+        languageRow.setOrientation(LinearLayout.HORIZONTAL);
 
-        languageButtons.setOrientation(
-                LinearLayout.HORIZONTAL
+        englishButton = createLanguageButton("English");
+        marathiButton = createLanguageButton("मराठी");
+        hindiButton = createLanguageButton("हिन्दी");
+
+        englishButton.setOnClickListener(
+                v -> selectLanguage("English")
         );
 
-        TextView english =
-                createChoiceButton("English");
-
-        TextView marathi =
-                createChoiceButton("मराठी");
-
-        TextView hindi =
-                createChoiceButton("हिन्दी");
-
-        english.setOnClickListener(
-                v -> saveLanguage("English")
+        marathiButton.setOnClickListener(
+                v -> selectLanguage("Marathi")
         );
 
-        marathi.setOnClickListener(
-                v -> saveLanguage("Marathi")
+        hindiButton.setOnClickListener(
+                v -> selectLanguage("Hindi")
         );
 
-        hindi.setOnClickListener(
-                v -> saveLanguage("Hindi")
+        languageRow.addView(
+                englishButton,
+                createLanguageParams()
         );
 
-        languageButtons.addView(
-                english,
-                new LinearLayout.LayoutParams(
-                        0,
-                        52,
-                        1
-                )
+        languageRow.addView(
+                marathiButton,
+                createLanguageParams()
         );
 
-        languageButtons.addView(
-                marathi,
-                new LinearLayout.LayoutParams(
-                        0,
-                        52,
-                        1
-                )
+        languageRow.addView(
+                hindiButton,
+                createLanguageParams()
         );
 
-        languageButtons.addView(
-                hindi,
-                new LinearLayout.LayoutParams(
-                        0,
-                        52,
-                        1
-                )
-        );
+        languageCard.addView(languageRow);
 
-        languageCard.addView(languageButtons);
+        updateLanguageButtons(getSavedLanguage());
 
         root.addView(
                 languageCard,
-                createParams(0, 0, 0, 18)
+                createMargins(0, 0, 0, 17)
         );
 
-        LinearLayout appearanceCard =
-                createCard();
+        // Appearance card
 
-        TextView appearanceTitle =
-                createSectionTitle("Appearance");
+        LinearLayout appearanceCard = createCard();
 
         appearanceCard.addView(
-                appearanceTitle
+                createSectionTitle("🎨  Appearance")
         );
 
-        LinearLayout darkRow =
-                new LinearLayout(this);
+        LinearLayout darkRow = new LinearLayout(this);
+        darkRow.setOrientation(LinearLayout.HORIZONTAL);
+        darkRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        darkRow.setOrientation(
-                LinearLayout.HORIZONTAL
-        );
-
-        darkRow.setGravity(
-                Gravity.CENTER_VERTICAL
-        );
-
-        TextView darkText =
-                createInfoText("Dark Theme");
-
-        Switch darkSwitch =
-                new Switch(this);
-
-        darkSwitch.setChecked(
-                isDarkMode()
-        );
+        TextView darkText = createInfoText("Dark Theme");
+        darkText.setTextSize(16);
 
         darkRow.addView(
                 darkText,
-                new LinearLayout.LayoutParams(
-                        0,
-                        60,
-                        1
-                )
+                new LinearLayout.LayoutParams(0, dp(58), 1)
         );
+
+        Switch darkSwitch = new Switch(this);
+        darkSwitch.setChecked(isDarkMode());
 
         darkRow.addView(
                 darkSwitch,
                 new LinearLayout.LayoutParams(
-                        60,
-                        60
+                        dp(60),
+                        dp(58)
                 )
         );
 
         appearanceCard.addView(
                 darkRow,
-                createParams(0, 8, 0, 0)
+                createMargins(0, dp(8), 0, 0)
         );
 
         darkSwitch.setOnCheckedChangeListener(
@@ -347,24 +486,8 @@ public class SettingsActivity extends AppCompatActivity {
                             MODE_PRIVATE
                     )
                             .edit()
-                            .putBoolean(
-                                    DARK_MODE_KEY,
-                                    isChecked
-                            )
+                            .putBoolean(DARK_MODE_KEY, isChecked)
                             .apply();
-
-                    if (isChecked) {
-
-                        AppCompatDelegate.setDefaultNightMode(
-                                AppCompatDelegate.MODE_NIGHT_YES
-                        );
-
-                    } else {
-
-                        AppCompatDelegate.setDefaultNightMode(
-                                AppCompatDelegate.MODE_NIGHT_NO
-                        );
-                    }
 
                     Toast.makeText(
                             SettingsActivity.this,
@@ -373,180 +496,170 @@ public class SettingsActivity extends AppCompatActivity {
                                     : "Light theme enabled",
                             Toast.LENGTH_SHORT
                     ).show();
+
+                    AppCompatDelegate.setDefaultNightMode(
+                            isChecked
+                                    ? AppCompatDelegate.MODE_NIGHT_YES
+                                    : AppCompatDelegate.MODE_NIGHT_NO
+                    );
                 }
         );
 
         root.addView(
                 appearanceCard,
-                createParams(0, 0, 0, 18)
+                createMargins(0, 0, 0, 17)
         );
 
-        LinearLayout accountCard =
-                createCard();
+        // Account card
 
-        TextView accountTitle =
-                createSectionTitle("Account");
+        LinearLayout accountCard = createCard();
 
-        accountCard.addView(accountTitle);
-
-        TextView logoutButton =
-                createActionButton(
-                        "Logout",
-                        0xFFEF4444
-                );
-
-        logoutButton.setOnClickListener(
-                v -> logout()
+        accountCard.addView(
+                createSectionTitle("🔐  Account")
         );
+
+        TextView logoutButton = createActionButton(
+                "Logout",
+                Color.rgb(239, 68, 68)
+        );
+
+        logoutButton.setOnClickListener(v -> logout());
 
         accountCard.addView(
                 logoutButton,
-                createParams(0, 16, 0, 0)
+                createMargins(0, dp(15), 0, 0)
         );
 
         root.addView(accountCard);
 
-        TextView developer =
-                new TextView(this);
+        // Footer
+
+        TextView developer = new TextView(this);
 
         developer.setText(
                 "MyStudy\nDeveloped by Vaibhav Bhosale"
         );
 
         developer.setTextSize(13);
-        developer.setTextColor(
-                isDarkMode()
-                        ? 0xFF94A3B8
-                        : 0xFF94A3B8
-        );
+        developer.setTextColor(getSecondaryColor());
         developer.setGravity(Gravity.CENTER);
-        developer.setPadding(0, 30, 0, 0);
 
-        root.addView(
-                developer,
-                createParams(0, 0, 0, 0)
+        developer.setPadding(
+                dp(10),
+                dp(28),
+                dp(10),
+                dp(5)
         );
+
+        root.addView(developer);
 
         scrollView.addView(root);
-
         setContentView(scrollView);
+
+        // Entrance animation
+
+        root.setAlpha(0f);
+        root.setTranslationY(dp(15));
+
+        root.animate()
+                .alpha(1f)
+                .translationY(0)
+                .setDuration(400)
+                .start();
     }
 
-    private boolean isDarkMode() {
-
-        return getSharedPreferences(
-                PREF_NAME,
-                MODE_PRIVATE
-        ).getBoolean(
-                DARK_MODE_KEY,
-                false
-        );
-    }
+    // Load Firebase profile
 
     private void loadUserData() {
 
         if (auth.getCurrentUser() == null) {
+
+            nameText.setText("Not logged in");
+            emailText.setText("");
+
             return;
         }
 
-        String uid =
-                auth.getCurrentUser().getUid();
+        String uid = auth.getCurrentUser().getUid();
+
+        String authEmail = auth.getCurrentUser().getEmail();
+
+        if (authEmail != null) {
+            emailText.setText(authEmail);
+        }
 
         db.collection("users")
                 .document(uid)
                 .get()
                 .addOnSuccessListener(document -> {
 
-                    if (!document.exists()) {
+                    if (isFinishing() || isDestroyed()) {
                         return;
                     }
 
-                    String name =
-                            document.getString("name");
+                    if (!document.exists()) {
 
-                    String email =
-                            document.getString("email");
+                        nameText.setText("Student");
+                        return;
+                    }
 
-                    String language =
-                            document.getString("language");
+                    String name = document.getString("name");
+                    String email = document.getString("email");
+                    String language = document.getString("language");
 
-                    nameText.setText(
-                            name == null
-                                    ? "Student"
-                                    : name
-                    );
+                    if (name != null && !name.trim().isEmpty()) {
 
-                    emailText.setText(
-                            email == null
-                                    ? ""
-                                    : email
-                    );
+                        nameText.setText(name);
+
+                    } else {
+
+                        nameText.setText("Student");
+                    }
+
+                    if (email != null && !email.trim().isEmpty()) {
+
+                        emailText.setText(email);
+                    }
 
                     if (language != null &&
                             !language.trim().isEmpty()) {
 
+                        String savedLanguage = getSavedLanguage();
+
                         languageText.setText(language);
 
                         saveLocalLanguage(language);
+
+                        updateLanguageButtons(language);
+
+                        if (!savedLanguage.equalsIgnoreCase(language)) {
+                            applyLanguage(language);
+                        }
+                    }
+                })
+                .addOnFailureListener(error -> {
+
+                    if (!isFinishing() && !isDestroyed()) {
+
+                        Toast.makeText(
+                                SettingsActivity.this,
+                                "Unable to load profile",
+                                Toast.LENGTH_SHORT
+                        ).show();
                     }
                 });
     }
 
-    private void saveLanguage(
-            String language
-    ) {
-
-        if (auth.getCurrentUser() == null) {
-            return;
-        }
-
-        String uid =
-                auth.getCurrentUser().getUid();
-
-        Map<String, Object> data =
-                new HashMap<>();
-
-        data.put(
-                "language",
-                language
-        );
-
-        db.collection("users")
-                .document(uid)
-                .set(
-                        data,
-                        SetOptions.merge()
-                )
-                .addOnSuccessListener(unused -> {
-
-                    saveLocalLanguage(language);
-
-                    languageText.setText(language);
-
-                    Toast.makeText(
-                            SettingsActivity.this,
-                            "Language saved",
-                            Toast.LENGTH_SHORT
-                    ).show();
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(
-                                SettingsActivity.this,
-                                "Unable to save language",
-                                Toast.LENGTH_SHORT
-                        ).show()
-                );
-    }
+    // Logout
 
     private void logout() {
 
         auth.signOut();
 
-        Intent intent =
-                new Intent(
-                        SettingsActivity.this,
-                        LoginActivity.class
-                );
+        Intent intent = new Intent(
+                SettingsActivity.this,
+                LoginActivity.class
+        );
 
         intent.addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK |
@@ -554,97 +667,116 @@ public class SettingsActivity extends AppCompatActivity {
         );
 
         startActivity(intent);
-
         finish();
+    }
+
+    // Helpers
+
+    private String getSavedLanguage() {
+
+        return getSharedPreferences(
+                PREF_NAME,
+                MODE_PRIVATE
+        ).getString(LANGUAGE_KEY, "English");
     }
 
     private LinearLayout createCard() {
 
-        LinearLayout card =
-                new LinearLayout(this);
-
-        card.setOrientation(
-                LinearLayout.VERTICAL
-        );
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
 
         card.setPadding(
-                22,
-                20,
-                22,
-                20
+                dp(18),
+                dp(18),
+                dp(18),
+                dp(18)
         );
 
-        card.setBackgroundColor(
-                isDarkMode()
-                        ? 0xFF1F2937
-                        : 0xFFFFFFFF
+        card.setBackground(
+                createBackground(getCardColor(), 22)
         );
 
-        card.setElevation(6);
+        card.setElevation(dp(3));
 
         return card;
     }
 
-    private TextView createSectionTitle(
-            String text
-    ) {
+    private TextView createTitle(String text) {
 
-        TextView view =
-                new TextView(this);
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextSize(27);
+        view.setTextColor(getTextColor());
+        view.setTypeface(null, Typeface.BOLD);
 
+        return view;
+    }
+
+    private TextView createSectionTitle(String text) {
+
+        TextView view = new TextView(this);
         view.setText(text);
         view.setTextSize(18);
-        view.setTextColor(
-                isDarkMode()
-                        ? 0xFFFFFFFF
-                        : 0xFF111827
-        );
-        view.setTypeface(null, 1);
+        view.setTextColor(getTextColor());
+        view.setTypeface(null, Typeface.BOLD);
 
         return view;
     }
 
-    private TextView createInfoText(
-            String text
-    ) {
+    private TextView createInfoText(String text) {
 
-        TextView view =
-                new TextView(this);
-
+        TextView view = new TextView(this);
         view.setText(text);
         view.setTextSize(15);
-        view.setTextColor(
-                isDarkMode()
-                        ? 0xFFCBD5E1
-                        : 0xFF64748B
-        );
+        view.setTextColor(getSecondaryColor());
 
         return view;
     }
 
-    private TextView createChoiceButton(
-            String text
-    ) {
+    private TextView createSubtitle(String text) {
 
-        TextView view =
-                new TextView(this);
-
+        TextView view = new TextView(this);
         view.setText(text);
-        view.setTextSize(14);
-        view.setTextColor(
-                isDarkMode()
-                        ? 0xFF818CF8
-                        : 0xFF4F46E5
-        );
-        view.setGravity(Gravity.CENTER);
-        view.setBackgroundColor(
-                isDarkMode()
-                        ? 0xFF374151
-                        : 0xFFF1F5F9
-        );
-        view.setPadding(8, 8, 8, 8);
+        view.setTextSize(13);
+        view.setTextColor(getSecondaryColor());
 
         return view;
+    }
+
+    private TextView createLanguageButton(String text) {
+
+        TextView button = new TextView(this);
+
+        button.setText(text);
+        button.setTextSize(13);
+        button.setTypeface(null, Typeface.BOLD);
+        button.setGravity(Gravity.CENTER);
+
+        button.setPadding(
+                dp(4),
+                dp(12),
+                dp(4),
+                dp(12)
+        );
+
+        addPressAnimation(button);
+
+        return button;
+    }
+
+    private LinearLayout.LayoutParams createLanguageParams() {
+
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(0, dp(48), 1);
+
+        params.setMargins(
+                0,
+                0,
+                dp(6),
+                0
+        );
+
+        return params;
     }
 
     private TextView createActionButton(
@@ -652,21 +784,62 @@ public class SettingsActivity extends AppCompatActivity {
             int color
     ) {
 
-        TextView view =
-                new TextView(this);
+        TextView button = new TextView(this);
 
-        view.setText(text);
-        view.setTextSize(16);
-        view.setTextColor(0xFFFFFFFF);
-        view.setGravity(Gravity.CENTER);
-        view.setTypeface(null, 1);
-        view.setBackgroundColor(color);
-        view.setPadding(10, 14, 10, 14);
+        button.setText(text);
+        button.setTextSize(16);
+        button.setTextColor(Color.WHITE);
+        button.setTypeface(null, Typeface.BOLD);
+        button.setGravity(Gravity.CENTER);
 
-        return view;
+        button.setPadding(
+                dp(10),
+                dp(15),
+                dp(10),
+                dp(15)
+        );
+
+        button.setBackground(
+                createBackground(color, 15)
+        );
+
+        addPressAnimation(button);
+
+        return button;
     }
 
-    private LinearLayout.LayoutParams createParams(
+    private GradientDrawable createBackground(
+            int color,
+            int radius
+    ) {
+
+        GradientDrawable drawable = new GradientDrawable();
+
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radius));
+
+        return drawable;
+    }
+
+    private GradientDrawable createBackground(
+            int color,
+            int radius,
+            int strokeColor
+    ) {
+
+        GradientDrawable drawable = createBackground(
+                color,
+                radius
+        );
+
+        if (strokeColor != Color.TRANSPARENT) {
+            drawable.setStroke(dp(2), strokeColor);
+        }
+
+        return drawable;
+    }
+
+    private LinearLayout.LayoutParams createMargins(
             int left,
             int top,
             int right,
@@ -674,18 +847,52 @@ public class SettingsActivity extends AppCompatActivity {
     ) {
 
         LinearLayout.LayoutParams params =
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
+                new LinearLayout.LayoutParams(-1, -2);
 
         params.setMargins(
-                left,
-                top,
-                right,
-                bottom
+                dp(left),
+                dp(top),
+                dp(right),
+                dp(bottom)
         );
 
         return params;
+    }
+
+    private void addPressAnimation(View view) {
+
+        view.setOnTouchListener((v, event) -> {
+
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+
+                v.animate()
+                        .scaleX(0.96f)
+                        .scaleY(0.96f)
+                        .setDuration(100)
+                        .start();
+
+            } else if (
+                    event.getAction() == MotionEvent.ACTION_UP ||
+                            event.getAction() == MotionEvent.ACTION_CANCEL
+            ) {
+
+                v.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .start();
+            }
+
+            return false;
+        });
+    }
+
+    private int dp(float value) {
+
+        return (int) (
+                value * getResources()
+                        .getDisplayMetrics()
+                        .density
+        );
     }
 }

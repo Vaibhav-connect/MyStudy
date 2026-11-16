@@ -8,2080 +8,833 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
-import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class StudentPracticeActivity extends AppCompatActivity {
 
-    private LinearLayout questionContainer;
-    private TextView scoreText;
-    private TextView statusView;
+    private static final int BLUE = Color.rgb(45, 105, 210);
+    private static final int DARK_BLUE = Color.rgb(28, 65, 130);
+    private static final int YELLOW = Color.rgb(255, 205, 65);
+    private static final int BG = Color.rgb(244, 248, 255);
+    private static final int TEXT = Color.rgb(35, 48, 70);
+    private static final int GREEN = Color.rgb(35, 155, 95);
+    private static final int RED = Color.rgb(220, 70, 70);
 
-    private FirebaseFirestore db;
     private FirebaseAuth auth;
-    private ProgressManager progressManager;
+    private FirebaseFirestore db;
 
-    private String classId = "";
-    private String className = "";
-    private String studentMedium = "";
-    private String studentName = "";
-    private String subjectId = "";
-    private String subjectName = "";
-    private String chapterId = "";
-    private String chapterName = "";
-    private String lessonId = "";
-    private String lessonTitle = "";
+    private LinearLayout root;
+    private LinearLayout content;
+    private LinearLayout questionCard;
+    private LinearLayout optionsContainer;
 
+    private TextView titleText;
+    private TextView progressText;
+    private TextView scoreText;
+    private TextView questionText;
+    private TextView feedbackText;
+    private TextView explanationText;
+
+    private ProgressBar progressBar;
+    private EditText answerInput;
+    private Button submitButton;
+    private Button nextButton;
+
+    private String classId, className;
+    private String studentMedium, studentName;
+    private String subjectId, subjectName;
+    private String chapterId, chapterName;
+    private String lessonId, lessonTitle;
+
+    private final List<Map<String, Object>> questions = new ArrayList<>();
+    private final List<String> questionIds = new ArrayList<>();
+
+    private int currentIndex = 0;
     private int score = 0;
-    private int answered = 0;
+    private int answeredCount = 0;
 
+    private boolean questionAnswered = false;
     private boolean practiceFinished = false;
+    private boolean resultSaved = false;
 
-    private final List<String> questionIds =
-            new ArrayList<>();
+    private String selectedAnswer = "";
 
-    private final int backgroundColor =
-            Color.rgb(248, 250, 252);
-
-    private final int textPrimary =
-            Color.rgb(17, 24, 39);
-
-    private final int textSecondary =
-            Color.rgb(100, 116, 139);
-
-    private final int primaryColor =
-            Color.rgb(79, 70, 229);
-
-    private final int successColor =
-            Color.rgb(22, 163, 74);
-
-    private final int errorColor =
-            Color.rgb(220, 38, 38);
+    private final ExecutorService imageExecutor =
+            Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        classId =
-                getIntent().getStringExtra("classId");
+        auth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
-        className =
-                getIntent().getStringExtra("className");
+        readIntentData();
+        createScreen();
 
-        studentMedium =
-                getIntent().getStringExtra("studentMedium");
-
-        studentName =
-                getIntent().getStringExtra("studentName");
-
-        subjectId =
-                getIntent().getStringExtra("subjectId");
-
-        subjectName =
-                getIntent().getStringExtra("subjectName");
-
-        chapterId =
-                getIntent().getStringExtra("chapterId");
-
-        chapterName =
-                getIntent().getStringExtra("chapterName");
-
-        lessonId =
-                getIntent().getStringExtra("lessonId");
-
-        lessonTitle =
-                getIntent().getStringExtra("lessonTitle");
-
-        if (classId == null) {
-            classId = "";
+        if (classId.isEmpty() || chapterId.isEmpty()) {
+            showError("Practice information is missing.");
+        } else {
+            loadQuestions();
         }
-
-        if (className == null) {
-            className = "";
-        }
-
-        if (studentMedium == null ||
-                studentMedium.trim().isEmpty()) {
-
-            studentMedium = "English";
-        }
-
-        if (studentName == null) {
-            studentName = "";
-        }
-
-        if (subjectId == null) {
-            subjectId = "";
-        }
-
-        if (subjectName == null) {
-            subjectName = "";
-        }
-
-        if (chapterId == null) {
-            chapterId = "";
-        }
-
-        if (chapterName == null) {
-            chapterName = "";
-        }
-
-        if (lessonId == null) {
-            lessonId = "";
-        }
-
-        if (lessonTitle == null) {
-            lessonTitle = "";
-        }
-
-        if (classId.trim().isEmpty() ||
-                chapterId.trim().isEmpty()) {
-
-            Toast.makeText(
-                    this,
-                    "Practice information missing",
-                    Toast.LENGTH_SHORT
-            ).show();
-
-            finish();
-            return;
-        }
-
-        db =
-                FirebaseFirestore.getInstance();
-
-        auth =
-                FirebaseAuth.getInstance();
-
-        progressManager =
-                new ProgressManager();
-
-        createUI();
-
-        showLoading();
-
-        loadQuestions();
     }
 
-    private void createUI() {
+    private void readIntentData() {
+        classId = getIntent().getStringExtra("classId");
+        className = getIntent().getStringExtra("className");
+        studentMedium = getIntent().getStringExtra("studentMedium");
+        studentName = getIntent().getStringExtra("studentName");
 
-        ScrollView scrollView =
-                new ScrollView(this);
+        subjectId = getIntent().getStringExtra("subjectId");
+        subjectName = getIntent().getStringExtra("subjectName");
 
-        scrollView.setFillViewport(true);
+        chapterId = getIntent().getStringExtra("chapterId");
+        chapterName = getIntent().getStringExtra("chapterName");
 
-        LinearLayout root =
-                new LinearLayout(this);
+        lessonId = getIntent().getStringExtra("lessonId");
+        lessonTitle = getIntent().getStringExtra("lessonTitle");
 
-        root.setOrientation(
-                LinearLayout.VERTICAL
-        );
+        if (classId == null) classId = "";
+        if (className == null) className = "";
+        if (studentMedium == null) studentMedium = "";
+        if (studentName == null) studentName = "";
+        if (subjectId == null) subjectId = "";
+        if (subjectName == null) subjectName = "";
+        if (chapterId == null) chapterId = "";
+        if (chapterName == null) chapterName = "";
+        if (lessonId == null) lessonId = "";
+        if (lessonTitle == null) lessonTitle = "";
+    }
 
-        root.setPadding(
-                20,
-                24,
-                20,
-                30
-        );
+    private void createScreen() {
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(BG);
 
-        root.setBackgroundColor(
-                backgroundColor
-        );
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.VERTICAL);
+        header.setPadding(dp(20), dp(18), dp(20), dp(18));
+        header.setBackground(rounded(BLUE, 0, 0, 22, 22));
 
-        TextView title =
-                new TextView(this);
+        TextView brand = text("📘 MyStudy", 23, Color.WHITE, true);
+        header.addView(brand);
 
-        title.setText(
-                "🧠 Practice"
-        );
+        TextView subtitle = text("Practice • Improve • Grow", 13,
+                Color.WHITE, false);
+        header.addView(subtitle);
 
-        title.setTextSize(27);
+        TextView chapter = text(
+                chapterName.isEmpty() ? "Practice Questions" : chapterName,
+                19, Color.WHITE, true);
+        chapter.setPadding(0, dp(14), 0, dp(2));
+        header.addView(chapter);
 
-        title.setTextColor(
-                textPrimary
-        );
-
-        title.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        title.setGravity(
-                Gravity.CENTER_VERTICAL
-        );
-
-        root.addView(
-                title,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        65
-                )
-        );
-
-        TextView subtitle =
-                new TextView(this);
-
-        if (!lessonTitle.trim().isEmpty()) {
-
-            subtitle.setText(
-                    lessonTitle +
-                            " • " +
-                            studentMedium +
-                            " • Test your knowledge"
-            );
-
-        } else if (!chapterName.trim().isEmpty()) {
-
-            subtitle.setText(
-                    chapterName +
-                            " • " +
-                            studentMedium +
-                            " • Test your knowledge"
-            );
-
-        } else {
-
-            subtitle.setText(
-                    studentMedium +
-                            " • Test your knowledge"
-            );
+        if (!subjectName.isEmpty()) {
+            TextView subject = text(subjectName, 13, Color.WHITE, false);
+            header.addView(subject);
         }
 
-        subtitle.setTextSize(16);
+        root.addView(header);
 
-        subtitle.setTextColor(
-                textSecondary
-        );
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
 
-        subtitle.setPadding(
-                0,
-                0,
-                0,
-                12
-        );
+        content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(18), dp(18), dp(18), dp(24));
 
-        root.addView(
-                subtitle,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
-        );
+        scroll.addView(content);
+        root.addView(scroll, new LinearLayout.LayoutParams(
+                -1, 0, 1));
 
-        statusView =
-                new TextView(this);
+        setContentView(root);
 
-        statusView.setTextSize(14);
-
-        statusView.setGravity(
-                Gravity.CENTER
-        );
-
-        statusView.setPadding(
-                0,
-                6,
-                0,
-                12
-        );
-
-        root.addView(
-                statusView,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
-        );
-
-        scoreText =
-                new TextView(this);
-
-        scoreText.setText(
-                "⭐ Score: 0 / 0"
-        );
-
-        scoreText.setTextSize(18);
-
-        scoreText.setTextColor(
-                primaryColor
-        );
-
-        scoreText.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        scoreText.setGravity(
-                Gravity.CENTER
-        );
-
-        GradientDrawable scoreBackground =
-                new GradientDrawable();
-
-        scoreBackground.setColor(
-                Color.WHITE
-        );
-
-        scoreBackground.setCornerRadius(
-                24
-        );
-
-        scoreText.setBackground(
-                scoreBackground
-        );
-
-        scoreText.setElevation(3);
-
-        root.addView(
-                scoreText,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        55
-                )
-        );
-
-        questionContainer =
-                new LinearLayout(this);
-
-        questionContainer.setOrientation(
-                LinearLayout.VERTICAL
-        );
-
-        LinearLayout.LayoutParams questionParams =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                );
-
-        questionParams.topMargin = 18;
-
-        root.addView(
-                questionContainer,
-                questionParams
-        );
-
-        scrollView.addView(root);
-
-        setContentView(scrollView);
+        showLoading();
     }
 
     private void loadQuestions() {
-
         showLoading();
 
-        questionIds.clear();
-
-        score = 0;
-
-        answered = 0;
-
-        practiceFinished = false;
-
-        updateScore();
-
         db.collection("questions")
-                .whereEqualTo(
-                        "classId",
-                        classId
-                )
-                .whereEqualTo(
-                        "chapterId",
-                        chapterId
-                )
-                .whereEqualTo(
-                        "medium",
-                        studentMedium
-                )
+                .whereEqualTo("classId", classId)
+                .whereEqualTo("chapterId", chapterId)
+                .whereEqualTo("medium", studentMedium)
                 .get()
-                .addOnSuccessListener(
-                        querySnapshot -> {
+                .addOnSuccessListener(snapshot -> {
+                    questions.clear();
+                    questionIds.clear();
 
-                            questionContainer
-                                    .removeAllViews();
+                    for (QueryDocumentSnapshot document : snapshot) {
+                        Map<String, Object> data = document.getData();
 
-                            if (querySnapshot.isEmpty()) {
+                        String question = getStringValue(
+                                data, "question");
 
-                                showEmpty(
-                                        "No practice questions available for " +
-                                                studentMedium +
-                                                " medium yet."
-                                );
-
-                                return;
-                            }
-
-                            for (
-                                    QueryDocumentSnapshot document :
-                                    querySnapshot
-                            ) {
-
-                                String questionId =
-                                        document.getId();
-
-                                String question =
-                                        document.getString(
-                                                "question"
-                                        );
-
-                                String type =
-                                        document.getString(
-                                                "type"
-                                        );
-
-                                String optionA =
-                                        document.getString(
-                                                "optionA"
-                                        );
-
-                                String optionB =
-                                        document.getString(
-                                                "optionB"
-                                        );
-
-                                String optionC =
-                                        document.getString(
-                                                "optionC"
-                                        );
-
-                                String optionD =
-                                        document.getString(
-                                                "optionD"
-                                        );
-
-                                String answer =
-                                        document.getString(
-                                                "answer"
-                                        );
-
-                                String explanation =
-                                        document.getString(
-                                                "explanation"
-                                        );
-
-                                String imageUrl =
-                                        document.getString(
-                                                "imageUrl"
-                                        );
-
-                                if (question == null ||
-                                        question.trim().isEmpty()) {
-
-                                    continue;
-                                }
-
-                                if (type == null ||
-                                        type.trim().isEmpty()) {
-
-                                    type = "MCQ";
-                                }
-
-                                if (answer == null) {
-                                    answer = "";
-                                }
-
-                                questionIds.add(
-                                        questionId
-                                );
-
-                                addQuestionCard(
-                                        questionId,
-                                        question,
-                                        type,
-                                        optionA,
-                                        optionB,
-                                        optionC,
-                                        optionD,
-                                        answer,
-                                        explanation,
-                                        imageUrl
-                                );
-                            }
-
-                            if (questionIds.isEmpty()) {
-
-                                showEmpty(
-                                        "No valid practice questions available."
-                                );
-
-                            } else {
-
-                                statusView.setText(
-                                        "📝 " +
-                                                questionIds.size() +
-                                                " question" +
-                                                (
-                                                        questionIds.size() == 1
-                                                                ? ""
-                                                                : "s"
-                                                ) +
-                                                " available"
-                                );
-
-                                statusView.setTextColor(
-                                        successColor
-                                );
-
-                                updateScore();
-                            }
+                        if (question.trim().isEmpty()) {
+                            continue;
                         }
-                )
-                .addOnFailureListener(
-                        error -> {
 
-                            showError(
-                                    "Unable to load questions."
-                            );
+                        questions.add(data);
+                        questionIds.add(document.getId());
+                    }
 
-                            Toast.makeText(
-                                    StudentPracticeActivity.this,
-                                    "Unable to load questions",
-                                    Toast.LENGTH_SHORT
-                            ).show();
-                        }
-                );
+                    if (questions.isEmpty()) {
+                        showEmpty();
+                    } else {
+                        currentIndex = 0;
+                        score = 0;
+                        answeredCount = 0;
+                        showQuestion();
+                    }
+                })
+                .addOnFailureListener(e ->
+                        showError("Unable to load questions. Please try again."));
     }
 
-    private void addQuestionCard(
-            String questionId,
-            String question,
-            String type,
-            String optionA,
-            String optionB,
-            String optionC,
-            String optionD,
-            String answer,
-            String explanation,
-            String imageUrl
-    ) {
+    private void showLoading() {
+        content.removeAllViews();
 
-        LinearLayout card =
-                new LinearLayout(this);
+        ProgressBar loader = new ProgressBar(this);
+        LinearLayout.LayoutParams loaderParams =
+                new LinearLayout.LayoutParams(dp(48), dp(48));
+        loaderParams.gravity = Gravity.CENTER;
+        loaderParams.topMargin = dp(70);
+        content.addView(loader, loaderParams);
 
-        card.setOrientation(
-                LinearLayout.VERTICAL
+        TextView message = text("Loading practice questions...",
+                15, TEXT, true);
+        message.setGravity(Gravity.CENTER);
+        message.setPadding(0, dp(18), 0, dp(20));
+        content.addView(message);
+    }
+
+    private void showEmpty() {
+        content.removeAllViews();
+
+        addMessageCard(
+                "📚",
+                "No Questions Available",
+                "There are no practice questions for this chapter yet."
         );
 
-        card.setPadding(
-                20,
-                20,
-                20,
-                20
-        );
+        addButton(content, "Go Back", BLUE, v -> finish());
+    }
 
-        GradientDrawable background =
-                new GradientDrawable();
+    private void showError(String message) {
+        content.removeAllViews();
 
-        background.setColor(
-                Color.WHITE
-        );
+        addMessageCard("⚠️", "Something went wrong", message);
 
-        background.setCornerRadius(
-                26
-        );
+        addButton(content, "Try Again", BLUE, v -> loadQuestions());
+        addButton(content, "Go Back", DARK_BLUE, v -> finish());
+    }
 
-        card.setBackground(
-                background
-        );
+    private void addMessageCard(
+            String icon, String heading, String message) {
 
-        card.setElevation(5);
+        LinearLayout card = createCard();
+        card.setGravity(Gravity.CENTER);
+        card.setPadding(dp(20), dp(35), dp(20), dp(35));
 
-        TextView questionNumber =
-                new TextView(this);
+        TextView iconText = text(icon, 42, BLUE, true);
+        iconText.setGravity(Gravity.CENTER);
+        card.addView(iconText);
 
-        int number =
-                questionIds.indexOf(questionId) + 1;
+        TextView title = text(heading, 20, TEXT, true);
+        title.setGravity(Gravity.CENTER);
+        title.setPadding(0, dp(12), 0, dp(8));
+        card.addView(title);
 
-        questionNumber.setText(
-                "Question " +
-                        number +
-                        " • " +
-                        type.replace("_", " ")
-        );
+        TextView description = text(message, 14, Color.GRAY, false);
+        description.setGravity(Gravity.CENTER);
+        card.addView(description);
 
-        questionNumber.setTextSize(13);
+        content.addView(card);
+    }
 
-        questionNumber.setTextColor(
-                primaryColor
-        );
-
-        questionNumber.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        card.addView(
-                questionNumber
-        );
-
-        TextView questionText =
-                new TextView(this);
-
-        questionText.setText(
-                "❓ " + question
-        );
-
-        questionText.setTextSize(17);
-
-        questionText.setTextColor(
-                textPrimary
-        );
-
-        questionText.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        questionText.setLineSpacing(
-                2,
-                1.05f
-        );
-
-        LinearLayout.LayoutParams questionTextParams =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                );
-
-        questionTextParams.topMargin = 8;
-
-        card.addView(
-                questionText,
-                questionTextParams
-        );
-
-        if ("PICTURE_BASED".equalsIgnoreCase(type)
-                && imageUrl != null
-                && !imageUrl.trim().isEmpty()) {
-
-            addQuestionImage(
-                    card,
-                    imageUrl
-            );
+    private void showQuestion() {
+        if (currentIndex >= questions.size()) {
+            showResult();
+            return;
         }
 
-        if ("TRUE_FALSE".equalsIgnoreCase(type)) {
+        questionAnswered = false;
+        selectedAnswer = "";
 
-            addOption(
-                    card,
-                    "True",
-                    answer,
-                    questionId,
-                    explanation
-            );
+        content.removeAllViews();
 
-            addOption(
-                    card,
-                    "False",
-                    answer,
-                    questionId,
-                    explanation
-            );
+        Map<String, Object> data = questions.get(currentIndex);
 
-        } else if (
-                "FILL_BLANK".equalsIgnoreCase(type)
-                        || "NUMERICAL".equalsIgnoreCase(type)
-                        || "SHORT_ANSWER".equalsIgnoreCase(type)
-                        || "SPELLING".equalsIgnoreCase(type)
-                        || "REARRANGE".equalsIgnoreCase(type)
-                        || "WORD_PROBLEM".equalsIgnoreCase(type)
-                        || "PICTURE_BASED".equalsIgnoreCase(type)
-        ) {
+        LinearLayout stats = new LinearLayout(this);
+        stats.setOrientation(LinearLayout.HORIZONTAL);
+        stats.setGravity(Gravity.CENTER_VERTICAL);
 
-            String hint;
+        progressText = text(
+                "Question " + (currentIndex + 1) + " / " + questions.size(),
+                14, DARK_BLUE, true);
 
-            if ("SPELLING".equalsIgnoreCase(type)) {
+        scoreText = text("⭐ " + score + " Points", 14, BLUE, true);
+        scoreText.setGravity(Gravity.END);
 
-                hint =
-                        "Type the correct spelling";
+        stats.addView(progressText,
+                new LinearLayout.LayoutParams(0, -2, 1));
+        stats.addView(scoreText,
+                new LinearLayout.LayoutParams(0, -2, 1));
 
-            } else if ("REARRANGE".equalsIgnoreCase(type)) {
+        content.addView(stats);
 
-                hint =
-                        "Arrange/type the words in the correct order";
+        progressBar = new ProgressBar(
+                this, null, android.R.attr.progressBarStyleHorizontal);
 
-            } else if ("WORD_PROBLEM".equalsIgnoreCase(type)) {
+        progressBar.setMax(questions.size());
+        progressBar.setProgress(currentIndex + 1);
+        progressBar.setProgressTintList(
+                android.content.res.ColorStateList.valueOf(BLUE));
 
-                hint =
-                        "Solve the problem and type your answer";
+        LinearLayout.LayoutParams progressParams =
+                new LinearLayout.LayoutParams(-1, dp(8));
+        progressParams.topMargin = dp(12);
+        progressParams.bottomMargin = dp(18);
 
-            } else if ("PICTURE_BASED".equalsIgnoreCase(type)) {
+        content.addView(progressBar, progressParams);
 
-                hint =
-                        "Type the answer related to the picture";
+        questionCard = createCard();
+        questionCard.setPadding(dp(18), dp(20), dp(18), dp(20));
 
-            } else {
+        TextView typeLabel = text(
+                getQuestionType(data).replace("_", " "),
+                12, BLUE, true);
 
-                hint =
-                        "Type your answer";
-            }
+        typeLabel.setBackground(rounded(
+                Color.rgb(230, 239, 255), 12, 12, 12, 12));
+        typeLabel.setPadding(dp(12), dp(7), dp(12), dp(7));
 
-            addTextAnswer(
-                    card,
-                    answer,
-                    questionId,
-                    explanation,
-                    type,
-                    hint
-            );
+        questionCard.addView(typeLabel);
 
-        } else if ("MATCH".equalsIgnoreCase(type)) {
+        questionText = text(
+                getStringValue(data, "question"),
+                19, TEXT, true);
 
-            addMatchQuestion(
-                    card,
-                    optionA,
-                    optionB,
-                    optionC,
-                    optionD,
-                    answer,
-                    questionId,
-                    explanation
-            );
+        questionText.setPadding(0, dp(18), 0, dp(12));
+        questionCard.addView(questionText);
 
+        String imageUrl = getStringValue(data, "imageUrl");
+
+        if (!imageUrl.isEmpty()) {
+            addQuestionImage(imageUrl);
+        }
+
+        optionsContainer = new LinearLayout(this);
+        optionsContainer.setOrientation(LinearLayout.VERTICAL);
+        optionsContainer.setPadding(0, dp(12), 0, 0);
+
+        questionCard.addView(optionsContainer);
+
+        content.addView(questionCard);
+
+        feedbackText = text("", 15, GREEN, true);
+        feedbackText.setPadding(dp(8), dp(12), dp(8), dp(4));
+        content.addView(feedbackText);
+
+        explanationText = text("", 14, TEXT, false);
+        explanationText.setPadding(dp(8), dp(4), dp(8), dp(12));
+        content.addView(explanationText);
+
+        showAnswerControls(data);
+
+        nextButton = createButton("Next Question", BLUE);
+        nextButton.setVisibility(View.GONE);
+        nextButton.setOnClickListener(v -> {
+            currentIndex++;
+            showQuestion();
+        });
+
+        content.addView(nextButton);
+
+        animateView(questionCard);
+    }
+
+    private void showAnswerControls(Map<String, Object> data) {
+        String type = getQuestionType(data);
+
+        answerInput = null;
+        submitButton = null;
+
+        if (type.equals("TRUE_FALSE")) {
+            addOption("True");
+            addOption("False");
+        } else if (type.equals("MCQ")
+                || type.equals("PICTURE_BASED")) {
+
+            addOptionFromData(data, "optionA");
+            addOptionFromData(data, "optionB");
+            addOptionFromData(data, "optionC");
+            addOptionFromData(data, "optionD");
+
+        } else if (type.equals("MATCH")) {
+            createTextAnswerInput(false);
         } else {
-
-            if (optionA != null &&
-                    !optionA.trim().isEmpty()) {
-
-                addOption(
-                        card,
-                        optionA,
-                        answer,
-                        questionId,
-                        explanation
-                );
-            }
-
-            if (optionB != null &&
-                    !optionB.trim().isEmpty()) {
-
-                addOption(
-                        card,
-                        optionB,
-                        answer,
-                        questionId,
-                        explanation
-                );
-            }
-
-            if (optionC != null &&
-                    !optionC.trim().isEmpty()) {
-
-                addOption(
-                        card,
-                        optionC,
-                        answer,
-                        questionId,
-                        explanation
-                );
-            }
-
-            if (optionD != null &&
-                    !optionD.trim().isEmpty()) {
-
-                addOption(
-                        card,
-                        optionD,
-                        answer,
-                        questionId,
-                        explanation
-                );
-            }
+            createTextAnswerInput(
+                    type.equals("NUMERICAL")
+                            || type.equals("WORD_PROBLEM"));
         }
+    }
+
+    private void addOptionFromData(
+            Map<String, Object> data, String key) {
+
+        String option = getStringValue(data, key);
+
+        if (!option.isEmpty()) {
+            addOption(option);
+        }
+    }
+
+    private void addOption(String option) {
+        Button button = createButton(option, Color.WHITE);
+        button.setTextColor(TEXT);
+        button.setGravity(Gravity.CENTER_VERTICAL);
+        button.setStrokeColor(BLUE);
+
+        button.setOnClickListener(v -> {
+            if (questionAnswered) return;
+
+            selectedAnswer = option;
+            checkAnswer(option);
+        });
 
         LinearLayout.LayoutParams params =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                );
+                new LinearLayout.LayoutParams(-1, dp(52));
 
-        params.setMargins(
-                0,
-                0,
-                0,
-                18
-        );
+        params.topMargin = dp(7);
+        params.bottomMargin = dp(7);
 
-        questionContainer.addView(
-                card,
-                params
-        );
-
-        addPressAnimation(card);
+        optionsContainer.addView(button, params);
     }
 
-    private void addQuestionImage(
-            LinearLayout card,
-            String imageUrl
-    ) {
-
-        ImageView imageView =
-                new ImageView(this);
-
-        imageView.setAdjustViewBounds(true);
-
-        imageView.setScaleType(
-                ImageView.ScaleType.CENTER_INSIDE
-        );
-
-        GradientDrawable imageBackground =
-                new GradientDrawable();
-
-        imageBackground.setColor(
-                backgroundColor
-        );
-
-        imageBackground.setCornerRadius(20);
-
-        imageView.setBackground(
-                imageBackground
-        );
-
-        LinearLayout.LayoutParams imageParams =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        300
-                );
-
-        imageParams.topMargin = 12;
-
-        card.addView(
-                imageView,
-                imageParams
-        );
-
-        loadImageFromUrl(
-                imageUrl,
-                imageView
-        );
-    }
-
-    private void loadImageFromUrl(
-            String imageUrl,
-            ImageView imageView
-    ) {
-
-        new Thread(() -> {
-
-            try {
-
-                URL url =
-                        new URL(imageUrl);
-
-                HttpURLConnection connection =
-                        (HttpURLConnection)
-                                url.openConnection();
-
-                connection.setConnectTimeout(
-                        10000
-                );
-
-                connection.setReadTimeout(
-                        10000
-                );
-
-                connection.setDoInput(true);
-
-                connection.connect();
-
-                InputStream inputStream =
-                        connection.getInputStream();
-
-                Bitmap bitmap =
-                        BitmapFactory.decodeStream(
-                                inputStream
-                        );
-
-                inputStream.close();
-
-                connection.disconnect();
-
-                runOnUiThread(() -> {
-
-                    if (bitmap != null) {
-
-                        imageView.setImageBitmap(
-                                bitmap
-                        );
-
-                    } else {
-
-                        imageView.setVisibility(
-                                View.GONE
-                        );
-                    }
-                });
-
-            } catch (Exception error) {
-
-                runOnUiThread(() ->
-                        imageView.setVisibility(
-                                View.GONE
-                        )
-                );
-            }
-
-        }).start();
-    }
-
-    private void addMatchQuestion(
-            LinearLayout card,
-            String optionA,
-            String optionB,
-            String optionC,
-            String optionD,
-            String correctAnswer,
-            String questionId,
-            String explanation
-    ) {
-
-        TextView instruction =
-                new TextView(this);
-
-        instruction.setText(
-                "Match the pairs using the format shown below."
-        );
-
-        instruction.setTextSize(14);
-
-        instruction.setTextColor(
-                textSecondary
-        );
-
-        instruction.setPadding(
-                0,
-                12,
-                0,
-                4
-        );
-
-        card.addView(
-                instruction
-        );
-
-        if (optionA != null &&
-                !optionA.trim().isEmpty()) {
-
-            addMatchRow(
-                    card,
-                    "A",
-                    optionA
-            );
-        }
-
-        if (optionB != null &&
-                !optionB.trim().isEmpty()) {
-
-            addMatchRow(
-                    card,
-                    "B",
-                    optionB
-            );
-        }
-
-        if (optionC != null &&
-                !optionC.trim().isEmpty()) {
-
-            addMatchRow(
-                    card,
-                    "C",
-                    optionC
-            );
-        }
-
-        if (optionD != null &&
-                !optionD.trim().isEmpty()) {
-
-            addMatchRow(
-                    card,
-                    "D",
-                    optionD
-            );
-        }
-
-        EditText matchInput =
-                new EditText(this);
-
-        matchInput.setHint(
-                "Example: A-1, B-2, C-3"
-        );
-
-        matchInput.setTextSize(16);
-
-        matchInput.setSingleLine(true);
-
-        matchInput.setInputType(
-                InputType.TYPE_CLASS_TEXT
-        );
-
-        GradientDrawable inputBackground =
-                new GradientDrawable();
-
-        inputBackground.setColor(
-                backgroundColor
-        );
-
-        inputBackground.setCornerRadius(20);
-
-        inputBackground.setStroke(
-                2,
-                Color.rgb(226, 232, 240)
-        );
-
-        matchInput.setBackground(
-                inputBackground
-        );
-
-        LinearLayout.LayoutParams inputParams =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        58
-                );
-
-        inputParams.topMargin = 10;
-
-        card.addView(
-                matchInput,
-                inputParams
-        );
-
-        Button submitButton =
-                createSubmitButton();
-
-        LinearLayout.LayoutParams submitParams =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        55
-                );
-
-        submitParams.topMargin = 10;
-
-        card.addView(
-                submitButton,
-                submitParams
-        );
-
-        addPressAnimation(
-                submitButton
-        );
-
-        submitButton.setOnClickListener(
-                view -> {
-
-                    if (!submitButton.isEnabled()
-                            || practiceFinished) {
-
-                        return;
-                    }
-
-                    String entered =
-                            matchInput
-                                    .getText()
-                                    .toString()
-                                    .trim();
-
-                    if (entered.isEmpty()) {
-
-                        Toast.makeText(
-                                this,
-                                "Please enter the matching answer.",
-                                Toast.LENGTH_SHORT
-                        ).show();
-
-                        return;
-                    }
-
-                    submitButton.setEnabled(
-                            false
-                    );
-
-                    matchInput.setEnabled(
-                            false
-                    );
-
-                    answered++;
-
-                    boolean isCorrect =
-                            checkMatchAnswer(
-                                    entered,
-                                    correctAnswer
-                            );
-
-                    if (isCorrect) {
-
-                        score++;
-
-                        setButtonBackground(
-                                submitButton,
-                                successColor
-                        );
-
-                        submitButton.setText(
-                                "✓ Correct"
-                        );
-
-                        Toast.makeText(
-                                this,
-                                "Correct! 🎉",
-                                Toast.LENGTH_SHORT
-                        ).show();
-
-                    } else {
-
-                        setButtonBackground(
-                                submitButton,
-                                errorColor
-                        );
-
-                        submitButton.setText(
-                                "✗ Wrong"
-                        );
-
-                        Toast.makeText(
-                                this,
-                                "Wrong matching.",
-                                Toast.LENGTH_SHORT
-                        ).show();
-                    }
-
-                    addExplanation(
-                            card,
-                            explanation
-                    );
-
-                    updateScore();
-
-                    checkPracticeFinished();
-                }
-        );
-    }
-
-    private void addMatchRow(
-            LinearLayout card,
-            String label,
-            String value
-    ) {
-
-        TextView row =
-                new TextView(this);
-
-        row.setText(
-                label + "  →  " + value
-        );
-
-        row.setTextSize(16);
-
-        row.setTextColor(
-                textPrimary
-        );
-
-        row.setPadding(
-                14,
-                12,
-                14,
-                12
-        );
-
-        GradientDrawable background =
-                new GradientDrawable();
-
-        background.setColor(
-                Color.rgb(248, 250, 252)
-        );
-
-        background.setCornerRadius(16);
-
-        row.setBackground(
-                background
-        );
+    private void createTextAnswerInput(boolean numeric) {
+        answerInput = new EditText(this);
+        answerInput.setSingleLine(false);
+        answerInput.setMinLines(1);
+        answerInput.setMaxLines(3);
+        answerInput.setTextSize(15);
+        answerInput.setTextColor(TEXT);
+        answerInput.setHint("Type your answer here...");
+        answerInput.setPadding(dp(14), dp(12), dp(14), dp(12));
+        answerInput.setBackground(rounded(Color.WHITE,
+                2, 2, 2, 2));
+        answerInput.setInputType(numeric
+                ? InputType.TYPE_CLASS_NUMBER
+                    | InputType.TYPE_NUMBER_FLAG_DECIMAL
+                : InputType.TYPE_CLASS_TEXT
+                    | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+
+        optionsContainer.addView(answerInput,
+                new LinearLayout.LayoutParams(-1, dp(55)));
+
+        submitButton = createButton("Submit Answer", BLUE);
 
         LinearLayout.LayoutParams params =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                );
+                new LinearLayout.LayoutParams(-1, dp(50));
+        params.topMargin = dp(14);
 
-        params.topMargin = 6;
+        optionsContainer.addView(submitButton, params);
 
-        card.addView(
-                row,
-                params
-        );
+        submitButton.setOnClickListener(v -> {
+            if (questionAnswered) return;
+
+            String answer = answerInput.getText()
+                    .toString().trim();
+
+            if (answer.isEmpty()) {
+                answerInput.setError("Please enter your answer");
+                return;
+            }
+
+            checkAnswer(answer);
+        });
     }
 
-    private boolean checkMatchAnswer(
-            String entered,
-            String correctAnswer
-    ) {
+    private void checkAnswer(String userAnswer) {
+        if (questionAnswered || currentIndex >= questions.size()) {
+            return;
+        }
 
-        if (correctAnswer == null ||
-                correctAnswer.trim().isEmpty()) {
+        questionAnswered = true;
+        answeredCount++;
 
+        Map<String, Object> data = questions.get(currentIndex);
+
+        String correctAnswer = getStringValue(data, "answer");
+        String type = getQuestionType(data);
+
+        boolean correct = isCorrectAnswer(
+                userAnswer, correctAnswer, type);
+
+        if (correct) {
+            score++;
+            feedbackText.setText("🎉 Correct Answer! Well done!");
+            feedbackText.setTextColor(GREEN);
+        } else {
+            feedbackText.setText(
+                    "❌ Incorrect. Correct answer: " + correctAnswer);
+            feedbackText.setTextColor(RED);
+        }
+
+        String explanation = getStringValue(data, "explanation");
+
+        if (!explanation.isEmpty()) {
+            explanationText.setText("💡 Explanation: " + explanation);
+        } else {
+            explanationText.setText("");
+        }
+
+        if (answerInput != null) {
+            answerInput.setEnabled(false);
+        }
+
+        if (submitButton != null) {
+            submitButton.setEnabled(false);
+        }
+
+        for (int i = 0; i < optionsContainer.getChildCount(); i++) {
+            View child = optionsContainer.getChildAt(i);
+
+            if (child instanceof Button) {
+                child.setEnabled(false);
+            }
+        }
+
+        scoreText.setText("⭐ " + score + " Points");
+
+        if (currentIndex == questions.size() - 1) {
+            nextButton.setText("View Results");
+        } else {
+            nextButton.setText("Next Question");
+        }
+
+        nextButton.setVisibility(View.VISIBLE);
+    }
+
+    private boolean isCorrectAnswer(
+            String userAnswer, String correctAnswer, String type) {
+
+        if (userAnswer == null || correctAnswer == null) {
             return false;
         }
 
-        return normalizeMatch(
-                entered
-        ).equals(
-                normalizeMatch(
-                        correctAnswer
-                )
-        );
-    }
+        String user = userAnswer.trim();
+        String correct = correctAnswer.trim();
 
-    private String normalizeMatch(
-            String value
-    ) {
-
-        return value
-                .toLowerCase(Locale.ROOT)
-                .replace(" ", "")
-                .replace("→", "-")
-                .replace(":", "-")
-                .replace(";", ",")
-                .trim();
-    }
-
-    private void addOption(
-            LinearLayout card,
-            String option,
-            String correctAnswer,
-            String questionId,
-            String explanation
-    ) {
-
-        Button button =
-                new Button(this);
-
-        button.setText(option);
-
-        button.setAllCaps(false);
-
-        button.setTextSize(15);
-
-        button.setTextColor(
-                textPrimary
-        );
-
-        button.setGravity(
-                Gravity.CENTER
-        );
-
-        GradientDrawable background =
-                new GradientDrawable();
-
-        background.setColor(
-                Color.rgb(241, 245, 249)
-        );
-
-        background.setCornerRadius(24);
-
-        button.setBackground(
-                background
-        );
-
-        LinearLayout.LayoutParams params =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        55
-                );
-
-        params.topMargin = 10;
-
-        card.addView(
-                button,
-                params
-        );
-
-        addPressAnimation(
-                button
-        );
-
-        button.setOnClickListener(
-                view -> {
-
-                    if (!button.isEnabled()
-                            || practiceFinished) {
-
-                        return;
-                    }
-
-                    disableQuestionOptions(
-                            card
-                    );
-
-                    answered++;
-
-                    String selected =
-                            option.trim();
-
-                    String correct =
-                            correctAnswer == null
-                                    ? ""
-                                    : correctAnswer.trim();
-
-                    boolean isCorrect =
-                            selected.equalsIgnoreCase(
-                                    correct
-                            );
-
-                    showAnswerResult(
-                            button,
-                            isCorrect,
-                            explanation
-                    );
-
-                    if (isCorrect) {
-
-                        score++;
-
-                        Toast.makeText(
-                                this,
-                                "Correct! 🎉",
-                                Toast.LENGTH_SHORT
-                        ).show();
-
-                    } else {
-
-                        Toast.makeText(
-                                this,
-                                "Try the next one!",
-                                Toast.LENGTH_SHORT
-                        ).show();
-                    }
-
-                    updateScore();
-
-                    checkPracticeFinished();
-                }
-        );
-    }
-
-    private void addTextAnswer(
-            LinearLayout card,
-            String correctAnswer,
-            String questionId,
-            String explanation,
-            String type,
-            String hint
-    ) {
-
-        EditText answerInput =
-                new EditText(this);
-
-        answerInput.setHint(hint);
-
-        answerInput.setTextSize(16);
-
-        answerInput.setSingleLine(true);
-
-        answerInput.setPadding(
-                16,
-                0,
-                16,
-                0
-        );
-
-        if ("NUMERICAL".equalsIgnoreCase(type)
-                || "WORD_PROBLEM".equalsIgnoreCase(type)) {
-
-            answerInput.setInputType(
-                    InputType.TYPE_CLASS_NUMBER
-                            | InputType.TYPE_NUMBER_FLAG_DECIMAL
-                            | InputType.TYPE_NUMBER_FLAG_SIGNED
-            );
-
-        } else {
-
-            answerInput.setInputType(
-                    InputType.TYPE_CLASS_TEXT
-            );
+        if (type.equals("MATCH")) {
+            return normalizeMatch(user).equals(
+                    normalizeMatch(correct));
         }
 
-        GradientDrawable inputBackground =
-                new GradientDrawable();
+        if (type.equals("NUMERICAL")
+                || type.equals("WORD_PROBLEM")) {
 
-        inputBackground.setColor(
-                backgroundColor
-        );
+            try {
+                double userNumber = Double.parseDouble(user);
+                double correctNumber =
+                        Double.parseDouble(correct);
 
-        inputBackground.setCornerRadius(20);
+                return Math.abs(userNumber - correctNumber) < 0.0001;
+            } catch (Exception ignored) {
+                return user.equalsIgnoreCase(correct);
+            }
+        }
 
-        inputBackground.setStroke(
-                2,
-                Color.rgb(226, 232, 240)
-        );
-
-        answerInput.setBackground(
-                inputBackground
-        );
-
-        LinearLayout.LayoutParams inputParams =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        58
-                );
-
-        inputParams.topMargin = 12;
-
-        card.addView(
-                answerInput,
-                inputParams
-        );
-
-        Button submitButton =
-                createSubmitButton();
-
-        LinearLayout.LayoutParams submitParams =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        55
-                );
-
-        submitParams.topMargin = 10;
-
-        card.addView(
-                submitButton,
-                submitParams
-        );
-
-        addPressAnimation(
-                submitButton
-        );
-
-        submitButton.setOnClickListener(
-                view -> {
-
-                    if (!submitButton.isEnabled()
-                            || practiceFinished) {
-
-                        return;
-                    }
-
-                    String entered =
-                            answerInput
-                                    .getText()
-                                    .toString()
-                                    .trim();
-
-                    if (entered.isEmpty()) {
-
-                        Toast.makeText(
-                                this,
-                                "Please enter an answer.",
-                                Toast.LENGTH_SHORT
-                        ).show();
-
-                        return;
-                    }
-
-                    submitButton.setEnabled(
-                            false
-                    );
-
-                    answerInput.setEnabled(
-                            false
-                    );
-
-                    answered++;
-
-                    boolean isCorrect =
-                            checkTextAnswer(
-                                    entered,
-                                    correctAnswer,
-                                    type
-                            );
-
-                    if (isCorrect) {
-
-                        score++;
-
-                        setButtonBackground(
-                                submitButton,
-                                successColor
-                        );
-
-                        submitButton.setText(
-                                "✓ Correct"
-                        );
-
-                        Toast.makeText(
-                                this,
-                                "Correct! 🎉",
-                                Toast.LENGTH_SHORT
-                        ).show();
-
-                    } else {
-
-                        setButtonBackground(
-                                submitButton,
-                                errorColor
-                        );
-
-                        submitButton.setText(
-                                "✗ Wrong"
-                        );
-
-                        Toast.makeText(
-                                this,
-                                "Wrong answer.",
-                                Toast.LENGTH_SHORT
-                        ).show();
-                    }
-
-                    addExplanation(
-                            card,
-                            explanation
-                    );
-
-                    updateScore();
-
-                    checkPracticeFinished();
-                }
-        );
+        return user.equalsIgnoreCase(correct);
     }
 
-    private Button createSubmitButton() {
+    private String normalizeMatch(String value) {
+        return value.toLowerCase(Locale.ROOT)
+                .replaceAll("\\s+", "");
+    }
 
-        Button button =
-                new Button(this);
+    private void addQuestionImage(String imageUrl) {
+        ImageView image = new ImageView(this);
+        image.setAdjustViewBounds(true);
+        image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        image.setBackground(rounded(BG, 12, 12, 12, 12));
 
-        button.setText(
-                "Submit Answer"
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(-1, dp(190));
+
+        params.topMargin = dp(8);
+        params.bottomMargin = dp(8);
+
+        questionCard.addView(image, params);
+
+        imageExecutor.execute(() -> {
+            HttpURLConnection connection = null;
+
+            try {
+                URL url = new URL(imageUrl);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setConnectTimeout(8000);
+                connection.setReadTimeout(8000);
+                connection.setDoInput(true);
+                connection.connect();
+
+                Bitmap bitmap = BitmapFactory.decodeStream(
+                        connection.getInputStream());
+
+                if (bitmap != null && !isFinishing()) {
+                    runOnUiThread(() -> image.setImageBitmap(bitmap));
+                }
+
+            } catch (Exception ignored) {
+                runOnUiThread(() ->
+                        image.setVisibility(View.GONE));
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
+            }
+        });
+    }
+
+    private void showResult() {
+        if (practiceFinished) return;
+
+        practiceFinished = true;
+
+        content.removeAllViews();
+
+        LinearLayout resultCard = createCard();
+        resultCard.setGravity(Gravity.CENTER);
+        resultCard.setPadding(dp(22), dp(28), dp(22), dp(28));
+
+        TextView trophy = text("🏆", 55, YELLOW, true);
+        trophy.setGravity(Gravity.CENTER);
+        resultCard.addView(trophy);
+
+        TextView heading = text(
+                "Practice Completed!",
+                23, DARK_BLUE, true);
+        heading.setGravity(Gravity.CENTER);
+        heading.setPadding(0, dp(12), 0, dp(12));
+        resultCard.addView(heading);
+
+        TextView scoreResult = text(
+                score + " / " + questions.size(),
+                38, BLUE, true);
+        scoreResult.setGravity(Gravity.CENTER);
+        resultCard.addView(scoreResult);
+
+        int percentage = questions.isEmpty()
+                ? 0
+                : (score * 100 / questions.size());
+
+        TextView percentageText = text(
+                percentage + "% Accuracy",
+                17, GREEN, true);
+        percentageText.setGravity(Gravity.CENTER);
+        percentageText.setPadding(0, dp(8), 0, dp(18));
+        resultCard.addView(percentageText);
+
+        TextView answered = text(
+                "Questions Answered: " + answeredCount,
+                15, TEXT, false);
+        answered.setGravity(Gravity.CENTER);
+        resultCard.addView(answered);
+
+        TextView points = text(
+                "⭐ Points Earned: " + (score * 5),
+                17, DARK_BLUE, true);
+        points.setGravity(Gravity.CENTER);
+        points.setPadding(0, dp(14), 0, dp(5));
+        resultCard.addView(points);
+
+        content.addView(resultCard);
+
+        addButton(content, "Practice Again", BLUE, v -> {
+            currentIndex = 0;
+            score = 0;
+            answeredCount = 0;
+            practiceFinished = false;
+            resultSaved = false;
+            showQuestion();
+        });
+
+        addButton(content, "Back to Lesson", DARK_BLUE, v -> finish());
+
+        savePracticeResult();
+    }
+
+    private void savePracticeResult() {
+        if (resultSaved) return;
+
+        resultSaved = true;
+
+        if (auth.getCurrentUser() == null) {
+            Toast.makeText(this,
+                    "Please login again to save progress.",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String uid = auth.getCurrentUser().getUid();
+
+        ProgressManager.saveQuizResult(
+                uid,
+                classId,
+                chapterId,
+                score,
+                questions.size()
         );
 
+        if (score > 0) {
+            ProgressManager.addPoints(uid, score * 5);
+        }
+
+        ProgressManager.updateStreak(uid);
+    }
+
+    private String getQuestionType(Map<String, Object> data) {
+        String type = getStringValue(data, "type");
+
+        if (type.isEmpty()) {
+            return "MCQ";
+        }
+
+        return type.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String getStringValue(
+            Map<String, Object> data, String key) {
+
+        Object value = data.get(key);
+
+        return value == null ? "" : String.valueOf(value);
+    }
+
+    private LinearLayout createCard() {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(16), dp(16), dp(16), dp(16));
+        card.setBackground(rounded(Color.WHITE,
+                18, 18, 18, 18));
+
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(-1, -2);
+
+        params.bottomMargin = dp(16);
+        card.setLayoutParams(params);
+
+        return card;
+    }
+
+    private TextView text(
+            String value, int size, int color, boolean bold) {
+
+        TextView view = new TextView(this);
+        view.setText(value);
+        view.setTextSize(size);
+        view.setTextColor(color);
+
+        if (bold) {
+            view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        }
+
+        return view;
+    }
+
+    private Button createButton(String label, int color) {
+        Button button = new Button(this);
+        button.setText(label);
+        button.setTextSize(14);
         button.setAllCaps(false);
+        button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        button.setTextColor(color == Color.WHITE ? TEXT : Color.WHITE);
 
-        button.setTextSize(15);
-
-        button.setTextColor(
-                Color.WHITE
-        );
-
-        GradientDrawable background =
-                new GradientDrawable();
-
-        background.setColor(
-                primaryColor
-        );
-
-        background.setCornerRadius(24);
-
-        button.setBackground(
-                background
-        );
+        button.setBackground(rounded(color, 12, 12, 12, 12));
 
         return button;
     }
 
-    private boolean checkTextAnswer(
-            String entered,
-            String correctAnswer,
-            String type
-    ) {
+    private void addButton(
+            LinearLayout parent,
+            String label,
+            int color,
+            View.OnClickListener listener) {
 
-        if (correctAnswer == null ||
-                correctAnswer.trim().isEmpty()) {
+        Button button = createButton(label, color);
 
-            return false;
-        }
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(-1, dp(50));
 
-        String expected =
-                correctAnswer.trim();
+        params.topMargin = dp(7);
+        params.bottomMargin = dp(7);
 
-        if ("NUMERICAL".equalsIgnoreCase(type)
-                || "WORD_PROBLEM".equalsIgnoreCase(type)) {
-
-            try {
-
-                double enteredNumber =
-                        Double.parseDouble(
-                                entered
-                        );
-
-                double expectedNumber =
-                        Double.parseDouble(
-                                expected
-                        );
-
-                return Math.abs(
-                        enteredNumber -
-                                expectedNumber
-                ) < 0.000001;
-
-            } catch (Exception error) {
-
-                return normalizeText(
-                        entered
-                ).equals(
-                        normalizeText(
-                                expected
-                        )
-                );
-            }
-        }
-
-        if ("REARRANGE".equalsIgnoreCase(type)) {
-
-            return normalizeRearrange(
-                    entered
-            ).equals(
-                    normalizeRearrange(
-                            expected
-                    )
-            );
-        }
-
-        return normalizeText(
-                entered
-        ).equals(
-                normalizeText(
-                        expected
-                )
-        );
+        parent.addView(button, params);
+        button.setOnClickListener(listener);
     }
 
-    private String normalizeText(
-            String value
-    ) {
+    private GradientDrawable rounded(
+            int color, int radius,
+            int topLeft, int topRight,
+            int bottomLeft) {
 
-        return value
-                .trim()
-                .replaceAll(
-                        "\\s+",
-                        " "
-                )
-                .toLowerCase(
-                        Locale.ROOT
-                );
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+
+        drawable.setCornerRadii(new float[]{
+                dp(topLeft), dp(topLeft),
+                dp(topRight), dp(topRight),
+                dp(bottomLeft), dp(bottomLeft),
+                dp(radius), dp(radius)
+        });
+
+        return drawable;
     }
 
-    private String normalizeRearrange(
-            String value
-    ) {
+    private void animateView(View view) {
+        AlphaAnimation animation =
+                new AlphaAnimation(0f, 1f);
 
-        return value
-                .trim()
-                .replaceAll(
-                        "\\s+",
-                        " "
-                )
-                .toLowerCase(
-                        Locale.ROOT
-                );
+        animation.setDuration(350);
+        view.startAnimation(animation);
     }
 
-    private void showAnswerResult(
-            Button button,
-            boolean isCorrect,
-            String explanation
-    ) {
-
-        if (isCorrect) {
-
-            button.setText(
-                    "✓ " + button.getText()
-            );
-
-            setButtonBackground(
-                    button,
-                    successColor
-            );
-
-        } else {
-
-            button.setText(
-                    "✗ " + button.getText()
-            );
-
-            setButtonBackground(
-                    button,
-                    errorColor
-            );
-        }
-
-        button.setTextColor(
-                Color.WHITE
-        );
-
-        if (explanation != null &&
-                !explanation.trim().isEmpty()) {
-
-            TextView explanationView =
-                    new TextView(this);
-
-            explanationView.setText(
-                    "💡 " + explanation
-            );
-
-            explanationView.setTextSize(14);
-
-            explanationView.setTextColor(
-                    Color.rgb(71, 85, 105)
-            );
-
-            explanationView.setPadding(
-                    0,
-                    10,
-                    0,
-                    0
-            );
-
-            View parent =
-                    (View) button.getParent();
-
-            if (parent instanceof LinearLayout) {
-
-                ((LinearLayout) parent)
-                        .addView(
-                                explanationView
-                        );
-            }
-        }
+    private int dp(int value) {
+        return (int) (value * getResources()
+                .getDisplayMetrics().density);
     }
 
-    private void addExplanation(
-            LinearLayout card,
-            String explanation
-    ) {
-
-        if (explanation == null ||
-                explanation.trim().isEmpty()) {
-
-            return;
-        }
-
-        TextView explanationView =
-                new TextView(this);
-
-        explanationView.setText(
-                "💡 " + explanation
-        );
-
-        explanationView.setTextSize(14);
-
-        explanationView.setTextColor(
-                Color.rgb(71, 85, 105)
-        );
-
-        explanationView.setPadding(
-                0,
-                10,
-                0,
-                0
-        );
-
-        card.addView(
-                explanationView
-        );
-    }
-
-    private void disableQuestionOptions(
-            LinearLayout card
-    ) {
-
-        for (
-                int i = 0;
-                i < card.getChildCount();
-                i++
-        ) {
-
-            View child =
-                    card.getChildAt(i);
-
-            if (child instanceof Button) {
-
-                child.setEnabled(
-                        false
-                );
-            }
-        }
-    }
-
-    private void setButtonBackground(
-            Button button,
-            int color
-    ) {
-
-        GradientDrawable background =
-                new GradientDrawable();
-
-        background.setColor(color);
-
-        background.setCornerRadius(24);
-
-        button.setBackground(
-                background
-        );
-    }
-
-    private void updateScore() {
-
-        if (scoreText == null) {
-            return;
-        }
-
-        scoreText.setText(
-                "⭐ Score: " +
-                        score +
-                        " / " +
-                        questionIds.size()
-        );
-    }
-
-    private void checkPracticeFinished() {
-
-        if (practiceFinished) {
-            return;
-        }
-
-        if (questionIds.isEmpty()) {
-            return;
-        }
-
-        if (answered >= questionIds.size()) {
-
-            finishPractice();
-        }
-    }
-
-    private void finishPractice() {
-
-        if (practiceFinished) {
-            return;
-        }
-
-        practiceFinished = true;
-
-        int total =
-                questionIds.size();
-
-        FirebaseUser user =
-                auth.getCurrentUser();
-
-        if (user != null &&
-                total > 0) {
-
-            progressManager.saveQuizResult(
-                    user.getUid(),
-                    classId,
-                    chapterId,
-                    score,
-                    total
-            );
-
-            progressManager.addPoints(
-                    user.getUid(),
-                    score * 5
-            );
-
-            progressManager.updateStreak(
-                    user.getUid()
-            );
-        }
-
-        if (statusView != null) {
-
-            statusView.setText(
-                    "🎉 Practice completed!"
-            );
-
-            statusView.setTextColor(
-                    successColor
-            );
-        }
-
-        Toast.makeText(
-                this,
-                "Practice complete! Score: " +
-                        score +
-                        "/" +
-                        total +
-                        " 🎉",
-                Toast.LENGTH_LONG
-        ).show();
-    }
-
-    private void addPressAnimation(
-            View view
-    ) {
-
-        view.setOnTouchListener(
-                (v, event) -> {
-
-                    if (event.getAction() ==
-                            MotionEvent.ACTION_DOWN) {
-
-                        v.animate()
-                                .scaleX(0.97f)
-                                .scaleY(0.97f)
-                                .setDuration(100)
-                                .start();
-
-                    } else if (
-                            event.getAction() ==
-                                    MotionEvent.ACTION_UP
-                                    ||
-                                    event.getAction() ==
-                                            MotionEvent.ACTION_CANCEL
-                    ) {
-
-                        v.animate()
-                                .scaleX(1f)
-                                .scaleY(1f)
-                                .setDuration(100)
-                                .start();
-                    }
-
-                    return false;
-                }
-        );
-    }
-
-    private void showLoading() {
-
-        if (statusView != null) {
-
-            statusView.setText(
-                    "⏳ Loading practice questions..."
-            );
-
-            statusView.setTextColor(
-                    primaryColor
-            );
-        }
-
-        if (questionContainer != null) {
-
-            questionContainer.removeAllViews();
-        }
-    }
-
-    private void showEmpty(
-            String message
-    ) {
-
-        if (questionContainer == null) {
-            return;
-        }
-
-        questionContainer.removeAllViews();
-
-        if (statusView != null) {
-
-            statusView.setText(
-                    "📝 No questions available"
-            );
-
-            statusView.setTextColor(
-                    textSecondary
-            );
-        }
-
-        TextView messageView =
-                new TextView(this);
-
-        messageView.setText(
-                message
-        );
-
-        messageView.setTextSize(16);
-
-        messageView.setTextColor(
-                textSecondary
-        );
-
-        messageView.setGravity(
-                Gravity.CENTER
-        );
-
-        messageView.setPadding(
-                20,
-                50,
-                20,
-                50
-        );
-
-        questionContainer.addView(
-                messageView,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
-        );
-
-        updateScore();
-    }
-
-    private void showError(
-            String message
-    ) {
-
-        if (questionContainer != null) {
-
-            questionContainer.removeAllViews();
-
-            TextView errorView =
-                    new TextView(this);
-
-            errorView.setText(
-                    "⚠️ " + message
-            );
-
-            errorView.setTextSize(16);
-
-            errorView.setTextColor(
-                    errorColor
-            );
-
-            errorView.setGravity(
-                    Gravity.CENTER
-            );
-
-            errorView.setPadding(
-                    20,
-                    50,
-                    20,
-                    50
-            );
-
-            questionContainer.addView(
-                    errorView,
-                    new LinearLayout.LayoutParams(
-                            -1,
-                            -2
-                    )
-            );
-        }
-
-        if (statusView != null) {
-
-            statusView.setText(
-                    "Something went wrong"
-            );
-
-            statusView.setTextColor(
-                    errorColor
-            );
-        }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        imageExecutor.shutdownNow();
     }
 }

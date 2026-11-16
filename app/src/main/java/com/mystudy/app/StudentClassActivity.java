@@ -22,8 +22,10 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class StudentClassActivity extends AppCompatActivity {
 
+    private LinearLayout root;
     private LinearLayout classContainer;
     private TextView statusView;
+    private TextView retryButton;
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
@@ -32,20 +34,15 @@ public class StudentClassActivity extends AppCompatActivity {
     private String studentMedium = "";
     private String studentName = "";
 
-    private final int backgroundColor =
-            Color.rgb(248, 250, 252);
-
-    private final int textPrimary =
-            Color.rgb(17, 24, 39);
-
-    private final int textSecondary =
-            Color.rgb(100, 116, 139);
-
-    private final int primaryColor =
-            Color.rgb(79, 70, 229);
-
-    private final int errorColor =
-            Color.rgb(220, 38, 38);
+    private static final int BLUE = Color.rgb(55, 105, 220);
+    private static final int DARK_BLUE = Color.rgb(31, 63, 145);
+    private static final int LIGHT_BLUE = Color.rgb(235, 243, 255);
+    private static final int YELLOW = Color.rgb(255, 211, 74);
+    private static final int BACKGROUND = Color.rgb(246, 249, 255);
+    private static final int TEXT = Color.rgb(27, 39, 64);
+    private static final int MUTED = Color.rgb(104, 119, 145);
+    private static final int RED = Color.rgb(205, 55, 55);
+    private static final int GREEN = Color.rgb(35, 145, 95);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,175 +51,218 @@ public class StudentClassActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
 
-        studentName =
-                getIntent().getStringExtra("studentName");
-
-        studentClass =
-                getIntent().getStringExtra("studentClass");
-
-        studentMedium =
-                getIntent().getStringExtra("studentMedium");
-
-        if (studentClass == null) {
-            studentClass = "";
-        }
-
-        if (studentMedium == null) {
-            studentMedium = "";
-        }
-
-        if (studentName == null) {
-            studentName = "";
-        }
+        studentName = safe(getIntent().getStringExtra("studentName"));
+        studentClass = safe(getIntent().getStringExtra("studentClass"));
+        studentMedium = safe(getIntent().getStringExtra("studentMedium"));
 
         createUI();
-        showLoading();
         loadStudentProfile();
     }
 
     private void createUI() {
 
-        ScrollView scrollView =
-                new ScrollView(this);
-
+        ScrollView scrollView = new ScrollView(this);
         scrollView.setFillViewport(true);
+        scrollView.setBackgroundColor(BACKGROUND);
 
-        LinearLayout root =
-                new LinearLayout(this);
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(20), dp(18), dp(20), dp(32));
+        root.setBackgroundColor(BACKGROUND);
 
-        root.setOrientation(
-                LinearLayout.VERTICAL
+        TextView back = new TextView(this);
+        back.setText("‹   Back");
+        back.setTextSize(16);
+        back.setTextColor(BLUE);
+        back.setTypeface(null, Typeface.BOLD);
+        back.setPadding(0, dp(4), 0, dp(14));
+
+        back.setOnClickListener(v ->
+                getOnBackPressedDispatcher().onBackPressed()
         );
 
-        root.setPadding(
-                20,
-                24,
-                20,
-                30
+        root.addView(back, matchWrap());
+
+        LinearLayout brandRow = new LinearLayout(this);
+        brandRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView logo = new TextView(this);
+        logo.setText("📘");
+        logo.setTextSize(25);
+        logo.setGravity(Gravity.CENTER);
+        logo.setBackground(round(LIGHT_BLUE, 18));
+
+        brandRow.addView(
+                logo,
+                new LinearLayout.LayoutParams(dp(52), dp(52))
         );
 
-        root.setBackgroundColor(
-                backgroundColor
+        LinearLayout brandText = new LinearLayout(this);
+        brandText.setOrientation(LinearLayout.VERTICAL);
+        brandText.setPadding(dp(12), 0, 0, 0);
+
+        TextView brand = new TextView(this);
+        brand.setText("MyStudy");
+        brand.setTextSize(21);
+        brand.setTextColor(DARK_BLUE);
+        brand.setTypeface(null, Typeface.BOLD);
+
+        TextView tagline = new TextView(this);
+        tagline.setText("Learn  •  Practice  •  Grow");
+        tagline.setTextSize(12);
+        tagline.setTextColor(MUTED);
+
+        brandText.addView(brand);
+        brandText.addView(tagline);
+
+        brandRow.addView(
+                brandText,
+                new LinearLayout.LayoutParams(0, -2, 1)
         );
 
-        TextView title =
-                new TextView(this);
+        root.addView(brandRow, matchWrap());
 
-        title.setText(
-                "📚 My Class"
+        LinearLayout hero = new LinearLayout(this);
+        hero.setOrientation(LinearLayout.VERTICAL);
+        hero.setPadding(dp(20), dp(22), dp(20), dp(22));
+        hero.setBackground(round(BLUE, 24));
+        hero.setElevation(dp(3));
+
+        TextView eyebrow = new TextView(this);
+        eyebrow.setText("YOUR LEARNING SPACE");
+        eyebrow.setTextSize(11);
+        eyebrow.setLetterSpacing(0.08f);
+        eyebrow.setTextColor(Color.rgb(220, 232, 255));
+        eyebrow.setTypeface(null, Typeface.BOLD);
+
+        TextView heading = new TextView(this);
+        heading.setText("Let's start learning! ✨");
+        heading.setTextSize(24);
+        heading.setTextColor(Color.WHITE);
+        heading.setTypeface(null, Typeface.BOLD);
+        heading.setPadding(0, dp(8), 0, dp(5));
+
+        TextView intro = new TextView(this);
+        intro.setText(
+                "Your subjects and lessons are ready in one place."
         );
+        intro.setTextSize(14);
+        intro.setTextColor(Color.rgb(235, 242, 255));
 
-        title.setTextSize(28);
-        title.setTextColor(textPrimary);
+        hero.addView(eyebrow);
+        hero.addView(heading);
+        hero.addView(intro);
 
-        title.setTypeface(
-                null,
-                Typeface.BOLD
+        TextView badge = new TextView(this);
+        badge.setText("📚  LEARN AT YOUR OWN PACE");
+        badge.setTextSize(11);
+        badge.setTextColor(DARK_BLUE);
+        badge.setTypeface(null, Typeface.BOLD);
+        badge.setPadding(dp(12), dp(8), dp(12), dp(8));
+        badge.setBackground(round(YELLOW, 30));
+
+        LinearLayout.LayoutParams badgeParams =
+                new LinearLayout.LayoutParams(-2, -2);
+
+        badgeParams.topMargin = dp(16);
+        hero.addView(badge, badgeParams);
+
+        LinearLayout.LayoutParams heroParams = matchWrap();
+        heroParams.topMargin = dp(22);
+
+        root.addView(hero, heroParams);
+
+        TextView sectionTitle = new TextView(this);
+        sectionTitle.setText("Your Class");
+        sectionTitle.setTextSize(21);
+        sectionTitle.setTextColor(TEXT);
+        sectionTitle.setTypeface(null, Typeface.BOLD);
+
+        LinearLayout.LayoutParams sectionParams = matchWrap();
+        sectionParams.topMargin = dp(25);
+
+        root.addView(sectionTitle, sectionParams);
+
+        TextView sectionSubtitle = new TextView(this);
+        sectionSubtitle.setText(
+                "Choose your class card to explore available subjects."
         );
+        sectionSubtitle.setTextSize(13);
+        sectionSubtitle.setTextColor(MUTED);
 
-        root.addView(
-                title,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
+        LinearLayout.LayoutParams subtitleParams = matchWrap();
+        subtitleParams.topMargin = dp(5);
+
+        root.addView(sectionSubtitle, subtitleParams);
+
+        statusView = new TextView(this);
+        statusView.setTextSize(13);
+        statusView.setGravity(Gravity.CENTER);
+        statusView.setTextColor(BLUE);
+        statusView.setPadding(dp(8), dp(18), dp(8), dp(12));
+
+        root.addView(statusView, matchWrap());
+
+        classContainer = new LinearLayout(this);
+        classContainer.setOrientation(LinearLayout.VERTICAL);
+
+        root.addView(classContainer, matchWrap());
+
+        retryButton = new TextView(this);
+        retryButton.setText("Try Again");
+        retryButton.setTextSize(14);
+        retryButton.setTextColor(Color.WHITE);
+        retryButton.setGravity(Gravity.CENTER);
+        retryButton.setTypeface(null, Typeface.BOLD);
+        retryButton.setPadding(dp(20), dp(12), dp(20), dp(12));
+        retryButton.setBackground(round(BLUE, 14));
+        retryButton.setVisibility(View.GONE);
+
+        retryButton.setOnClickListener(v -> loadStudentProfile());
+
+        LinearLayout.LayoutParams retryParams =
+                new LinearLayout.LayoutParams(-1, -2);
+
+        retryParams.topMargin = dp(10);
+        root.addView(retryButton, retryParams);
+
+        TextView footer = new TextView(this);
+        footer.setText(
+                "🌟 Small steps every day lead to big achievements."
         );
+        footer.setTextSize(12);
+        footer.setTextColor(MUTED);
+        footer.setGravity(Gravity.CENTER);
+        footer.setPadding(dp(8), dp(28), dp(8), dp(4));
 
-        TextView subtitle =
-                new TextView(this);
-
-        subtitle.setText(
-                "Your learning content is based on your selected class and medium."
-        );
-
-        subtitle.setTextSize(16);
-        subtitle.setTextColor(textSecondary);
-
-        subtitle.setPadding(
-                0,
-                8,
-                0,
-                12
-        );
-
-        root.addView(
-                subtitle,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
-        );
-
-        statusView =
-                new TextView(this);
-
-        statusView.setTextSize(14);
-        statusView.setGravity(
-                Gravity.CENTER
-        );
-
-        statusView.setPadding(
-                0,
-                8,
-                0,
-                16
-        );
-
-        root.addView(
-                statusView,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
-        );
-
-        classContainer =
-                new LinearLayout(this);
-
-        classContainer.setOrientation(
-                LinearLayout.VERTICAL
-        );
-
-        root.addView(
-                classContainer,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
-        );
+        root.addView(footer, matchWrap());
 
         scrollView.addView(root);
-
         setContentView(scrollView);
     }
 
     private void loadStudentProfile() {
 
-        FirebaseUser user =
-                auth.getCurrentUser();
+        FirebaseUser user = auth.getCurrentUser();
 
         if (user == null) {
-
-            showError(
-                    "Please login again."
-            );
-
+            showError("Please log in again to continue.");
             return;
         }
 
-        showLoading();
+        showLoading("Loading your learning profile...");
 
         db.collection("users")
                 .document(user.getUid())
                 .get()
                 .addOnSuccessListener(document -> {
 
+                    if (isFinishing() || isDestroyed()) return;
+
                     if (!document.exists()) {
-
-                        showError(
-                                "Student profile not found."
+                        showEmpty(
+                                "Your student profile could not be found."
                         );
-
                         return;
                     }
 
@@ -238,28 +278,25 @@ public class StudentClassActivity extends AppCompatActivity {
                     if (savedClass != null &&
                             !savedClass.trim().isEmpty()) {
 
-                        studentClass =
-                                savedClass.trim();
+                        studentClass = savedClass.trim();
                     }
 
                     if (savedMedium != null &&
                             !savedMedium.trim().isEmpty()) {
 
-                        studentMedium =
-                                savedMedium.trim();
+                        studentMedium = savedMedium.trim();
                     }
 
                     if (savedName != null &&
                             !savedName.trim().isEmpty()) {
 
-                        studentName =
-                                savedName.trim();
+                        studentName = savedName.trim();
                     }
 
                     if (studentClass.isEmpty()) {
 
                         showEmpty(
-                                "Your class is not selected in your profile."
+                                "Your class is not selected in your profile. Please contact your administrator."
                         );
 
                         return;
@@ -269,13 +306,15 @@ public class StudentClassActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(error -> {
 
+                    if (isFinishing() || isDestroyed()) return;
+
                     showError(
-                            "Unable to load your profile."
+                            "Unable to load your profile. Please check your internet connection."
                     );
 
                     Toast.makeText(
-                            StudentClassActivity.this,
-                            "Unable to load student profile",
+                            this,
+                            "Profile loading failed",
                             Toast.LENGTH_SHORT
                     ).show();
                 });
@@ -283,34 +322,30 @@ public class StudentClassActivity extends AppCompatActivity {
 
     private void loadSelectedClass() {
 
-        showLoading();
+        showLoading("Finding your class...");
 
         db.collection("classes")
-                .whereEqualTo(
-                        "name",
-                        studentClass
-                )
+                .whereEqualTo("name", studentClass)
                 .limit(1)
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addOnSuccessListener(snapshot -> {
+
+                    if (isFinishing() || isDestroyed()) return;
 
                     classContainer.removeAllViews();
 
-                    if (querySnapshot.isEmpty()) {
+                    if (snapshot.isEmpty()) {
 
                         showEmpty(
-                                studentClass +
-                                        " is not available yet."
+                                studentClass + " content is not available yet."
                         );
 
                         return;
                     }
 
-                    for (QueryDocumentSnapshot document :
-                            querySnapshot) {
+                    for (QueryDocumentSnapshot document : snapshot) {
 
-                        String classId =
-                                document.getId();
+                        String classId = document.getId();
 
                         String className =
                                 document.getString("name");
@@ -318,8 +353,7 @@ public class StudentClassActivity extends AppCompatActivity {
                         if (className == null ||
                                 className.trim().isEmpty()) {
 
-                            className =
-                                    studentClass;
+                            className = studentClass;
                         }
 
                         addClassCard(
@@ -328,22 +362,27 @@ public class StudentClassActivity extends AppCompatActivity {
                                 studentMedium
                         );
 
-                        showSuccess(
-                                "✅ Class loaded successfully"
+                        statusView.setText(
+                                "Your learning space is ready!"
                         );
+
+                        statusView.setTextColor(GREEN);
+                        retryButton.setVisibility(View.GONE);
 
                         break;
                     }
                 })
                 .addOnFailureListener(error -> {
 
+                    if (isFinishing() || isDestroyed()) return;
+
                     showError(
-                            "Unable to load your class."
+                            "Unable to load your class. Please try again."
                     );
 
                     Toast.makeText(
-                            StudentClassActivity.this,
-                            "Unable to load class",
+                            this,
+                            "Class loading failed",
                             Toast.LENGTH_SHORT
                     ).show();
                 });
@@ -355,226 +394,127 @@ public class StudentClassActivity extends AppCompatActivity {
             String medium
     ) {
 
-        final String selectedClassId =
-                classId;
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(18), dp(18), dp(18), dp(18));
+        card.setBackground(round(Color.WHITE, 22));
+        card.setElevation(dp(4));
+        card.setClickable(true);
+        card.setFocusable(true);
 
-        final String selectedClassName =
-                className;
+        LinearLayout topRow = new LinearLayout(this);
+        topRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        final String selectedMedium =
-                medium;
-
-        LinearLayout card =
-                new LinearLayout(this);
-
-        card.setOrientation(
-                LinearLayout.HORIZONTAL
-        );
-
-        card.setGravity(
-                Gravity.CENTER_VERTICAL
-        );
-
-        card.setPadding(
-                18,
-                18,
-                14,
-                18
-        );
-
-        GradientDrawable background =
-                new GradientDrawable();
-
-        background.setColor(Color.WHITE);
-        background.setCornerRadius(30);
-
-        card.setBackground(background);
-        card.setElevation(6);
-
-        TextView icon =
-                new TextView(this);
-
+        TextView icon = new TextView(this);
         icon.setText("🎓");
-        icon.setTextSize(30);
-        icon.setGravity(
-                Gravity.CENTER
-        );
+        icon.setTextSize(29);
+        icon.setGravity(Gravity.CENTER);
+        icon.setBackground(round(LIGHT_BLUE, 18));
 
-        GradientDrawable iconBackground =
-                new GradientDrawable();
-
-        iconBackground.setColor(
-                Color.rgb(238, 242, 255)
-        );
-
-        iconBackground.setCornerRadius(22);
-
-        icon.setBackground(
-                iconBackground
-        );
-
-        card.addView(
+        topRow.addView(
                 icon,
-                new LinearLayout.LayoutParams(
-                        68,
-                        68
-                )
+                new LinearLayout.LayoutParams(dp(62), dp(62))
         );
 
-        LinearLayout textContainer =
-                new LinearLayout(this);
+        LinearLayout labels = new LinearLayout(this);
+        labels.setOrientation(LinearLayout.VERTICAL);
+        labels.setPadding(dp(14), 0, 0, 0);
 
-        textContainer.setOrientation(
-                LinearLayout.VERTICAL
+        TextView name = new TextView(this);
+        name.setText(className);
+        name.setTextSize(21);
+        name.setTextColor(TEXT);
+        name.setTypeface(null, Typeface.BOLD);
+
+        TextView mediumText = new TextView(this);
+
+        mediumText.setText(
+                medium.isEmpty()
+                        ? "Medium not selected"
+                        : "Medium: " + medium
         );
 
-        textContainer.setPadding(
-                16,
-                0,
-                8,
-                0
+        mediumText.setTextSize(13);
+        mediumText.setTextColor(MUTED);
+        mediumText.setPadding(0, dp(4), 0, 0);
+
+        labels.addView(name);
+        labels.addView(mediumText);
+
+        topRow.addView(
+                labels,
+                new LinearLayout.LayoutParams(0, -2, 1)
         );
 
-        TextView name =
-                new TextView(this);
-
-        name.setText(
-                selectedClassName
-        );
-
-        name.setTextSize(20);
-        name.setTextColor(textPrimary);
-
-        name.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        TextView mediumText =
-                new TextView(this);
-
-        if (selectedMedium == null ||
-                selectedMedium.trim().isEmpty()) {
-
-            mediumText.setText(
-                    "Medium not selected"
-            );
-
-        } else {
-
-            mediumText.setText(
-                    "Medium: " + selectedMedium
-            );
-        }
-
-        mediumText.setTextSize(14);
-        mediumText.setTextColor(textSecondary);
-
-        mediumText.setPadding(
-                0,
-                5,
-                0,
-                0
-        );
-
-        TextView description =
-                new TextView(this);
-
-        description.setText(
-                "Tap to explore subjects"
-        );
-
-        description.setTextSize(14);
-        description.setTextColor(textSecondary);
-
-        description.setPadding(
-                0,
-                3,
-                0,
-                0
-        );
-
-        textContainer.addView(name);
-        textContainer.addView(mediumText);
-        textContainer.addView(description);
-
-        card.addView(
-                textContainer,
-                new LinearLayout.LayoutParams(
-                        0,
-                        -2,
-                        1
-                )
-        );
-
-        TextView arrow =
-                new TextView(this);
-
+        TextView arrow = new TextView(this);
         arrow.setText("›");
         arrow.setTextSize(34);
-        arrow.setTextColor(primaryColor);
-        arrow.setGravity(
-                Gravity.CENTER
-        );
+        arrow.setTextColor(BLUE);
+        arrow.setGravity(Gravity.CENTER);
 
-        arrow.setTypeface(
-                null,
-                Typeface.BOLD
-        );
-
-        card.addView(
+        topRow.addView(
                 arrow,
-                new LinearLayout.LayoutParams(
-                        42,
-                        68
-                )
+                new LinearLayout.LayoutParams(dp(30), dp(52))
         );
 
-        LinearLayout.LayoutParams cardParams =
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                );
+        card.addView(topRow);
 
-        cardParams.setMargins(
-                0,
-                0,
-                0,
-                16
+        View divider = new View(this);
+        divider.setBackgroundColor(
+                Color.rgb(232, 238, 248)
         );
 
-        classContainer.addView(
-                card,
-                cardParams
+        LinearLayout.LayoutParams dividerParams = matchWrap();
+        dividerParams.height = dp(1);
+        dividerParams.topMargin = dp(16);
+        dividerParams.bottomMargin = dp(12);
+
+        card.addView(divider, dividerParams);
+
+        LinearLayout bottomRow = new LinearLayout(this);
+        bottomRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView hint = new TextView(this);
+        hint.setText(
+                "Explore subjects, chapters and lessons"
+        );
+        hint.setTextSize(13);
+        hint.setTextColor(MUTED);
+
+        bottomRow.addView(
+                hint,
+                new LinearLayout.LayoutParams(0, -2, 1)
         );
 
-        card.setOnClickListener(view -> {
+        TextView explore = new TextView(this);
+        explore.setText("EXPLORE  →");
+        explore.setTextSize(11);
+        explore.setTextColor(BLUE);
+        explore.setTypeface(null, Typeface.BOLD);
 
-            Intent intent =
-                    new Intent(
-                            StudentClassActivity.this,
-                            StudentSubjectActivity.class
-                    );
+        bottomRow.addView(explore);
 
-            intent.putExtra(
-                    "classId",
-                    selectedClassId
+        card.addView(bottomRow);
+
+        LinearLayout.LayoutParams params = matchWrap();
+        params.topMargin = dp(4);
+        params.bottomMargin = dp(12);
+
+        classContainer.addView(card, params);
+
+        final String selectedClassName = className;
+
+        card.setOnClickListener(v -> {
+
+            Intent intent = new Intent(
+                    StudentClassActivity.this,
+                    StudentSubjectActivity.class
             );
 
-            intent.putExtra(
-                    "className",
-                    selectedClassName
-            );
-
-            intent.putExtra(
-                    "studentMedium",
-                    selectedMedium
-            );
-
-            intent.putExtra(
-                    "studentName",
-                    studentName
-            );
+            intent.putExtra("classId", classId);
+            intent.putExtra("className", selectedClassName);
+            intent.putExtra("studentMedium", medium);
+            intent.putExtra("studentName", studentName);
 
             startActivity(intent);
 
@@ -584,174 +524,109 @@ public class StudentClassActivity extends AppCompatActivity {
             );
         });
 
-        card.setOnTouchListener(
-                (view, event) -> {
+        card.setOnTouchListener((view, event) -> {
 
-                    if (event.getAction() ==
-                            MotionEvent.ACTION_DOWN) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
 
-                        view.animate()
-                                .scaleX(0.97f)
-                                .scaleY(0.97f)
-                                .setDuration(100)
-                                .start();
+                view.animate()
+                        .scaleX(0.985f)
+                        .scaleY(0.985f)
+                        .setDuration(100)
+                        .start();
 
-                    } else if (
-                            event.getAction() ==
-                                    MotionEvent.ACTION_UP ||
-                                    event.getAction() ==
-                                            MotionEvent.ACTION_CANCEL
-                    ) {
+            } else if (
+                    event.getAction() == MotionEvent.ACTION_UP ||
+                    event.getAction() == MotionEvent.ACTION_CANCEL
+            ) {
 
-                        view.animate()
-                                .scaleX(1f)
-                                .scaleY(1f)
-                                .setDuration(100)
-                                .start();
-                    }
+                view.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(120)
+                        .start();
+            }
 
-                    return false;
-                }
-        );
+            return false;
+        });
     }
 
-    private void showLoading() {
+    private void showLoading(String message) {
 
-        if (statusView != null) {
+        classContainer.removeAllViews();
+        retryButton.setVisibility(View.GONE);
 
-            statusView.setText(
-                    "⏳ Loading your class..."
-            );
-
-            statusView.setTextColor(
-                    primaryColor
-            );
-        }
-
-        if (classContainer != null) {
-
-            classContainer.removeAllViews();
-        }
+        statusView.setText("⏳  " + message);
+        statusView.setTextColor(BLUE);
     }
 
-    private void showSuccess(
-            String message
-    ) {
-
-        if (statusView != null) {
-
-            statusView.setText(message);
-
-            statusView.setTextColor(
-                    primaryColor
-            );
-        }
-    }
-
-    private void showEmpty(
-            String message
-    ) {
-
-        if (classContainer == null) {
-            return;
-        }
+    private void showEmpty(String message) {
 
         classContainer.removeAllViews();
 
-        if (statusView != null) {
-
-            statusView.setText(
-                    "📚 No class content available"
-            );
-
-            statusView.setTextColor(
-                    textSecondary
-            );
-        }
-
-        TextView messageView =
-                new TextView(this);
-
-        messageView.setText(
-                message
+        statusView.setText(
+                "📚  No class content available"
         );
 
-        messageView.setTextSize(16);
+        statusView.setTextColor(MUTED);
+        retryButton.setVisibility(View.GONE);
 
-        messageView.setTextColor(
-                textSecondary
-        );
+        TextView empty = new TextView(this);
+        empty.setText(message);
+        empty.setTextSize(14);
+        empty.setTextColor(MUTED);
+        empty.setGravity(Gravity.CENTER);
+        empty.setPadding(dp(22), dp(24), dp(22), dp(24));
+        empty.setBackground(round(Color.WHITE, 18));
 
-        messageView.setGravity(
-                Gravity.CENTER
-        );
+        classContainer.addView(empty, matchWrap());
+    }
 
-        messageView.setPadding(
-                20,
-                50,
-                20,
-                50
-        );
+    private void showError(String message) {
 
-        classContainer.addView(
-                messageView,
-                new LinearLayout.LayoutParams(
-                        -1,
-                        -2
-                )
+        classContainer.removeAllViews();
+
+        statusView.setText("Something went wrong");
+        statusView.setTextColor(RED);
+
+        retryButton.setVisibility(View.VISIBLE);
+
+        TextView error = new TextView(this);
+        error.setText("⚠️  " + message);
+        error.setTextSize(14);
+        error.setTextColor(RED);
+        error.setGravity(Gravity.CENTER);
+        error.setPadding(dp(20), dp(22), dp(20), dp(22));
+        error.setBackground(round(Color.WHITE, 18));
+
+        classContainer.addView(error, matchWrap());
+    }
+
+    private GradientDrawable round(int color, int radiusDp) {
+
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radiusDp));
+
+        return drawable;
+    }
+
+    private LinearLayout.LayoutParams matchWrap() {
+
+        return new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
         );
     }
 
-    private void showError(
-            String message
-    ) {
+    private int dp(int value) {
 
-        if (classContainer != null) {
+        return Math.round(
+                value * getResources().getDisplayMetrics().density
+        );
+    }
 
-            classContainer.removeAllViews();
+    private String safe(String value) {
 
-            TextView errorView =
-                    new TextView(this);
-
-            errorView.setText(
-                    "⚠️ " + message
-            );
-
-            errorView.setTextSize(16);
-
-            errorView.setTextColor(
-                    errorColor
-            );
-
-            errorView.setGravity(
-                    Gravity.CENTER
-            );
-
-            errorView.setPadding(
-                    20,
-                    50,
-                    20,
-                    50
-            );
-
-            classContainer.addView(
-                    errorView,
-                    new LinearLayout.LayoutParams(
-                            -1,
-                            -2
-                    )
-            );
-        }
-
-        if (statusView != null) {
-
-            statusView.setText(
-                    "Something went wrong"
-            );
-
-            statusView.setTextColor(
-                    errorColor
-            );
-        }
+        return value == null ? "" : value.trim();
     }
 }

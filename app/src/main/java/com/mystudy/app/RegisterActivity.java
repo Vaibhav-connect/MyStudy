@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FieldValue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +34,8 @@ public class RegisterActivity extends AppCompatActivity {
     private Spinner classSpinner;
     private Spinner mediumSpinner;
     private Spinner languageSpinner;
+
+    private Button registerButton;
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
@@ -190,7 +193,7 @@ public class RegisterActivity extends AppCompatActivity {
                 createSpinnerParams(12)
         );
 
-        Button registerButton = new Button(this);
+        registerButton = new Button(this);
 
         registerButton.setText("Create Account");
         registerButton.setTextSize(18);
@@ -400,35 +403,29 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
         if (classSpinner.getSelectedItemPosition() == 0) {
-
             Toast.makeText(
                     this,
                     "Please select your class",
                     Toast.LENGTH_SHORT
             ).show();
-
             return;
         }
 
         if (mediumSpinner.getSelectedItemPosition() == 0) {
-
             Toast.makeText(
                     this,
                     "Please select your medium",
                     Toast.LENGTH_SHORT
             ).show();
-
             return;
         }
 
         if (languageSpinner.getSelectedItemPosition() == 0) {
-
             Toast.makeText(
                     this,
                     "Please select your app language",
                     Toast.LENGTH_SHORT
             ).show();
-
             return;
         }
 
@@ -441,11 +438,8 @@ public class RegisterActivity extends AppCompatActivity {
         String selectedLanguage =
                 languageSpinner.getSelectedItem().toString();
 
-        Toast.makeText(
-                this,
-                "Creating your account...",
-                Toast.LENGTH_SHORT
-        ).show();
+        registerButton.setEnabled(false);
+        registerButton.setText("Creating Account...");
 
         auth.createUserWithEmailAndPassword(
                 email,
@@ -453,6 +447,9 @@ public class RegisterActivity extends AppCompatActivity {
         ).addOnCompleteListener(this, task -> {
 
             if (!task.isSuccessful()) {
+
+                registerButton.setEnabled(true);
+                registerButton.setText("Create Account");
 
                 String message =
                         task.getException() != null
@@ -468,10 +465,12 @@ public class RegisterActivity extends AppCompatActivity {
                 return;
             }
 
-            FirebaseUser user =
-                    auth.getCurrentUser();
+            FirebaseUser user = auth.getCurrentUser();
 
             if (user == null) {
+
+                registerButton.setEnabled(true);
+                registerButton.setText("Create Account");
 
                 Toast.makeText(
                         this,
@@ -489,47 +488,88 @@ public class RegisterActivity extends AppCompatActivity {
 
             userData.put("name", name);
             userData.put("email", email);
-
             userData.put("class", selectedClass);
             userData.put("medium", selectedMedium);
             userData.put("language", selectedLanguage);
-
             userData.put("parentPin", parentPin);
-
             userData.put("role", "student");
-
             userData.put("points", 0);
             userData.put("streak", 0);
-
+            userData.put("emailVerified", false);
             userData.put(
                     "createdAt",
-                    com.google.firebase.firestore.FieldValue.serverTimestamp()
+                    FieldValue.serverTimestamp()
             );
 
-            db.collection("users")
-                    .document(uid)
-                    .set(userData)
-                    .addOnSuccessListener(unused -> {
+            // Send Firebase email verification.
+            user.sendEmailVerification()
+                    .addOnCompleteListener(emailTask -> {
 
-                        Toast.makeText(
-                                this,
-                                "Account created successfully! 🎉",
-                                Toast.LENGTH_LONG
-                        ).show();
+                        boolean verificationSent =
+                                emailTask.isSuccessful();
 
-                        auth.signOut();
-
-                        finish();
-                    })
-                    .addOnFailureListener(e -> {
-
-                        Toast.makeText(
-                                this,
-                                "Account created, but profile saving failed: "
-                                        + e.getMessage(),
-                                Toast.LENGTH_LONG
-                        ).show();
+                        // Save student profile in Firestore.
+                        saveStudentProfile(
+                                uid,
+                                userData,
+                                verificationSent,
+                                emailTask.getException()
+                        );
                     });
         });
+    }
+
+    private void saveStudentProfile(
+            String uid,
+            Map<String, Object> userData,
+            boolean verificationSent,
+            Exception emailError
+    ) {
+
+        db.collection("users")
+                .document(uid)
+                .set(userData)
+                .addOnSuccessListener(unused -> {
+
+                    auth.signOut();
+
+                    if (verificationSent) {
+
+                        Toast.makeText(
+                                this,
+                                "Account created! Verification link sent to your email. Please verify your email before login. 📧",
+                                Toast.LENGTH_LONG
+                        ).show();
+
+                    } else {
+
+                        String message =
+                                emailError != null
+                                        ? emailError.getMessage()
+                                        : "Unknown error";
+
+                        Toast.makeText(
+                                this,
+                                "Account created, but verification email could not be sent. You can request it again from Login. " + message,
+                                Toast.LENGTH_LONG
+                        ).show();
+                    }
+
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+
+                    auth.signOut();
+
+                    Toast.makeText(
+                            this,
+                            "Account created, but profile saving failed: "
+                                    + e.getMessage(),
+                            Toast.LENGTH_LONG
+                    ).show();
+
+                    registerButton.setEnabled(true);
+                    registerButton.setText("Create Account");
+                });
     }
 }

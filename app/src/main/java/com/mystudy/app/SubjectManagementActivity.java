@@ -737,7 +737,8 @@ public class SubjectManagementActivity extends AppCompatActivity {
                 .setPositiveButton(editMode ? "Update" : "Save", null)
                 .create();
 
-        dialog.setOnShowListener(unused -> {
+        // FIXED: unique lambda parameter name
+        dialog.setOnShowListener(dialogEvent -> {
 
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)
                     .setOnClickListener(v -> {
@@ -823,7 +824,7 @@ public class SubjectManagementActivity extends AppCompatActivity {
 
                             db.collection("subjects")
                                     .add(data)
-                                    .addOnSuccessListener(documentReference -> {
+                                    .addOnSuccessListener(addResult -> {
 
                                         Toast.makeText(
                                                 this,
@@ -849,7 +850,7 @@ public class SubjectManagementActivity extends AppCompatActivity {
                             db.collection("subjects")
                                     .document(editData.documentId)
                                     .update(data)
-                                    .addOnSuccessListener(unused -> {
+                                    .addOnSuccessListener(updateResult -> {
 
                                         Toast.makeText(
                                                 this,
@@ -918,7 +919,7 @@ public class SubjectManagementActivity extends AppCompatActivity {
         db.collection("subjects")
                 .document(documentId)
                 .delete()
-                .addOnSuccessListener(unused -> {
+                .addOnSuccessListener(deleteResult -> {
 
                     Toast.makeText(
                             this,

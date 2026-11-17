@@ -510,6 +510,47 @@ public class SettingsActivity extends AppCompatActivity {
                 createMargins(0, 0, 0, 17)
         );
 
+        // About MyStudy Card
+
+        LinearLayout aboutCard = createCard();
+
+        aboutCard.addView(
+                createSectionTitle("ℹ️  About MyStudy")
+        );
+
+        TextView aboutDescription = createInfoText(
+                "Learn more about MyStudy, its features and developers."
+        );
+
+        aboutDescription.setTextSize(14);
+
+        aboutCard.addView(
+                aboutDescription,
+                createMargins(0, dp(10), 0, dp(12))
+        );
+
+        TextView aboutButton = createActionButton(
+                "About MyStudy  →",
+                DARK_BLUE
+        );
+
+        aboutButton.setOnClickListener(v -> {
+
+            Intent intent = new Intent(
+                    SettingsActivity.this,
+                    AboutActivity.class
+            );
+
+            startActivity(intent);
+        });
+
+        aboutCard.addView(aboutButton);
+
+        root.addView(
+                aboutCard,
+                createMargins(0, 0, 0, 17)
+        );
+
         // Account card
 
         LinearLayout accountCard = createCard();
@@ -537,7 +578,7 @@ public class SettingsActivity extends AppCompatActivity {
         TextView developer = new TextView(this);
 
         developer.setText(
-                "MyStudy\nDeveloped by Vaibhav Bhosale"
+                "MyStudy\nMade by Vaibhav Bhosale & Prathamesh Bhosale"
         );
 
         developer.setTextSize(13);

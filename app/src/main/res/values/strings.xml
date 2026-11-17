@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- App Branding -->
     <string name="app_name">MyStudy</string>
+    <string name="app_tagline">Learn • Practice • Grow</string>
 
+    <!-- Common -->
     <string name="welcome">Welcome</string>
     <string name="login">Login</string>
     <string name="register">Register</string>
     <string name="logout">Logout</string>
 
+    <!-- Student -->
     <string name="student_name">Student Name</string>
     <string name="email">Email</string>
     <string name="password">Password</string>
@@ -15,25 +19,57 @@
     <string name="class_name">Class</string>
     <string name="parent_pin">Parent PIN</string>
 
+    <!-- Languages -->
     <string name="english">English</string>
     <string name="marathi">Marathi</string>
     <string name="hindi">Hindi</string>
 
+    <!-- Learning -->
     <string name="subjects">Subjects</string>
     <string name="lessons">Lessons</string>
     <string name="practice">Practice</string>
     <string name="progress">Progress</string>
     <string name="profile">Profile</string>
 
+    <!-- Subjects -->
     <string name="mathematics">Mathematics</string>
     <string name="evs">EVS</string>
 
+    <!-- Performance -->
     <string name="points">Points</string>
     <string name="streak">Streak</string>
     <string name="accuracy">Accuracy</string>
 
+    <!-- About MyStudy -->
     <string name="about_mystudy">About MyStudy</string>
-    <string name="developed_by">Developed by Vaibhav Bhosale</string>
+    <string name="about_app_title">MyStudy - Learn Better</string>
+    <string name="about_app_description">MyStudy is an educational learning app designed to make learning simple, interactive and enjoyable for students.</string>
+
+    <!-- App Information -->
+    <string name="app_version_label">App Version</string>
+    <string name="app_version">1.0.0</string>
+
+    <!-- Developers -->
+    <string name="developed_by">Made with care by</string>
+    <string name="developer_names">Vaibhav Bhosale &amp; Prathamesh Bhosale</string>
     <string name="developer_email">vb1961869@gmail.com</string>
+
+    <!-- Features -->
+    <string name="about_features_title">App Features</string>
+    <string name="about_feature_1">Interactive Lessons</string>
+    <string name="about_feature_2">Practice Questions</string>
+    <string name="about_feature_3">Online Exams</string>
+    <string name="about_feature_4">Learning Progress Tracking</string>
+    <string name="about_feature_5">Parent Dashboard</string>
+
+    <!-- Supported Classes and Languages -->
+    <string name="about_classes_title">Supported Classes</string>
+    <string name="about_classes">Classes 1 to 10</string>
+
+    <string name="about_languages_title">Supported Languages</string>
+    <string name="about_languages">English, Marathi, Hindi and Semi-English</string>
+
+    <!-- Copyright -->
+    <string name="about_copyright">© 2026 MyStudy. All Rights Reserved.</string>
 
 </resources>

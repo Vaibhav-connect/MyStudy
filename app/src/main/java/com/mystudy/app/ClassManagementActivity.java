@@ -2,8 +2,12 @@ package com.mystudy.app;
 
 import android.app.AlertDialog;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -14,6 +18,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -22,7 +27,20 @@ import java.util.Map;
 public class ClassManagementActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
+
     private LinearLayout classContainer;
+    private TextView countView;
+    private TextView statusView;
+    private Button addButton;
+
+    private final int BLUE = Color.rgb(37, 99, 235);
+    private final int DARK_BLUE = Color.rgb(30, 64, 175);
+    private final int YELLOW = Color.rgb(250, 204, 21);
+    private final int BACKGROUND = Color.rgb(245, 248, 255);
+    private final int TEXT = Color.rgb(30, 41, 59);
+    private final int MUTED = Color.rgb(100, 116, 139);
+    private final int GREEN = Color.rgb(22, 163, 74);
+    private final int RED = Color.rgb(220, 38, 38);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,57 +52,347 @@ public class ClassManagementActivity extends AppCompatActivity {
         loadClasses();
     }
 
+    private int dp(float value) {
+        return (int) (value * getResources()
+                .getDisplayMetrics().density);
+    }
+
+    private GradientDrawable rounded(
+            int color,
+            int radius
+    ) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radius));
+        return drawable;
+    }
+
+    private GradientDrawable bordered(
+            int color,
+            int strokeColor,
+            int radius
+    ) {
+        GradientDrawable drawable = rounded(color, radius);
+        drawable.setStroke(dp(1), strokeColor);
+        return drawable;
+    }
+
+    private TextView createText(
+            String text,
+            int size,
+            int color,
+            boolean bold
+    ) {
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextSize(size);
+        view.setTextColor(color);
+
+        if (bold) {
+            view.setTypeface(null, Typeface.BOLD);
+        }
+
+        return view;
+    }
+
+    private Button createButton(
+            String text,
+            int backgroundColor,
+            int textColor
+    ) {
+        Button button = new Button(this);
+        button.setText(text);
+        button.setTextSize(13);
+        button.setTextColor(textColor);
+        button.setAllCaps(false);
+        button.setTypeface(null, Typeface.BOLD);
+        button.setBackground(rounded(backgroundColor, 14));
+        button.setPadding(
+                dp(12), dp(8),
+                dp(12), dp(8)
+        );
+
+        return button;
+    }
+
     private void createUi() {
 
         ScrollView scrollView = new ScrollView(this);
+        scrollView.setFillViewport(true);
+        scrollView.setBackgroundColor(BACKGROUND);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(30, 35, 30, 35);
-        root.setBackgroundColor(Color.rgb(248, 250, 252));
+        root.setPadding(
+                dp(20), dp(20),
+                dp(20), dp(30)
+        );
 
-        TextView title = new TextView(this);
-        title.setText("Class Management");
-        title.setTextSize(28);
-        title.setTextColor(Color.rgb(17, 24, 39));
-        title.setGravity(Gravity.CENTER);
+        // Header
 
-        root.addView(title);
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
 
-        Button addButton = new Button(this);
-        addButton.setText("+ Add Class");
+        TextView backButton = createText(
+                "‹",
+                36,
+                BLUE,
+                true
+        );
+
+        backButton.setGravity(Gravity.CENTER);
+        backButton.setBackground(rounded(Color.WHITE, 14));
+
+        LinearLayout.LayoutParams backParams =
+                new LinearLayout.LayoutParams(
+                        dp(48),
+                        dp(48)
+                );
+
+        header.addView(backButton, backParams);
+
+        LinearLayout brandLayout = new LinearLayout(this);
+        brandLayout.setOrientation(LinearLayout.VERTICAL);
+        brandLayout.setPadding(dp(12), 0, 0, 0);
+
+        TextView brand = createText(
+                "MyStudy",
+                22,
+                DARK_BLUE,
+                true
+        );
+
+        TextView tagline = createText(
+                "ADMINISTRATION PANEL",
+                10,
+                MUTED,
+                true
+        );
+
+        brandLayout.addView(brand);
+        brandLayout.addView(tagline);
+
+        header.addView(
+                brandLayout,
+                new LinearLayout.LayoutParams(
+                        0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1
+                )
+        );
+
+        root.addView(header);
+
+        backButton.setOnClickListener(v -> finish());
+
+        // Title
+
+        TextView title = createText(
+                "Class Management",
+                27,
+                TEXT,
+                true
+        );
+
+        LinearLayout.LayoutParams titleParams =
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                );
+
+        titleParams.topMargin = dp(28);
+
+        root.addView(title, titleParams);
+
+        TextView subtitle = createText(
+                "Create and manage student classes.",
+                14,
+                MUTED,
+                false
+        );
+
+        LinearLayout.LayoutParams subtitleParams =
+                new LinearLayout.LayoutParams(-1, -2);
+
+        subtitleParams.topMargin = dp(6);
+
+        root.addView(subtitle, subtitleParams);
+
+        // Total Classes Card
+
+        LinearLayout countCard = new LinearLayout(this);
+        countCard.setOrientation(LinearLayout.VERTICAL);
+        countCard.setPadding(
+                dp(22), dp(20),
+                dp(22), dp(20)
+        );
+        countCard.setBackground(rounded(BLUE, 22));
+
+        LinearLayout.LayoutParams countCardParams =
+                new LinearLayout.LayoutParams(-1, -2);
+
+        countCardParams.topMargin = dp(24);
+
+        root.addView(countCard, countCardParams);
+
+        TextView countLabel = createText(
+                "TOTAL CLASSES",
+                12,
+                Color.WHITE,
+                true
+        );
+
+        countCard.addView(countLabel);
+
+        countView = createText(
+                "0",
+                36,
+                YELLOW,
+                true
+        );
+
+        LinearLayout.LayoutParams numberParams =
+                new LinearLayout.LayoutParams(-1, -2);
+
+        numberParams.topMargin = dp(5);
+
+        countCard.addView(countView, numberParams);
+
+        TextView countDescription = createText(
+                "Manage all available classes in MyStudy",
+                12,
+                Color.WHITE,
+                false
+        );
+
+        countCard.addView(countDescription);
+
+        // Add Class Button
+
+        addButton = createButton(
+                "+  Add New Class",
+                YELLOW,
+                DARK_BLUE
+        );
 
         LinearLayout.LayoutParams addParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
+                        -1,
+                        dp(54)
                 );
 
-        addParams.topMargin = 25;
+        addParams.topMargin = dp(22);
 
         root.addView(addButton, addParams);
+
+        addButton.setOnClickListener(v ->
+                showAddClassDialog()
+        );
+
+        // Section Heading
+
+        LinearLayout sectionHeader = new LinearLayout(this);
+        sectionHeader.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView sectionTitle = createText(
+                "Available Classes",
+                19,
+                TEXT,
+                true
+        );
+
+        sectionHeader.addView(
+                sectionTitle,
+                new LinearLayout.LayoutParams(
+                        0, -2, 1
+                )
+        );
+
+        TextView sectionBadge = createText(
+                "CLASSES",
+                10,
+                BLUE,
+                true
+        );
+
+        sectionBadge.setPadding(
+                dp(12), dp(7),
+                dp(12), dp(7)
+        );
+
+        sectionBadge.setBackground(
+                rounded(Color.rgb(219, 234, 254), 20)
+        );
+
+        sectionHeader.addView(sectionBadge);
+
+        LinearLayout.LayoutParams sectionParams =
+                new LinearLayout.LayoutParams(-1, -2);
+
+        sectionParams.topMargin = dp(28);
+
+        root.addView(sectionHeader, sectionParams);
+
+        // Status
+
+        statusView = createText(
+                "Loading classes...",
+                14,
+                MUTED,
+                false
+        );
+
+        statusView.setGravity(Gravity.CENTER);
+        statusView.setPadding(
+                dp(15), dp(25),
+                dp(15), dp(25)
+        );
+
+        LinearLayout.LayoutParams statusParams =
+                new LinearLayout.LayoutParams(-1, -2);
+
+        statusParams.topMargin = dp(10);
+
+        root.addView(statusView, statusParams);
+
+        // Class Cards Container
 
         classContainer = new LinearLayout(this);
         classContainer.setOrientation(LinearLayout.VERTICAL);
 
-        LinearLayout.LayoutParams containerParams =
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
+        root.addView(classContainer);
 
-        containerParams.topMargin = 20;
+        // Footer
 
-        root.addView(classContainer, containerParams);
+        TextView footer = createText(
+                "MyStudy • Learn • Practice • Grow",
+                12,
+                MUTED,
+                false
+        );
 
-        addButton.setOnClickListener(v -> showAddClassDialog());
+        footer.setGravity(Gravity.CENTER);
+
+        LinearLayout.LayoutParams footerParams =
+                new LinearLayout.LayoutParams(-1, -2);
+
+        footerParams.topMargin = dp(30);
+
+        root.addView(footer, footerParams);
 
         scrollView.addView(root);
 
         setContentView(scrollView);
     }
 
+    // LOAD CLASSES
+
     private void loadClasses() {
+
+        statusView.setVisibility(View.VISIBLE);
+        statusView.setText("Loading classes...");
+        classContainer.removeAllViews();
 
         db.collection("classes")
                 .orderBy("order")
@@ -93,29 +401,32 @@ public class ClassManagementActivity extends AppCompatActivity {
 
                     classContainer.removeAllViews();
 
-                    if (querySnapshot.isEmpty()) {
+                    int total = querySnapshot.size();
 
-                        TextView empty = new TextView(this);
-                        empty.setText("No classes added yet.");
-                        empty.setTextSize(16);
-                        empty.setTextColor(
-                                Color.rgb(100, 116, 139)
+                    countView.setText(String.valueOf(total));
+
+                    if (total == 0) {
+
+                        statusView.setVisibility(View.VISIBLE);
+                        statusView.setText(
+                                "📚\n\nNo classes added yet.\nTap Add New Class to get started."
                         );
-                        empty.setGravity(Gravity.CENTER);
-
-                        classContainer.addView(empty);
 
                         return;
                     }
 
+                    statusView.setVisibility(View.GONE);
+
                     for (DocumentSnapshot document :
                             querySnapshot.getDocuments()) {
 
-                        String name =
-                                document.getString("name");
+                        String name = document.getString("name");
 
-                        Long order =
-                                document.getLong("order");
+                        if (name == null || name.trim().isEmpty()) {
+                            name = "Unnamed Class";
+                        }
+
+                        Long order = document.getLong("order");
 
                         addClassCard(
                                 document.getId(),
@@ -126,13 +437,36 @@ public class ClassManagementActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
 
-                    Toast.makeText(
-                            this,
-                            "Unable to load classes.",
-                            Toast.LENGTH_LONG
-                    ).show();
+                    countView.setText("--");
+
+                    statusView.setVisibility(View.VISIBLE);
+                    statusView.setText(
+                            "Unable to load classes.\nPlease try again."
+                    );
+
+                    Button retry = createButton(
+                            "Retry",
+                            BLUE,
+                            Color.WHITE
+                    );
+
+                    LinearLayout.LayoutParams retryParams =
+                            new LinearLayout.LayoutParams(
+                                    dp(130),
+                                    dp(48)
+                            );
+
+                    retryParams.gravity = Gravity.CENTER;
+
+                    statusView.setTextColor(RED);
+
+                    classContainer.addView(retry, retryParams);
+
+                    retry.setOnClickListener(v -> loadClasses());
                 });
     }
+
+    // CLASS CARD
 
     private void addClassCard(
             String documentId,
@@ -142,67 +476,137 @@ public class ClassManagementActivity extends AppCompatActivity {
 
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(25, 25, 25, 25);
-        card.setBackgroundColor(Color.WHITE);
+        card.setPadding(
+                dp(18), dp(18),
+                dp(18), dp(18)
+        );
 
-        TextView nameView = new TextView(this);
-        nameView.setText(name);
-        nameView.setTextSize(20);
-        nameView.setTextColor(Color.rgb(17, 24, 39));
+        card.setBackground(
+                bordered(Color.WHITE,
+                        Color.rgb(226, 232, 240), 20)
+        );
 
-        card.addView(nameView);
+        LinearLayout.LayoutParams cardParams =
+                new LinearLayout.LayoutParams(-1, -2);
 
-        TextView orderView = new TextView(this);
-        orderView.setText("Order: " + order);
-        orderView.setTextSize(14);
-        orderView.setTextColor(Color.rgb(100, 116, 139));
+        cardParams.setMargins(0, 0, 0, dp(15));
 
-        LinearLayout.LayoutParams orderParams =
+        classContainer.addView(card, cardParams);
+
+        // Card Header
+
+        LinearLayout topRow = new LinearLayout(this);
+        topRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView icon = createText(
+                "📚",
+                25,
+                BLUE,
+                false
+        );
+
+        icon.setGravity(Gravity.CENTER);
+        icon.setBackground(
+                rounded(Color.rgb(239, 246, 255), 14)
+        );
+
+        LinearLayout.LayoutParams iconParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
+                        dp(52), dp(52)
                 );
 
-        orderParams.topMargin = 5;
+        topRow.addView(icon, iconParams);
 
-        card.addView(orderView, orderParams);
+        LinearLayout info = new LinearLayout(this);
+        info.setOrientation(LinearLayout.VERTICAL);
+        info.setPadding(dp(13), 0, 0, 0);
+
+        TextView nameView = createText(
+                name,
+                18,
+                TEXT,
+                true
+        );
+
+        TextView orderView = createText(
+                "Display Order: " + order,
+                12,
+                MUTED,
+                false
+        );
+
+        LinearLayout.LayoutParams orderParams =
+                new LinearLayout.LayoutParams(-1, -2);
+
+        orderParams.topMargin = dp(5);
+
+        info.addView(nameView);
+        info.addView(orderView, orderParams);
+
+        topRow.addView(
+                info,
+                new LinearLayout.LayoutParams(
+                        0, -2, 1
+                )
+        );
+
+        card.addView(topRow);
+
+        // Divider
+
+        View divider = new View(this);
+        divider.setBackgroundColor(
+                Color.rgb(241, 245, 249)
+        );
+
+        LinearLayout.LayoutParams dividerParams =
+                new LinearLayout.LayoutParams(-1, dp(1));
+
+        dividerParams.topMargin = dp(17);
+        dividerParams.bottomMargin = dp(13);
+
+        card.addView(divider, dividerParams);
+
+        // Action Buttons
 
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
 
-        Button editButton = new Button(this);
-        editButton.setText("Edit");
-
-        Button deleteButton = new Button(this);
-        deleteButton.setText("Delete");
-
-        actions.addView(
-                editButton,
-                new LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1
-                )
+        Button editButton = createButton(
+                "✎  Edit",
+                Color.rgb(219, 234, 254),
+                BLUE
         );
 
-        actions.addView(
-                deleteButton,
-                new LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1
-                )
+        Button deleteButton = createButton(
+                "Delete",
+                Color.rgb(254, 226, 226),
+                RED
         );
 
-        LinearLayout.LayoutParams actionsParams =
+        LinearLayout.LayoutParams actionButtonParams =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
+                        0, dp(45), 1
                 );
 
-        actionsParams.topMargin = 10;
+        actionButtonParams.setMargins(
+                0, 0, dp(6), 0
+        );
 
-        card.addView(actions, actionsParams);
+        actions.addView(editButton, actionButtonParams);
+
+        LinearLayout.LayoutParams deleteParams =
+                new LinearLayout.LayoutParams(
+                        0, dp(45), 1
+                );
+
+        deleteParams.setMargins(
+                dp(6), 0, 0, 0
+        );
+
+        actions.addView(deleteButton, deleteParams);
+
+        card.addView(actions);
 
         editButton.setOnClickListener(v ->
                 showEditClassDialog(
@@ -215,91 +619,98 @@ public class ClassManagementActivity extends AppCompatActivity {
         deleteButton.setOnClickListener(v ->
                 confirmDelete(documentId, name)
         );
-
-        LinearLayout.LayoutParams cardParams =
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
-
-        cardParams.setMargins(0, 0, 0, 20);
-
-        classContainer.addView(card, cardParams);
     }
+
+    // ADD CLASS
 
     private void showAddClassDialog() {
 
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(40, 10, 40, 10);
+        layout.setPadding(
+                dp(20), dp(10),
+                dp(20), dp(5)
+        );
 
         EditText nameInput = new EditText(this);
-        nameInput.setHint("Class name");
+        nameInput.setHint("Enter class name");
+        nameInput.setSingleLine(true);
 
         EditText orderInput = new EditText(this);
-        orderInput.setHint("Order number");
+        orderInput.setHint("Enter order number");
         orderInput.setInputType(
-                android.text.InputType.TYPE_CLASS_NUMBER
+                InputType.TYPE_CLASS_NUMBER
         );
+        orderInput.setSingleLine(true);
 
         layout.addView(nameInput);
         layout.addView(orderInput);
 
-        new AlertDialog.Builder(this)
-                .setTitle("Add Class")
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Add New Class")
                 .setView(layout)
-                .setPositiveButton("Save", (dialog, which) -> {
-
-                    String name =
-                            nameInput.getText()
-                                    .toString()
-                                    .trim();
-
-                    String orderText =
-                            orderInput.getText()
-                                    .toString()
-                                    .trim();
-
-                    if (name.isEmpty() ||
-                            orderText.isEmpty()) {
-
-                        Toast.makeText(
-                                this,
-                                "Enter class name and order.",
-                                Toast.LENGTH_SHORT
-                        ).show();
-
-                        return;
-                    }
-
-                    long order;
-
-                    try {
-                        order = Long.parseLong(orderText);
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(
-                                this,
-                                "Invalid order number.",
-                                Toast.LENGTH_SHORT
-                        ).show();
-                        return;
-                    }
-
-                    saveClass(name, order);
-                })
+                .setPositiveButton("Save", null)
                 .setNegativeButton("Cancel", null)
-                .show();
+                .create();
+
+        dialog.setOnShowListener(unused -> {
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                    .setOnClickListener(v -> {
+
+                        String name = nameInput.getText()
+                                .toString().trim();
+
+                        String orderText = orderInput.getText()
+                                .toString().trim();
+
+                        if (name.isEmpty() ||
+                                orderText.isEmpty()) {
+
+                            Toast.makeText(
+                                    this,
+                                    "Enter class name and order.",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+
+                            return;
+                        }
+
+                        try {
+
+                            long order = Long.parseLong(orderText);
+
+                            dialog.dismiss();
+
+                            saveClass(name, order);
+
+                        } catch (NumberFormatException e) {
+
+                            Toast.makeText(
+                                    this,
+                                    "Invalid order number.",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+                        }
+                    });
+        });
+
+        dialog.show();
     }
 
-    private void saveClass(String name, long order) {
+    private void saveClass(
+            String name,
+            long order
+    ) {
 
-        Map<String, Object> data =
-                new HashMap<>();
+        Map<String, Object> data = new HashMap<>();
 
         data.put("name", name);
         data.put("order", order);
-        data.put("createdAt",
-                com.google.firebase.firestore.FieldValue.serverTimestamp());
+        data.put(
+                "createdAt",
+                FieldValue.serverTimestamp()
+        );
 
         db.collection("classes")
                 .add(data)
@@ -323,6 +734,8 @@ public class ClassManagementActivity extends AppCompatActivity {
                 });
     }
 
+    // EDIT CLASS
+
     private void showEditClassDialog(
             String documentId,
             String oldName,
@@ -331,70 +744,81 @@ public class ClassManagementActivity extends AppCompatActivity {
 
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(40, 10, 40, 10);
+        layout.setPadding(
+                dp(20), dp(10),
+                dp(20), dp(5)
+        );
 
         EditText nameInput = new EditText(this);
         nameInput.setText(oldName);
         nameInput.setHint("Class name");
+        nameInput.setSingleLine(true);
 
         EditText orderInput = new EditText(this);
         orderInput.setText(String.valueOf(oldOrder));
         orderInput.setHint("Order number");
         orderInput.setInputType(
-                android.text.InputType.TYPE_CLASS_NUMBER
+                InputType.TYPE_CLASS_NUMBER
         );
+        orderInput.setSingleLine(true);
 
         layout.addView(nameInput);
         layout.addView(orderInput);
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Edit Class")
                 .setView(layout)
-                .setPositiveButton("Update", (dialog, which) -> {
-
-                    String name =
-                            nameInput.getText()
-                                    .toString()
-                                    .trim();
-
-                    String orderText =
-                            orderInput.getText()
-                                    .toString()
-                                    .trim();
-
-                    if (name.isEmpty() ||
-                            orderText.isEmpty()) {
-
-                        Toast.makeText(
-                                this,
-                                "Enter all details.",
-                                Toast.LENGTH_SHORT
-                        ).show();
-
-                        return;
-                    }
-
-                    long order;
-
-                    try {
-                        order = Long.parseLong(orderText);
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(
-                                this,
-                                "Invalid order number.",
-                                Toast.LENGTH_SHORT
-                        ).show();
-                        return;
-                    }
-
-                    updateClass(
-                            documentId,
-                            name,
-                            order
-                    );
-                })
+                .setPositiveButton("Update", null)
                 .setNegativeButton("Cancel", null)
-                .show();
+                .create();
+
+        dialog.setOnShowListener(unused -> {
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                    .setOnClickListener(v -> {
+
+                        String name = nameInput.getText()
+                                .toString().trim();
+
+                        String orderText = orderInput.getText()
+                                .toString().trim();
+
+                        if (name.isEmpty() ||
+                                orderText.isEmpty()) {
+
+                            Toast.makeText(
+                                    this,
+                                    "Enter all details.",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+
+                            return;
+                        }
+
+                        try {
+
+                            long order = Long.parseLong(orderText);
+
+                            dialog.dismiss();
+
+                            updateClass(
+                                    documentId,
+                                    name,
+                                    order
+                            );
+
+                        } catch (NumberFormatException e) {
+
+                            Toast.makeText(
+                                    this,
+                                    "Invalid order number.",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+                        }
+                    });
+        });
+
+        dialog.show();
     }
 
     private void updateClass(
@@ -403,8 +827,7 @@ public class ClassManagementActivity extends AppCompatActivity {
             long order
     ) {
 
-        Map<String, Object> updates =
-                new HashMap<>();
+        Map<String, Object> updates = new HashMap<>();
 
         updates.put("name", name);
         updates.put("order", order);
@@ -416,7 +839,7 @@ public class ClassManagementActivity extends AppCompatActivity {
 
                     Toast.makeText(
                             this,
-                            "Class updated.",
+                            "Class updated successfully.",
                             Toast.LENGTH_SHORT
                     ).show();
 
@@ -432,15 +855,18 @@ public class ClassManagementActivity extends AppCompatActivity {
                 });
     }
 
+    // DELETE CLASS
+
     private void confirmDelete(
             String documentId,
             String name
     ) {
 
         new AlertDialog.Builder(this)
-                .setTitle("Delete Class")
+                .setTitle("Delete Class?")
                 .setMessage(
-                        "Delete " + name + "?"
+                        "Are you sure you want to delete "
+                                + name + "?"
                 )
                 .setPositiveButton(
                         "Delete",
@@ -463,7 +889,7 @@ public class ClassManagementActivity extends AppCompatActivity {
 
                     Toast.makeText(
                             this,
-                            "Class deleted.",
+                            "Class deleted successfully.",
                             Toast.LENGTH_SHORT
                     ).show();
 

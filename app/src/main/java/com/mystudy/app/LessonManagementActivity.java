@@ -3,20 +3,14 @@ package com.mystudy.app;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -34,9 +28,19 @@ public class LessonManagementActivity extends AppCompatActivity {
 
     private static final int FILE_PICKER_REQUEST = 2001;
 
+    private final int BLUE = Color.rgb(37, 99, 235);
+    private final int DARK = Color.rgb(30, 41, 59);
+    private final int YELLOW = Color.rgb(250, 204, 21);
+    private final int BG = Color.rgb(245, 248, 255);
+    private final int GRAY = Color.rgb(100, 116, 139);
+
     private FirebaseFirestore db;
     private FirebaseStorage storage;
+
     private LinearLayout lessonContainer;
+    private TextView countText;
+    private TextView statusText;
+    private ProgressBar progressBar;
 
     private final List<String> classIds = new ArrayList<>();
     private final List<String> classNames = new ArrayList<>();
@@ -48,13 +52,16 @@ public class LessonManagementActivity extends AppCompatActivity {
     private final List<String> chapterNames = new ArrayList<>();
 
     private final String[] mediums = {
-            "English",
-            "Semi-English",
-            "Marathi",
-            "Hindi"
+            "English", "Semi-English", "Marathi", "Hindi"
     };
 
-    private Uri selectedFileUri = null;
+    private final String[] contentTypes = {
+            "TEXT", "IMAGE", "PDF", "VIDEO", "AUDIO", "LINK"
+    };
+
+    private Uri selectedFileUri;
+    private TextView selectedFileText;
+    private AlertDialog activeDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,218 +74,241 @@ public class LessonManagementActivity extends AppCompatActivity {
         loadLessons();
     }
 
+    private GradientDrawable rounded(int color, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radius));
+        return drawable;
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density);
+    }
+
+    private TextView text(String value, int size, int color, boolean bold) {
+        TextView view = new TextView(this);
+        view.setText(value);
+        view.setTextSize(size);
+        view.setTextColor(color);
+
+        if (bold) {
+            view.setTypeface(null, Typeface.BOLD);
+        }
+
+        return view;
+    }
+
+    private Button button(String label) {
+        Button btn = new Button(this);
+        btn.setText(label);
+        btn.setAllCaps(false);
+        btn.setTextSize(14);
+        return btn;
+    }
+
     private void createUI() {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(24, 30, 24, 24);
-        root.setBackgroundColor(Color.rgb(248, 250, 252));
+        root.setBackgroundColor(BG);
 
-        TextView title = new TextView(this);
-        title.setText("Lesson Management");
-        title.setTextSize(28);
-        title.setTextColor(Color.rgb(17, 24, 39));
-        title.setGravity(Gravity.CENTER);
-        title.setPadding(0, 0, 0, 20);
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.VERTICAL);
+        header.setPadding(dp(20), dp(22), dp(20), dp(22));
+        header.setBackground(rounded(BLUE, 22));
 
-        root.addView(title);
+        TextView brand = text("📘 MyStudy", 17, Color.WHITE, true);
+        TextView title = text("Lesson Management", 25, Color.WHITE, true);
+        TextView subtitle = text(
+                "Create and manage learning lessons",
+                13,
+                Color.WHITE,
+                false
+        );
 
-        Button addButton = new Button(this);
-        addButton.setText("+ Add Lesson");
-        addButton.setAllCaps(false);
-        addButton.setTextSize(16);
+        header.addView(brand);
+        header.addView(title);
+        header.addView(subtitle);
 
+        LinearLayout.LayoutParams headerParams =
+                new LinearLayout.LayoutParams(
+                        -1,
+                        -2
+                );
+
+        headerParams.setMargins(dp(16), dp(16), dp(16), dp(12));
+        root.addView(header, headerParams);
+
+        LinearLayout countCard = new LinearLayout(this);
+        countCard.setOrientation(LinearLayout.VERTICAL);
+        countCard.setPadding(dp(18), dp(15), dp(18), dp(15));
+        countCard.setBackground(rounded(Color.WHITE, 18));
+
+        countText = text("Total Lessons: 0", 18, DARK, true);
+        countCard.addView(countText);
+
+        LinearLayout.LayoutParams countParams =
+                new LinearLayout.LayoutParams(-1, -2);
+
+        countParams.setMargins(dp(16), dp(4), dp(16), dp(12));
+        root.addView(countCard, countParams);
+
+        Button addButton = button("＋ Add New Lesson");
+        addButton.setTextColor(Color.WHITE);
+        addButton.setBackground(rounded(BLUE, 14));
         addButton.setOnClickListener(v -> showAddLessonDialog());
 
-        root.addView(
-                addButton,
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-        );
+        LinearLayout.LayoutParams addParams =
+                new LinearLayout.LayoutParams(-1, dp(52));
+
+        addParams.setMargins(dp(16), 0, dp(16), dp(12));
+        root.addView(addButton, addParams);
+
+        progressBar = new ProgressBar(this);
+        progressBar.setVisibility(View.GONE);
+
+        root.addView(progressBar);
+
+        statusText = text("", 14, GRAY, false);
+        statusText.setGravity(Gravity.CENTER);
+        statusText.setPadding(dp(16), dp(12), dp(16), dp(12));
+        statusText.setVisibility(View.GONE);
+
+        root.addView(statusText);
 
         ScrollView scrollView = new ScrollView(this);
 
         lessonContainer = new LinearLayout(this);
         lessonContainer.setOrientation(LinearLayout.VERTICAL);
-        lessonContainer.setPadding(0, 20, 0, 20);
+        lessonContainer.setPadding(dp(16), dp(8), dp(16), dp(20));
 
         scrollView.addView(lessonContainer);
 
         root.addView(
                 scrollView,
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        0,
-                        1
-                )
+                new LinearLayout.LayoutParams(0, 0, 1)
         );
 
-        Button backButton = new Button(this);
-        backButton.setText("Back");
-        backButton.setAllCaps(false);
+        Button backButton = button("← Back to Dashboard");
         backButton.setOnClickListener(v -> finish());
 
-        root.addView(backButton);
+        LinearLayout.LayoutParams backParams =
+                new LinearLayout.LayoutParams(-1, dp(48));
+
+        backParams.setMargins(dp(16), dp(6), dp(16), dp(14));
+        root.addView(backButton, backParams);
 
         setContentView(root);
     }
 
+    private void showStatus(String message, boolean loading) {
+
+        statusText.setText(message);
+        statusText.setVisibility(message.isEmpty() ? View.GONE : View.VISIBLE);
+
+        progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
+    }
+
     private void loadLessons() {
 
-        if (lessonContainer == null) {
-            return;
-        }
-
         lessonContainer.removeAllViews();
+        showStatus("Loading lessons...", true);
 
         db.collection("lessons")
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addOnSuccessListener(snapshot -> {
 
-                    if (querySnapshot.isEmpty()) {
+                    showStatus("", false);
 
-                        TextView empty = new TextView(this);
-                        empty.setText("No lessons added yet.");
-                        empty.setTextSize(16);
-                        empty.setTextColor(Color.rgb(100, 116, 139));
-                        empty.setGravity(Gravity.CENTER);
-                        empty.setPadding(0, 40, 0, 40);
+                    int total = snapshot.size();
+                    countText.setText("Total Lessons: " + total);
 
-                        lessonContainer.addView(empty);
+                    if (total == 0) {
+                        showEmptyState();
                         return;
                     }
 
-                    for (DocumentSnapshot document :
-                            querySnapshot.getDocuments()) {
+                    for (DocumentSnapshot document : snapshot.getDocuments()) {
 
-                        String documentId = document.getId();
+                        String id = document.getId();
 
-                        String title = document.getString("title");
-                        String description =
-                                document.getString("description");
-                        String content =
-                                document.getString("content");
+                        String title = value(document, "title", "Untitled Lesson");
+                        String description = value(document, "description", "");
+                        String content = value(document, "content", "");
 
-                        String classId =
-                                document.getString("classId");
-                        String className =
-                                document.getString("className");
+                        String classId = value(document, "classId", "");
+                        String className = value(document, "className", "Unknown Class");
+                        String medium = value(document, "medium", "English");
 
-                        String medium =
-                                document.getString("medium");
+                        String subjectId = value(document, "subjectId", "");
+                        String subjectName = value(document, "subjectName", "Unknown Subject");
 
-                        String subjectId =
-                                document.getString("subjectId");
-                        String subjectName =
-                                document.getString("subjectName");
+                        String chapterId = value(document, "chapterId", "");
+                        String chapterName = value(document, "chapterName", "Unknown Chapter");
 
-                        String chapterId =
-                                document.getString("chapterId");
-                        String chapterName =
-                                document.getString("chapterName");
+                        String type = value(document, "contentType", "text");
+                        String url = value(document, "contentUrl", "");
+                        String path = value(document, "storagePath", "");
 
-                        String contentType =
-                                document.getString("contentType");
-                        String contentUrl =
-                                document.getString("contentUrl");
-                        String storagePath =
-                                document.getString("storagePath");
-
-                        Long orderValue =
-                                document.getLong("order");
-
-                        if (title == null) {
-                            title = "Untitled Lesson";
-                        }
-
-                        if (description == null) {
-                            description = "";
-                        }
-
-                        if (content == null) {
-                            content = "";
-                        }
-
-                        if (classId == null) {
-                            classId = "";
-                        }
-
-                        if (className == null) {
-                            className = "Unknown Class";
-                        }
-
-                        if (medium == null ||
-                                medium.trim().isEmpty()) {
-                            medium = "English";
-                        }
-
-                        if (subjectId == null) {
-                            subjectId = "";
-                        }
-
-                        if (subjectName == null) {
-                            subjectName = "Unknown Subject";
-                        }
-
-                        if (chapterId == null) {
-                            chapterId = "";
-                        }
-
-                        if (chapterName == null) {
-                            chapterName = "Unknown Chapter";
-                        }
-
-                        if (contentType == null ||
-                                contentType.trim().isEmpty()) {
-                            contentType = "text";
-                        }
-
-                        if (contentUrl == null) {
-                            contentUrl = "";
-                        }
-
-                        if (storagePath == null) {
-                            storagePath = "";
-                        }
-
-                        long order =
-                                orderValue != null
-                                        ? orderValue
-                                        : 0;
+                        Long orderValue = document.getLong("order");
+                        long order = orderValue != null ? orderValue : 0;
 
                         addLessonCard(
-                                documentId,
-                                title,
-                                description,
-                                content,
-                                classId,
-                                className,
-                                medium,
-                                subjectId,
-                                subjectName,
-                                chapterId,
-                                chapterName,
-                                contentType,
-                                contentUrl,
-                                storagePath,
-                                order
+                                id, title, description, content,
+                                classId, className, medium,
+                                subjectId, subjectName,
+                                chapterId, chapterName,
+                                type, url, path, order
                         );
                     }
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(
-                                this,
-                                "Failed to load lessons: "
-                                        + e.getMessage(),
-                                Toast.LENGTH_LONG
-                        ).show()
-                );
+                .addOnFailureListener(e -> {
+
+                    showStatus("Unable to load lessons.", false);
+
+                    Button retry = button("Retry");
+                    retry.setOnClickListener(v -> loadLessons());
+
+                    lessonContainer.addView(retry);
+                });
+    }
+
+    private String value(DocumentSnapshot document, String field, String fallback) {
+        String result = document.getString(field);
+        return result == null ? fallback : result;
+    }
+
+    private void showEmptyState() {
+
+        LinearLayout empty = new LinearLayout(this);
+        empty.setOrientation(LinearLayout.VERTICAL);
+        empty.setGravity(Gravity.CENTER);
+        empty.setPadding(dp(20), dp(45), dp(20), dp(45));
+        empty.setBackground(rounded(Color.WHITE, 20));
+
+        TextView icon = text("📚", 42, DARK, false);
+        icon.setGravity(Gravity.CENTER);
+
+        TextView title = text("No Lessons Yet", 20, DARK, true);
+        title.setGravity(Gravity.CENTER);
+
+        TextView message = text(
+                "Add your first lesson to get started.",
+                14,
+                GRAY,
+                false
+        );
+        message.setGravity(Gravity.CENTER);
+
+        empty.addView(icon);
+        empty.addView(title);
+        empty.addView(message);
+
+        lessonContainer.addView(empty);
     }
 
     private void addLessonCard(
-            String documentId,
+            String id,
             String title,
             String description,
             String content,
@@ -297,141 +327,88 @@ public class LessonManagementActivity extends AppCompatActivity {
 
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(24, 20, 24, 20);
-        card.setBackgroundColor(Color.WHITE);
+        card.setPadding(dp(18), dp(16), dp(18), dp(16));
+        card.setBackground(rounded(Color.WHITE, 20));
 
-        TextView titleText = new TextView(this);
-        titleText.setText(title);
-        titleText.setTextSize(20);
-        titleText.setTextColor(Color.rgb(17, 24, 39));
+        TextView lessonTitle = text(title, 19, DARK, true);
 
-        TextView classText = new TextView(this);
-        classText.setText("Class: " + className);
-        classText.setTextSize(14);
-        classText.setTextColor(Color.rgb(79, 70, 229));
-
-        TextView mediumText = new TextView(this);
-        mediumText.setText("Medium: " + medium);
-        mediumText.setTextSize(14);
-        mediumText.setTextColor(Color.rgb(245, 158, 11));
-
-        TextView subjectText = new TextView(this);
-        subjectText.setText("Subject: " + subjectName);
-        subjectText.setTextSize(15);
-        subjectText.setTextColor(Color.rgb(14, 116, 144));
-
-        TextView chapterText = new TextView(this);
-        chapterText.setText("Chapter: " + chapterName);
-        chapterText.setTextSize(15);
-        chapterText.setTextColor(Color.rgb(16, 185, 129));
-
-        TextView typeText = new TextView(this);
-        typeText.setText("Content Type: " + contentType);
-        typeText.setTextSize(14);
-        typeText.setTextColor(Color.rgb(124, 58, 237));
-
-        TextView descriptionText = new TextView(this);
-        descriptionText.setText(
-                description.isEmpty()
-                        ? "No description"
-                        : description
+        TextView classInfo = text(
+                "Class: " + className + "  •  " + medium,
+                13,
+                BLUE,
+                true
         );
-        descriptionText.setTextSize(14);
-        descriptionText.setTextColor(Color.rgb(71, 85, 105));
-        descriptionText.setPadding(0, 8, 0, 4);
 
-        TextView orderText = new TextView(this);
-        orderText.setText("Order: " + order);
-        orderText.setTextSize(14);
-        orderText.setTextColor(Color.rgb(100, 116, 139));
+        TextView subjectInfo = text(
+                "Subject: " + subjectName,
+                14,
+                DARK,
+                false
+        );
 
-        card.addView(titleText);
-        card.addView(classText);
-        card.addView(mediumText);
-        card.addView(subjectText);
-        card.addView(chapterText);
-        card.addView(typeText);
-        card.addView(descriptionText);
-        card.addView(orderText);
+        TextView chapterInfo = text(
+                "Chapter: " + chapterName,
+                14,
+                DARK,
+                false
+        );
+
+        TextView typeInfo = text(
+                "Content Type: " + contentType.toUpperCase(),
+                13,
+                BLUE,
+                true
+        );
+
+        TextView descriptionInfo = text(
+                description.isEmpty() ? "No description available" : description,
+                13,
+                GRAY,
+                false
+        );
+
+        TextView orderInfo = text("Lesson Order: " + order, 12, GRAY, false);
+
+        card.addView(lessonTitle);
+        card.addView(classInfo);
+        card.addView(subjectInfo);
+        card.addView(chapterInfo);
+        card.addView(typeInfo);
+        card.addView(descriptionInfo);
+        card.addView(orderInfo);
 
         if (!contentUrl.isEmpty()) {
-
-            TextView urlText = new TextView(this);
-            urlText.setText("Attached: " + contentUrl);
-            urlText.setTextSize(12);
-            urlText.setTextColor(Color.rgb(100, 116, 139));
-            urlText.setPadding(0, 6, 0, 6);
-
-            card.addView(urlText);
+            TextView attached = text("📎 Learning file attached", 12, BLUE, false);
+            card.addView(attached);
         }
 
-        LinearLayout buttonRow = new LinearLayout(this);
-        buttonRow.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
 
-        Button editButton = new Button(this);
-        editButton.setText("Edit");
-        editButton.setAllCaps(false);
+        Button edit = button("Edit");
+        Button delete = button("Delete");
 
-        editButton.setOnClickListener(v ->
-                showEditLessonDialog(
-                        documentId,
-                        title,
-                        description,
-                        content,
-                        classId,
-                        className,
-                        medium,
-                        subjectId,
-                        subjectName,
-                        chapterId,
-                        chapterName,
-                        contentType,
-                        contentUrl,
-                        storagePath,
-                        order
-                )
-        );
+        edit.setOnClickListener(v -> showEditLessonDialog(
+                id, title, description, content,
+                classId, className, medium,
+                subjectId, subjectName,
+                chapterId, chapterName,
+                contentType, contentUrl, storagePath, order
+        ));
 
-        Button deleteButton = new Button(this);
-        deleteButton.setText("Delete");
-        deleteButton.setAllCaps(false);
+        delete.setOnClickListener(v -> confirmDelete(id, title));
 
-        deleteButton.setOnClickListener(v ->
-                confirmDelete(
-                        documentId,
-                        title
-                )
-        );
+        actions.addView(edit, new LinearLayout.LayoutParams(0, dp(45), 1));
+        actions.addView(delete, new LinearLayout.LayoutParams(0, dp(45), 1));
 
-        buttonRow.addView(
-                editButton,
-                new LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1
-                )
-        );
+        card.addView(actions);
 
-        buttonRow.addView(
-                deleteButton,
-                new LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1
-                )
-        );
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(-1, -2);
 
-        card.addView(buttonRow);
+        params.setMargins(0, 0, 0, dp(14));
 
-        LinearLayout.LayoutParams cardParams =
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
-
-        cardParams.setMargins(0, 0, 0, 18);
-
-        lessonContainer.addView(card, cardParams);
+        lessonContainer.addView(card, params);
     }
 
     private void showAddLessonDialog() {
@@ -439,112 +416,83 @@ public class LessonManagementActivity extends AppCompatActivity {
     }
 
     private void showEditLessonDialog(
-            String documentId,
-            String oldTitle,
-            String oldDescription,
-            String oldContent,
-            String oldClassId,
-            String oldClassName,
-            String oldMedium,
-            String oldSubjectId,
-            String oldSubjectName,
-            String oldChapterId,
-            String oldChapterName,
-            String oldContentType,
-            String oldContentUrl,
-            String oldStoragePath,
-            long oldOrder
+            String id,
+            String title,
+            String description,
+            String content,
+            String classId,
+            String className,
+            String medium,
+            String subjectId,
+            String subjectName,
+            String chapterId,
+            String chapterName,
+            String contentType,
+            String contentUrl,
+            String storagePath,
+            long order
     ) {
 
         LessonEditData data = new LessonEditData();
 
-        data.documentId = documentId;
-        data.title = oldTitle;
-        data.description = oldDescription;
-        data.content = oldContent;
-        data.classId = oldClassId;
-        data.className = oldClassName;
-        data.medium = oldMedium;
-        data.subjectId = oldSubjectId;
-        data.subjectName = oldSubjectName;
-        data.chapterId = oldChapterId;
-        data.chapterName = oldChapterName;
-        data.contentType = oldContentType;
-        data.contentUrl = oldContentUrl;
-        data.storagePath = oldStoragePath;
-        data.order = oldOrder;
+        data.documentId = id;
+        data.title = title;
+        data.description = description;
+        data.content = content;
+        data.classId = classId;
+        data.className = className;
+        data.medium = medium;
+        data.subjectId = subjectId;
+        data.subjectName = subjectName;
+        data.chapterId = chapterId;
+        data.chapterName = chapterName;
+        data.contentType = contentType;
+        data.contentUrl = contentUrl;
+        data.storagePath = storagePath;
+        data.order = order;
 
         loadClassesForDialog(true, data);
     }
 
-    private void loadClassesForDialog(
-            boolean editMode,
-            LessonEditData editData
-    ) {
+    private void loadClassesForDialog(boolean editMode, LessonEditData editData) {
 
         db.collection("classes")
+                .orderBy("order")
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addOnSuccessListener(snapshot -> {
 
                     classIds.clear();
                     classNames.clear();
 
-                    for (DocumentSnapshot document :
-                            querySnapshot.getDocuments()) {
+                    for (DocumentSnapshot document : snapshot.getDocuments()) {
 
                         classIds.add(document.getId());
-
-                        String name =
-                                document.getString("name");
-
-                        if (name == null) {
-                            name = "Unnamed Class";
-                        }
-
-                        classNames.add(name);
+                        classNames.add(value(document, "name", "Unnamed Class"));
                     }
 
-                    if (classNames.isEmpty()) {
-
-                        Toast.makeText(
-                                this,
-                                "Please add a class first.",
-                                Toast.LENGTH_LONG
-                        ).show();
-
+                    if (classIds.isEmpty()) {
+                        Toast.makeText(this, "Please add a class first.", Toast.LENGTH_LONG).show();
                         return;
                     }
 
-                    showLessonDialog(
-                            editMode,
-                            editData
-                    );
+                    showLessonDialog(editMode, editData);
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(
-                                this,
-                                "Failed to load classes: "
-                                        + e.getMessage(),
-                                Toast.LENGTH_LONG
-                        ).show()
+                        Toast.makeText(this, "Failed to load classes: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show()
                 );
     }
 
-    private void showLessonDialog(
-            boolean editMode,
-            LessonEditData editData
-    ) {
+    private void showLessonDialog(boolean editMode, LessonEditData editData) {
 
         selectedFileUri = null;
 
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(40, 10, 40, 10);
-
-        ScrollView dialogScroll = new ScrollView(this);
-
         LinearLayout form = new LinearLayout(this);
         form.setOrientation(LinearLayout.VERTICAL);
+        form.setPadding(dp(20), dp(8), dp(20), dp(8));
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(form);
 
         EditText titleInput = new EditText(this);
         titleInput.setHint("Lesson title");
@@ -552,685 +500,244 @@ public class LessonManagementActivity extends AppCompatActivity {
 
         EditText descriptionInput = new EditText(this);
         descriptionInput.setHint("Short description");
-        descriptionInput.setSingleLine(false);
+        descriptionInput.setMinLines(2);
 
         EditText contentInput = new EditText(this);
         contentInput.setHint("Lesson text content");
-        contentInput.setSingleLine(false);
+        contentInput.setMinLines(4);
         contentInput.setGravity(Gravity.TOP);
-        contentInput.setMinLines(5);
 
         Spinner classSpinner = new Spinner(this);
-
-        ArrayAdapter<String> classAdapter =
-                new ArrayAdapter<>(
-                        this,
-                        android.R.layout.simple_spinner_item,
-                        classNames
-                );
-
-        classAdapter.setDropDownViewResource(
-                android.R.layout.simple_spinner_dropdown_item
-        );
-
-        classSpinner.setAdapter(classAdapter);
-
         Spinner mediumSpinner = new Spinner(this);
-
-        ArrayAdapter<String> mediumAdapter =
-                new ArrayAdapter<>(
-                        this,
-                        android.R.layout.simple_spinner_item,
-                        mediums
-                );
-
-        mediumAdapter.setDropDownViewResource(
-                android.R.layout.simple_spinner_dropdown_item
-        );
-
-        mediumSpinner.setAdapter(mediumAdapter);
-
         Spinner subjectSpinner = new Spinner(this);
-
         Spinner chapterSpinner = new Spinner(this);
+        Spinner typeSpinner = new Spinner(this);
 
-        Spinner contentTypeSpinner = new Spinner(this);
-
-        String[] contentTypes = {
-                "TEXT",
-                "IMAGE",
-                "PDF",
-                "VIDEO",
-                "AUDIO",
-                "LINK"
-        };
-
-        ArrayAdapter<String> contentTypeAdapter =
-                new ArrayAdapter<>(
-                        this,
-                        android.R.layout.simple_spinner_item,
-                        contentTypes
-                );
-
-        contentTypeAdapter.setDropDownViewResource(
-                android.R.layout.simple_spinner_dropdown_item
-        );
-
-        contentTypeSpinner.setAdapter(contentTypeAdapter);
+        setSpinner(classSpinner, classNames);
+        setSpinner(mediumSpinner, java.util.Arrays.asList(mediums));
+        setSpinner(typeSpinner, java.util.Arrays.asList(contentTypes));
 
         EditText linkInput = new EditText(this);
         linkInput.setHint("External learning URL");
-        linkInput.setInputType(
-                InputType.TYPE_CLASS_TEXT |
-                        InputType.TYPE_TEXT_VARIATION_URI
-        );
+        linkInput.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
         linkInput.setSingleLine(true);
-        linkInput.setVisibility(View.GONE);
 
-        Button fileButton = new Button(this);
-        fileButton.setText("Choose File");
-        fileButton.setAllCaps(false);
-        fileButton.setVisibility(View.GONE);
-
-        TextView selectedFileText = new TextView(this);
-        selectedFileText.setText("No file selected");
-        selectedFileText.setTextSize(13);
-        selectedFileText.setTextColor(Color.rgb(100, 116, 139));
-        selectedFileText.setPadding(0, 4, 0, 10);
-        selectedFileText.setVisibility(View.GONE);
+        Button fileButton = button("Choose File");
+        selectedFileText = text("No file selected", 12, GRAY, false);
 
         EditText orderInput = new EditText(this);
-        orderInput.setHint("Order e.g. 1");
+        orderInput.setHint("Lesson order e.g. 1");
         orderInput.setInputType(InputType.TYPE_CLASS_NUMBER);
         orderInput.setSingleLine(true);
 
-        form.addView(titleInput);
-        form.addView(descriptionInput);
-        form.addView(contentInput);
-
-        addLabel(form, "Class");
-        form.addView(classSpinner);
-
-        addLabel(form, "Medium");
-        form.addView(mediumSpinner);
-
-        addLabel(form, "Subject");
-        form.addView(subjectSpinner);
-
-        addLabel(form, "Chapter");
-        form.addView(chapterSpinner);
-
-        addLabel(form, "Content Type");
-        form.addView(contentTypeSpinner);
+        addField(form, "Lesson Title", titleInput);
+        addField(form, "Description", descriptionInput);
+        addField(form, "Text Content", contentInput);
+        addField(form, "Class", classSpinner);
+        addField(form, "Medium", mediumSpinner);
+        addField(form, "Subject", subjectSpinner);
+        addField(form, "Chapter", chapterSpinner);
+        addField(form, "Content Type", typeSpinner);
 
         form.addView(linkInput);
         form.addView(fileButton);
         form.addView(selectedFileText);
-        form.addView(orderInput);
 
-        dialogScroll.addView(form);
-        layout.addView(dialogScroll);
+        addField(form, "Display Order", orderInput);
+
+        linkInput.setVisibility(View.GONE);
+        fileButton.setVisibility(View.GONE);
+        selectedFileText.setVisibility(View.GONE);
 
         if (editMode && editData != null) {
 
             titleInput.setText(editData.title);
             descriptionInput.setText(editData.description);
             contentInput.setText(editData.content);
+            orderInput.setText(String.valueOf(editData.order));
 
-            orderInput.setText(
-                    String.valueOf(editData.order)
-            );
+            int cp = classIds.indexOf(editData.classId);
+            if (cp >= 0) classSpinner.setSelection(cp);
 
-            int classPosition =
-                    classIds.indexOf(editData.classId);
+            int mp = findPosition(mediums, editData.medium);
+            if (mp >= 0) mediumSpinner.setSelection(mp);
 
-            if (classPosition >= 0) {
-                classSpinner.setSelection(classPosition);
-            }
+            int tp = findPosition(contentTypes, editData.contentType);
+            if (tp >= 0) typeSpinner.setSelection(tp);
 
-            int mediumPosition =
-                    findPosition(
-                            mediums,
-                            editData.medium
-                    );
-
-            if (mediumPosition >= 0) {
-                mediumSpinner.setSelection(mediumPosition);
-            }
-
-            int contentTypePosition =
-                    findPosition(
-                            contentTypes,
-                            editData.contentType
-                    );
-
-            if (contentTypePosition >= 0) {
-                contentTypeSpinner.setSelection(
-                        contentTypePosition
-                );
-            }
-
-            if ("LINK".equalsIgnoreCase(
-                    editData.contentType
-            )) {
-
-                linkInput.setVisibility(View.VISIBLE);
+            if ("LINK".equalsIgnoreCase(editData.contentType)) {
                 linkInput.setText(editData.contentUrl);
-
-            } else if (
-                    !"TEXT".equalsIgnoreCase(
-                            editData.contentType
-                    )
-                            && !editData.contentUrl.isEmpty()
-            ) {
-
-                selectedFileText.setVisibility(
-                        View.VISIBLE
-                );
-
-                selectedFileText.setText(
-                        "Existing file: "
-                                + editData.contentUrl
-                );
+            } else if (!"TEXT".equalsIgnoreCase(editData.contentType)
+                    && !editData.contentUrl.isEmpty()) {
+                selectedFileText.setText("Existing file attached");
             }
         }
 
-        classSpinner.setOnItemSelectedListener(
-                new AdapterView.OnItemSelectedListener() {
+        classSpinner.setOnItemSelectedListener(new SimpleListener(() ->
+                refreshSubjects(classSpinner, mediumSpinner, subjectSpinner,
+                        chapterSpinner, editMode, editData)
+        ));
 
-                    @Override
-                    public void onItemSelected(
-                            AdapterView<?> parent,
-                            View view,
-                            int position,
-                            long id
-                    ) {
+        mediumSpinner.setOnItemSelectedListener(new SimpleListener(() ->
+                refreshSubjects(classSpinner, mediumSpinner, subjectSpinner,
+                        chapterSpinner, editMode, editData)
+        ));
 
-                        refreshSubjects(
-                                classSpinner,
-                                mediumSpinner,
-                                subjectSpinner,
-                                chapterSpinner,
-                                editMode,
-                                editData
-                        );
-                    }
+        subjectSpinner.setOnItemSelectedListener(new SimpleListener(() -> {
 
-                    @Override
-                    public void onNothingSelected(
-                            AdapterView<?> parent
-                    ) {
-                    }
-                }
-        );
+            int cp = classSpinner.getSelectedItemPosition();
+            int mp = mediumSpinner.getSelectedItemPosition();
+            int sp = subjectSpinner.getSelectedItemPosition();
 
-        mediumSpinner.setOnItemSelectedListener(
-                new AdapterView.OnItemSelectedListener() {
+            if (cp >= 0 && mp >= 0 && sp >= 0
+                    && cp < classIds.size() && sp < subjectIds.size()) {
 
-                    @Override
-                    public void onItemSelected(
-                            AdapterView<?> parent,
-                            View view,
-                            int position,
-                            long id
-                    ) {
+                loadChapters(
+                        classIds.get(cp),
+                        subjectIds.get(sp),
+                        mediums[mp],
+                        chapterSpinner,
+                        editMode,
+                        editData
+                );
+            }
+        }));
 
-                        refreshSubjects(
-                                classSpinner,
-                                mediumSpinner,
-                                subjectSpinner,
-                                chapterSpinner,
-                                editMode,
-                                editData
-                        );
-                    }
+        typeSpinner.setOnItemSelectedListener(new SimpleListener(() -> {
 
-                    @Override
-                    public void onNothingSelected(
-                            AdapterView<?> parent
-                    ) {
-                    }
-                }
-        );
+            int position = typeSpinner.getSelectedItemPosition();
 
-        subjectSpinner.setOnItemSelectedListener(
-                new AdapterView.OnItemSelectedListener() {
+            if (position < 0 || position >= contentTypes.length) return;
 
-                    @Override
-                    public void onItemSelected(
-                            AdapterView<?> parent,
-                            View view,
-                            int position,
-                            long id
-                    ) {
+            String type = contentTypes[position];
 
-                        if (position >= 0 &&
-                                position < subjectIds.size() &&
-                                classSpinner
-                                        .getSelectedItemPosition()
-                                        >= 0 &&
-                                mediumSpinner
-                                        .getSelectedItemPosition()
-                                        >= 0) {
+            contentInput.setVisibility("TEXT".equals(type) ? View.VISIBLE : View.GONE);
+            linkInput.setVisibility("LINK".equals(type) ? View.VISIBLE : View.GONE);
 
-                            String selectedClassId =
-                                    classIds.get(
-                                            classSpinner
-                                                    .getSelectedItemPosition()
-                                    );
+            boolean fileType = !type.equals("TEXT") && !type.equals("LINK");
 
-                            String selectedMedium =
-                                    mediums[
-                                            mediumSpinner
-                                                    .getSelectedItemPosition()
-                                    ];
-
-                            loadChaptersForClassSubjectAndMedium(
-                                    selectedClassId,
-                                    subjectIds.get(position),
-                                    selectedMedium,
-                                    chapterSpinner,
-                                    editMode,
-                                    editData
-                            );
-                        }
-                    }
-
-                    @Override
-                    public void onNothingSelected(
-                            AdapterView<?> parent
-                    ) {
-                    }
-                }
-        );
-
-        contentTypeSpinner.setOnItemSelectedListener(
-                new AdapterView.OnItemSelectedListener() {
-
-                    @Override
-                    public void onItemSelected(
-                            AdapterView<?> parent,
-                            View view,
-                            int position,
-                            long id
-                    ) {
-
-                        if (position >= 0 &&
-                                position < contentTypes.length) {
-
-                            String selectedType =
-                                    contentTypes[position];
-
-                            updateContentControls(
-                                    selectedType,
-                                    linkInput,
-                                    fileButton,
-                                    selectedFileText,
-                                    contentInput
-                            );
-                        }
-                    }
-
-                    @Override
-                    public void onNothingSelected(
-                            AdapterView<?> parent
-                    ) {
-                    }
-                }
-        );
+            fileButton.setVisibility(fileType ? View.VISIBLE : View.GONE);
+            selectedFileText.setVisibility(fileType ? View.VISIBLE : View.GONE);
+        }));
 
         fileButton.setOnClickListener(v -> {
 
-            Intent intent = new Intent(
-                    Intent.ACTION_OPEN_DOCUMENT
-            );
-
-            intent.addCategory(
-                    Intent.CATEGORY_OPENABLE
-            );
-
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("*/*");
 
-            startActivityForResult(
-                    intent,
-                    FILE_PICKER_REQUEST
-            );
+            startActivityForResult(intent, FILE_PICKER_REQUEST);
         });
 
-        AlertDialog dialog =
-                new AlertDialog.Builder(this)
-                        .setTitle(
-                                editMode
-                                        ? "Edit Lesson"
-                                        : "Add Lesson"
-                        )
-                        .setView(layout)
-                        .setNegativeButton(
-                                "Cancel",
-                                null
-                        )
-                        .setPositiveButton(
-                                editMode
-                                        ? "Save"
-                                        : "Add",
-                                null
-                        )
-                        .create();
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(editMode ? "Edit Lesson" : "Add Lesson")
+                .setView(scroll)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton(editMode ? "Save Changes" : "Add Lesson", null)
+                .create();
 
-        dialog.setOnShowListener(ignored -> {
+        activeDialog = dialog;
 
-            dialog.getButton(
-                    AlertDialog.BUTTON_POSITIVE
-            ).setOnClickListener(v -> {
+        dialog.setOnShowListener(dialogEvent -> {
 
-                String title =
-                        titleInput.getText()
-                                .toString()
-                                .trim();
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
 
-                String description =
-                        descriptionInput.getText()
-                                .toString()
-                                .trim();
+                String title = titleInput.getText().toString().trim();
+                String description = descriptionInput.getText().toString().trim();
+                String content = contentInput.getText().toString().trim();
+                String orderString = orderInput.getText().toString().trim();
 
-                String content =
-                        contentInput.getText()
-                                .toString()
-                                .trim();
-
-                String orderString =
-                        orderInput.getText()
-                                .toString()
-                                .trim();
-
-                int classPosition =
-                        classSpinner
-                                .getSelectedItemPosition();
-
-                int mediumPosition =
-                        mediumSpinner
-                                .getSelectedItemPosition();
-
-                int subjectPosition =
-                        subjectSpinner
-                                .getSelectedItemPosition();
-
-                int chapterPosition =
-                        chapterSpinner
-                                .getSelectedItemPosition();
-
-                int contentTypePosition =
-                        contentTypeSpinner
-                                .getSelectedItemPosition();
+                int cp = classSpinner.getSelectedItemPosition();
+                int mp = mediumSpinner.getSelectedItemPosition();
+                int sp = subjectSpinner.getSelectedItemPosition();
+                int chp = chapterSpinner.getSelectedItemPosition();
+                int tp = typeSpinner.getSelectedItemPosition();
 
                 if (title.isEmpty()) {
-
-                    titleInput.setError(
-                            "Enter lesson title"
-                    );
-
+                    titleInput.setError("Enter lesson title");
                     return;
                 }
 
                 if (orderString.isEmpty()) {
-
-                    orderInput.setError(
-                            "Enter order"
-                    );
-
+                    orderInput.setError("Enter lesson order");
                     return;
                 }
 
-                if (classPosition < 0 ||
-                        classPosition >= classIds.size()) {
+                if (cp < 0 || cp >= classIds.size()
+                        || mp < 0 || mp >= mediums.length
+                        || sp < 0 || sp >= subjectIds.size()
+                        || chp < 0 || chp >= chapterIds.size()
+                        || tp < 0 || tp >= contentTypes.length) {
 
-                    Toast.makeText(
-                            this,
-                            "Select a class.",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
-                    return;
-                }
-
-                if (mediumPosition < 0 ||
-                        mediumPosition >= mediums.length) {
-
-                    Toast.makeText(
-                            this,
-                            "Select a medium.",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
-                    return;
-                }
-
-                if (subjectPosition < 0 ||
-                        subjectPosition >= subjectIds.size()) {
-
-                    Toast.makeText(
-                            this,
-                            "Select a subject for selected medium.",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
-                    return;
-                }
-
-                if (chapterPosition < 0 ||
-                        chapterPosition >= chapterIds.size()) {
-
-                    Toast.makeText(
-                            this,
-                            "Select a chapter for selected medium.",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
-                    return;
-                }
-
-                if (contentTypePosition < 0 ||
-                        contentTypePosition >= contentTypes.length) {
-
-                    Toast.makeText(
-                            this,
-                            "Select content type.",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
+                    Toast.makeText(this, "Please select all required options.",
+                            Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 long order;
 
                 try {
-
-                    order =
-                            Long.parseLong(orderString);
-
+                    order = Long.parseLong(orderString);
                 } catch (Exception e) {
-
-                    orderInput.setError(
-                            "Enter valid number"
-                    );
-
+                    orderInput.setError("Enter a valid number");
                     return;
                 }
 
-                String selectedContentType =
-                        contentTypes[
-                                contentTypePosition
-                        ];
+                String type = contentTypes[tp];
+                String link = linkInput.getText().toString().trim();
 
-                if ("TEXT".equals(
-                        selectedContentType
-                ) && content.isEmpty()) {
-
-                    contentInput.setError(
-                            "Enter lesson content"
-                    );
-
+                if ("TEXT".equals(type) && content.isEmpty()) {
+                    contentInput.setError("Enter lesson content");
                     return;
                 }
 
-                String selectedLink =
-                        linkInput.getText()
-                                .toString()
-                                .trim();
-
-                if ("LINK".equals(
-                        selectedContentType
-                ) && selectedLink.isEmpty()) {
-
-                    linkInput.setError(
-                            "Enter external URL"
-                    );
-
+                if ("LINK".equals(type) && link.isEmpty()) {
+                    linkInput.setError("Enter external URL");
                     return;
                 }
 
-                if (!"TEXT".equals(
-                        selectedContentType
-                )
-                        && !"LINK".equals(
-                        selectedContentType
-                )
-                        && !editMode
-                        && selectedFileUri == null) {
+                if (!"TEXT".equals(type) && !"LINK".equals(type)
+                        && selectedFileUri == null
+                        && (!editMode || editData == null
+                        || editData.contentUrl.isEmpty())) {
 
-                    Toast.makeText(
-                            this,
-                            "Please choose a file.",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
+                    Toast.makeText(this, "Please choose a file.",
+                            Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                String selectedClassId =
-                        classIds.get(classPosition);
+                Map<String, Object> data = new HashMap<>();
 
-                String selectedClassName =
-                        classNames.get(classPosition);
+                data.put("title", title);
+                data.put("description", description);
+                data.put("content", content);
 
-                String selectedMedium =
-                        mediums[mediumPosition];
+                data.put("classId", classIds.get(cp));
+                data.put("className", classNames.get(cp));
+                data.put("medium", mediums[mp]);
 
-                String selectedSubjectId =
-                        subjectIds.get(subjectPosition);
+                data.put("subjectId", subjectIds.get(sp));
+                data.put("subjectName", subjectNames.get(sp));
 
-                String selectedSubjectName =
-                        subjectNames.get(subjectPosition);
+                data.put("chapterId", chapterIds.get(chp));
+                data.put("chapterName", chapterNames.get(chp));
 
-                String selectedChapterId =
-                        chapterIds.get(chapterPosition);
+                data.put("order", order);
+                data.put("contentType", type.toLowerCase());
 
-                String selectedChapterName =
-                        chapterNames.get(chapterPosition);
+                if ("TEXT".equals(type)) {
+                    data.put("contentUrl", "");
+                    data.put("storagePath", "");
 
-                Map<String, Object> data =
-                        new HashMap<>();
-
-                data.put(
-                        "title",
-                        title
-                );
-
-                data.put(
-                        "description",
-                        description
-                );
-
-                data.put(
-                        "content",
-                        content
-                );
-
-                data.put(
-                        "classId",
-                        selectedClassId
-                );
-
-                data.put(
-                        "className",
-                        selectedClassName
-                );
-
-                data.put(
-                        "medium",
-                        selectedMedium
-                );
-
-                data.put(
-                        "subjectId",
-                        selectedSubjectId
-                );
-
-                data.put(
-                        "subjectName",
-                        selectedSubjectName
-                );
-
-                data.put(
-                        "chapterId",
-                        selectedChapterId
-                );
-
-                data.put(
-                        "chapterName",
-                        selectedChapterName
-                );
-
-                data.put(
-                        "order",
-                        order
-                );
-
-                data.put(
-                        "contentType",
-                        selectedContentType.toLowerCase()
-                );
-
-                if ("LINK".equals(
-                        selectedContentType
-                )) {
-
-                    data.put(
-                            "contentUrl",
-                            selectedLink
-                    );
-
-                    saveLessonData(
-                            editMode,
-                            editData,
-                            data,
-                            dialog
-                    );
-
+                    saveLessonData(editMode, editData, data, dialog);
                     return;
                 }
 
-                if ("TEXT".equals(
-                        selectedContentType
-                )) {
+                if ("LINK".equals(type)) {
+                    data.put("contentUrl", link);
+                    data.put("storagePath", "");
 
-                    data.put(
-                            "contentUrl",
-                            ""
-                    );
-
-                    data.put(
-                            "storagePath",
-                            ""
-                    );
-
-                    saveLessonData(
-                            editMode,
-                            editData,
-                            data,
-                            dialog
-                    );
-
+                    saveLessonData(editMode, editData, data, dialog);
                     return;
                 }
 
@@ -1239,39 +746,48 @@ public class LessonManagementActivity extends AppCompatActivity {
                     uploadLessonFile(
                             selectedFileUri,
                             title,
-                            selectedContentType,
+                            type,
                             data,
                             editMode,
                             editData,
                             dialog
                     );
 
-                } else if (
-                        editMode &&
-                                editData != null
-                ) {
+                } else if (editMode && editData != null) {
 
-                    data.put(
-                            "contentUrl",
-                            editData.contentUrl
-                    );
+                    data.put("contentUrl", editData.contentUrl);
+                    data.put("storagePath", editData.storagePath);
 
-                    data.put(
-                            "storagePath",
-                            editData.storagePath
-                    );
-
-                    saveLessonData(
-                            editMode,
-                            editData,
-                            data,
-                            dialog
-                    );
+                    saveLessonData(editMode, editData, data, dialog);
                 }
             });
         });
 
         dialog.show();
+    }
+
+    private void setSpinner(Spinner spinner, List<String> values) {
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                values
+        );
+
+        adapter.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item
+        );
+
+        spinner.setAdapter(adapter);
+    }
+
+    private void addField(LinearLayout parent, String label, View field) {
+
+        TextView heading = text(label, 13, DARK, true);
+        heading.setPadding(0, dp(10), 0, dp(2));
+
+        parent.addView(heading);
+        parent.addView(field);
     }
 
     private void refreshSubjects(
@@ -1283,31 +799,15 @@ public class LessonManagementActivity extends AppCompatActivity {
             LessonEditData editData
     ) {
 
-        int classPosition =
-                classSpinner.getSelectedItemPosition();
+        int cp = classSpinner.getSelectedItemPosition();
+        int mp = mediumSpinner.getSelectedItemPosition();
 
-        int mediumPosition =
-                mediumSpinner.getSelectedItemPosition();
+        if (cp < 0 || cp >= classIds.size()
+                || mp < 0 || mp >= mediums.length) return;
 
-        if (classPosition < 0 ||
-                classPosition >= classIds.size()) {
-            return;
-        }
-
-        if (mediumPosition < 0 ||
-                mediumPosition >= mediums.length) {
-            return;
-        }
-
-        String selectedClassId =
-                classIds.get(classPosition);
-
-        String selectedMedium =
-                mediums[mediumPosition];
-
-        loadSubjectsForClassAndMedium(
-                selectedClassId,
-                selectedMedium,
+        loadSubjects(
+                classIds.get(cp),
+                mediums[mp],
                 subjectSpinner,
                 chapterSpinner,
                 editMode,
@@ -1315,38 +815,89 @@ public class LessonManagementActivity extends AppCompatActivity {
         );
     }
 
-    private void updateContentControls(
-            String type,
-            EditText linkInput,
-            Button fileButton,
-            TextView selectedFileText,
-            EditText contentInput
+    private void loadSubjects(
+            String classId,
+            String medium,
+            Spinner subjectSpinner,
+            Spinner chapterSpinner,
+            boolean editMode,
+            LessonEditData editData
     ) {
 
-        if ("LINK".equals(type)) {
+        subjectIds.clear();
+        subjectNames.clear();
+        chapterIds.clear();
+        chapterNames.clear();
 
-            linkInput.setVisibility(View.VISIBLE);
-            fileButton.setVisibility(View.GONE);
-            selectedFileText.setVisibility(View.GONE);
+        setSpinner(subjectSpinner, subjectNames);
+        setSpinner(chapterSpinner, chapterNames);
 
-            contentInput.setVisibility(View.GONE);
+        db.collection("subjects")
+                .whereEqualTo("classId", classId)
+                .whereEqualTo("medium", medium)
+                .get()
+                .addOnSuccessListener(snapshot -> {
 
-        } else if ("TEXT".equals(type)) {
+                    subjectIds.clear();
+                    subjectNames.clear();
 
-            linkInput.setVisibility(View.GONE);
-            fileButton.setVisibility(View.GONE);
-            selectedFileText.setVisibility(View.GONE);
+                    for (DocumentSnapshot document : snapshot.getDocuments()) {
+                        subjectIds.add(document.getId());
+                        subjectNames.add(value(document, "name", "Unnamed Subject"));
+                    }
 
-            contentInput.setVisibility(View.VISIBLE);
+                    setSpinner(subjectSpinner, subjectNames);
 
-        } else {
+                    if (editMode && editData != null) {
+                        int position = subjectIds.indexOf(editData.subjectId);
+                        if (position >= 0) subjectSpinner.setSelection(position);
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to load subjects: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show()
+                );
+    }
 
-            linkInput.setVisibility(View.GONE);
-            fileButton.setVisibility(View.VISIBLE);
-            selectedFileText.setVisibility(View.VISIBLE);
+    private void loadChapters(
+            String classId,
+            String subjectId,
+            String medium,
+            Spinner chapterSpinner,
+            boolean editMode,
+            LessonEditData editData
+    ) {
 
-            contentInput.setVisibility(View.GONE);
-        }
+        chapterIds.clear();
+        chapterNames.clear();
+        setSpinner(chapterSpinner, chapterNames);
+
+        db.collection("chapters")
+                .whereEqualTo("classId", classId)
+                .whereEqualTo("subjectId", subjectId)
+                .whereEqualTo("medium", medium)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+
+                    chapterIds.clear();
+                    chapterNames.clear();
+
+                    for (DocumentSnapshot document : snapshot.getDocuments()) {
+                        chapterIds.add(document.getId());
+                        chapterNames.add(value(document, "name", "Unnamed Chapter"));
+                    }
+
+                    setSpinner(chapterSpinner, chapterNames);
+
+                    if (editMode && editData != null) {
+                        int position = chapterIds.indexOf(editData.chapterId);
+                        if (position >= 0) chapterSpinner.setSelection(position);
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to load chapters: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show()
+                );
     }
 
     private void uploadLessonFile(
@@ -1359,25 +910,13 @@ public class LessonManagementActivity extends AppCompatActivity {
             AlertDialog dialog
     ) {
 
-        Toast.makeText(
-                this,
-                "Uploading file...",
-                Toast.LENGTH_SHORT
-        ).show();
+        Toast.makeText(this, "Uploading lesson file...", Toast.LENGTH_SHORT).show();
 
-        String safeTitle =
-                lessonTitle.replaceAll(
-                        "[^a-zA-Z0-9_-]",
-                        "_"
-                );
+        String safeTitle = lessonTitle.replaceAll("[^a-zA-Z0-9_-]", "_");
 
-        String extension =
-                getFileExtension(fileUri);
+        String extension = getFileExtension(fileUri);
 
-        String fileName =
-                System.currentTimeMillis()
-                        + "_"
-                        + safeTitle;
+        String fileName = System.currentTimeMillis() + "_" + safeTitle;
 
         if (!extension.isEmpty()) {
             fileName += "." + extension;
@@ -1391,54 +930,29 @@ public class LessonManagementActivity extends AppCompatActivity {
                         + "/"
                         + fileName;
 
-        StorageReference fileReference =
-                storage.getReference()
-                        .child(storagePath);
+        StorageReference reference = storage.getReference().child(storagePath);
 
-        fileReference.putFile(fileUri)
-                .addOnSuccessListener(
-                        taskSnapshot ->
-                                fileReference
-                                        .getDownloadUrl()
-                                        .addOnSuccessListener(
-                                                downloadUri -> {
+        reference.putFile(fileUri)
+                .addOnSuccessListener(task ->
 
-                                                    data.put(
-                                                            "contentUrl",
-                                                            downloadUri.toString()
-                                                    );
+                        reference.getDownloadUrl()
+                                .addOnSuccessListener(downloadUri -> {
 
-                                                    data.put(
-                                                            "storagePath",
-                                                            storagePath
-                                                    );
+                                    data.put("contentUrl", downloadUri.toString());
+                                    data.put("storagePath", storagePath);
 
-                                                    saveLessonData(
-                                                            editMode,
-                                                            editData,
-                                                            data,
-                                                            dialog
-                                                    );
-                                                }
-                                        )
-                                        .addOnFailureListener(
-                                                e ->
-                                                        Toast.makeText(
-                                                                this,
-                                                                "Failed to get file URL: "
-                                                                        + e.getMessage(),
-                                                                Toast.LENGTH_LONG
-                                                        ).show()
-                                        )
+                                    saveLessonData(editMode, editData, data, dialog);
+                                })
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this,
+                                                "Failed to get file URL: " + e.getMessage(),
+                                                Toast.LENGTH_LONG).show()
+                                )
                 )
-                .addOnFailureListener(
-                        e ->
-                                Toast.makeText(
-                                        this,
-                                        "File upload failed: "
-                                                + e.getMessage(),
-                                        Toast.LENGTH_LONG
-                                ).show()
+                .addOnFailureListener(e ->
+                        Toast.makeText(this,
+                                "File upload failed: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show()
                 );
     }
 
@@ -1451,288 +965,51 @@ public class LessonManagementActivity extends AppCompatActivity {
 
         if (!editMode) {
 
-            data.put(
-                    "createdAt",
-                    System.currentTimeMillis()
-            );
+            data.put("createdAt", System.currentTimeMillis());
 
             db.collection("lessons")
                     .add(data)
-                    .addOnSuccessListener(
-                            unused -> {
+                    .addOnSuccessListener(result -> {
 
-                                Toast.makeText(
-                                        this,
-                                        "Lesson added successfully",
-                                        Toast.LENGTH_SHORT
-                                ).show();
+                        Toast.makeText(this, "Lesson added successfully!",
+                                Toast.LENGTH_SHORT).show();
 
-                                dialog.dismiss();
-
-                                loadLessons();
-                            }
-                    )
-                    .addOnFailureListener(
-                            e ->
-                                    Toast.makeText(
-                                            this,
-                                            "Failed: "
-                                                    + e.getMessage(),
-                                            Toast.LENGTH_LONG
-                                    ).show()
+                        dialog.dismiss();
+                        loadLessons();
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Failed: " + e.getMessage(),
+                                    Toast.LENGTH_LONG).show()
                     );
 
         } else {
 
-            if (editData == null) {
-                return;
-            }
+            if (editData == null) return;
 
             db.collection("lessons")
                     .document(editData.documentId)
                     .update(data)
-                    .addOnSuccessListener(
-                            unused -> {
+                    .addOnSuccessListener(result -> {
 
-                                Toast.makeText(
-                                        this,
-                                        "Lesson updated successfully",
-                                        Toast.LENGTH_SHORT
-                                ).show();
+                        Toast.makeText(this, "Lesson updated successfully!",
+                                Toast.LENGTH_SHORT).show();
 
-                                dialog.dismiss();
-
-                                loadLessons();
-                            }
-                    )
-                    .addOnFailureListener(
-                            e ->
-                                    Toast.makeText(
-                                            this,
-                                            "Failed: "
-                                                    + e.getMessage(),
-                                            Toast.LENGTH_LONG
-                                    ).show()
+                        dialog.dismiss();
+                        loadLessons();
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Failed: " + e.getMessage(),
+                                    Toast.LENGTH_LONG).show()
                     );
         }
     }
 
-    private void loadSubjectsForClassAndMedium(
-            String classId,
-            String medium,
-            Spinner subjectSpinner,
-            Spinner chapterSpinner,
-            boolean editMode,
-            LessonEditData editData
-    ) {
+    private int findPosition(String[] values, String value) {
 
-        db.collection("subjects")
-                .whereEqualTo(
-                        "classId",
-                        classId
-                )
-                .whereEqualTo(
-                        "medium",
-                        medium
-                )
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-
-                    subjectIds.clear();
-                    subjectNames.clear();
-
-                    for (DocumentSnapshot document :
-                            querySnapshot.getDocuments()) {
-
-                        subjectIds.add(
-                                document.getId()
-                        );
-
-                        String name =
-                                document.getString("name");
-
-                        if (name == null) {
-                            name = "Unnamed Subject";
-                        }
-
-                        subjectNames.add(name);
-                    }
-
-                    ArrayAdapter<String> adapter =
-                            new ArrayAdapter<>(
-                                    this,
-                                    android.R.layout.simple_spinner_item,
-                                    subjectNames
-                            );
-
-                    adapter.setDropDownViewResource(
-                            android.R.layout.simple_spinner_dropdown_item
-                    );
-
-                    subjectSpinner.setAdapter(adapter);
-
-                    chapterIds.clear();
-                    chapterNames.clear();
-
-                    ArrayAdapter<String> emptyChapterAdapter =
-                            new ArrayAdapter<>(
-                                    this,
-                                    android.R.layout.simple_spinner_item,
-                                    chapterNames
-                            );
-
-                    emptyChapterAdapter.setDropDownViewResource(
-                            android.R.layout.simple_spinner_dropdown_item
-                    );
-
-                    chapterSpinner.setAdapter(
-                            emptyChapterAdapter
-                    );
-
-                    if (editMode &&
-                            editData != null) {
-
-                        int position =
-                                subjectIds.indexOf(
-                                        editData.subjectId
-                                );
-
-                        if (position >= 0) {
-
-                            subjectSpinner.setSelection(
-                                    position
-                            );
-                        }
-                    }
-
-                })
-                .addOnFailureListener(
-                        e ->
-                                Toast.makeText(
-                                        this,
-                                        "Failed to load subjects: "
-                                                + e.getMessage(),
-                                        Toast.LENGTH_LONG
-                                ).show()
-                );
-    }
-
-    private void loadChaptersForClassSubjectAndMedium(
-            String classId,
-            String subjectId,
-            String medium,
-            Spinner chapterSpinner,
-            boolean editMode,
-            LessonEditData editData
-    ) {
-
-        db.collection("chapters")
-                .whereEqualTo(
-                        "classId",
-                        classId
-                )
-                .whereEqualTo(
-                        "subjectId",
-                        subjectId
-                )
-                .whereEqualTo(
-                        "medium",
-                        medium
-                )
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-
-                    chapterIds.clear();
-                    chapterNames.clear();
-
-                    for (DocumentSnapshot document :
-                            querySnapshot.getDocuments()) {
-
-                        chapterIds.add(
-                                document.getId()
-                        );
-
-                        String name =
-                                document.getString("name");
-
-                        if (name == null) {
-                            name = "Unnamed Chapter";
-                        }
-
-                        chapterNames.add(name);
-                    }
-
-                    ArrayAdapter<String> adapter =
-                            new ArrayAdapter<>(
-                                    this,
-                                    android.R.layout.simple_spinner_item,
-                                    chapterNames
-                            );
-
-                    adapter.setDropDownViewResource(
-                            android.R.layout.simple_spinner_dropdown_item
-                    );
-
-                    chapterSpinner.setAdapter(adapter);
-
-                    if (editMode &&
-                            editData != null) {
-
-                        int position =
-                                chapterIds.indexOf(
-                                        editData.chapterId
-                                );
-
-                        if (position >= 0) {
-
-                            chapterSpinner.setSelection(
-                                    position
-                            );
-                        }
-                    }
-
-                })
-                .addOnFailureListener(
-                        e ->
-                                Toast.makeText(
-                                        this,
-                                        "Failed to load chapters: "
-                                                + e.getMessage(),
-                                        Toast.LENGTH_LONG
-                                ).show()
-                );
-    }
-
-    private void addLabel(
-            LinearLayout parent,
-            String text
-    ) {
-
-        TextView label = new TextView(this);
-        label.setText(text);
-        label.setTextSize(13);
-        label.setTextColor(Color.rgb(71, 85, 105));
-        label.setPadding(0, 12, 0, 4);
-
-        parent.addView(label);
-    }
-
-    private int findPosition(
-            String[] values,
-            String value
-    ) {
-
-        if (value == null) {
-            return -1;
-        }
+        if (value == null) return -1;
 
         for (int i = 0; i < values.length; i++) {
-
-            if (values[i].equalsIgnoreCase(
-                    value.trim()
-            )) {
-                return i;
-            }
+            if (values[i].equalsIgnoreCase(value.trim())) return i;
         }
 
         return -1;
@@ -1740,19 +1017,13 @@ public class LessonManagementActivity extends AppCompatActivity {
 
     private String getFileExtension(Uri uri) {
 
-        String name =
-                uri.getLastPathSegment();
+        String name = uri.getLastPathSegment();
 
-        if (name == null) {
-            return "";
-        }
+        if (name == null) return "";
 
-        int dot =
-                name.lastIndexOf(".");
+        int dot = name.lastIndexOf(".");
 
-        if (dot >= 0 &&
-                dot < name.length() - 1) {
-
+        if (dot >= 0 && dot < name.length() - 1) {
             return name.substring(dot + 1);
         }
 
@@ -1766,76 +1037,83 @@ public class LessonManagementActivity extends AppCompatActivity {
             Intent data
     ) {
 
-        super.onActivityResult(
-                requestCode,
-                resultCode,
-                data
-        );
+        super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode ==
-                FILE_PICKER_REQUEST &&
-                resultCode ==
-                        RESULT_OK &&
-                data != null) {
+        if (requestCode == FILE_PICKER_REQUEST
+                && resultCode == RESULT_OK
+                && data != null) {
 
-            selectedFileUri =
-                    data.getData();
+            selectedFileUri = data.getData();
 
-            Toast.makeText(
-                    this,
-                    "File selected successfully",
-                    Toast.LENGTH_SHORT
-            ).show();
+            if (selectedFileUri != null) {
+
+                try {
+                    getContentResolver().takePersistableUriPermission(
+                            selectedFileUri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    );
+                } catch (Exception ignored) {
+                }
+
+                if (selectedFileText != null) {
+                    selectedFileText.setText("✓ New file selected successfully");
+                }
+
+                Toast.makeText(this, "File selected successfully",
+                        Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
-    private void confirmDelete(
-            String documentId,
-            String lessonTitle
-    ) {
+    private void confirmDelete(String documentId, String lessonTitle) {
 
         new AlertDialog.Builder(this)
-                .setTitle("Delete Lesson")
-                .setMessage(
-                        "Delete \""
-                                + lessonTitle
-                                + "\"?"
-                )
-                .setNegativeButton(
-                        "Cancel",
-                        null
-                )
-                .setPositiveButton(
-                        "Delete",
-                        (dialog, which) -> {
+                .setTitle("Delete Lesson?")
+                .setMessage("Are you sure you want to delete \"" + lessonTitle + "\"?")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Delete", (dialog, which) -> {
 
-                            db.collection("lessons")
-                                    .document(documentId)
-                                    .delete()
-                                    .addOnSuccessListener(
-                                            unused -> {
+                    db.collection("lessons")
+                            .document(documentId)
+                            .delete()
+                            .addOnSuccessListener(result -> {
 
-                                                Toast.makeText(
-                                                        this,
-                                                        "Lesson deleted",
-                                                        Toast.LENGTH_SHORT
-                                                ).show();
+                                Toast.makeText(this, "Lesson deleted",
+                                        Toast.LENGTH_SHORT).show();
 
-                                                loadLessons();
-                                            }
-                                    )
-                                    .addOnFailureListener(
-                                            e ->
-                                                    Toast.makeText(
-                                                            this,
-                                                            "Delete failed: "
-                                                                    + e.getMessage(),
-                                                            Toast.LENGTH_LONG
-                                                    ).show()
-                                    );
-                        }
-                )
+                                loadLessons();
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(this,
+                                            "Delete failed: " + e.getMessage(),
+                                            Toast.LENGTH_LONG).show()
+                            );
+                })
                 .show();
+    }
+
+    private static class SimpleListener
+            implements AdapterView.OnItemSelectedListener {
+
+        private final Runnable action;
+
+        SimpleListener(Runnable action) {
+            this.action = action;
+        }
+
+        @Override
+        public void onItemSelected(
+                AdapterView<?> parent,
+                View view,
+                int position,
+                long id
+        ) {
+            action.run();
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> parent) {
+        }
     }
 
     private static class LessonEditData {
